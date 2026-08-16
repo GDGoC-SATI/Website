@@ -15,6 +15,7 @@ import Contact from './pages/Contact';
 
 import About from './pages/About';
 import Gallery from './pages/Gallery';
+import Alumni from './pages/Alumni';
 
 function App() {
   const { pathname } = useLocation();
@@ -31,6 +32,7 @@ function App() {
         <Route path="/events/:id" element={<EventDetails />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/team" element={<Team />} />
+        <Route path="/alumni" element={<Alumni />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/about" element={<About />} />
         <Route path="/gallery" element={<Gallery />} />

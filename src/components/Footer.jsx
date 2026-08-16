@@ -21,7 +21,7 @@ const Footer = () => {
             title: "Community",
             links: [
                 { name: "Achievements", path: "/achievements" }, // Placeholder for now
-                { name: "Alumni", path: "/team#alumni" },
+                { name: "Alumni", path: "/alumni" },
                 { name: "Gallery", path: "/gallery" }, // Placeholder
                 { name: "Meetings", path: "/events#meetings" },
             ]

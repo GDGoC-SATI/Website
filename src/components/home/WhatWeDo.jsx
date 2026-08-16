@@ -48,8 +48,8 @@ const WhatWeDo = () => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-6">
-                        <StatsCard icon={<FaUserFriends />} count={977} label="Community Members" suffix="+" />
-                        <StatsCard icon={<FaCalendarAlt />} count={13} label="Events Hosted" suffix="+" />
+                        <StatsCard icon={<FaUserFriends />} count={1000} label="Community Members" suffix="+" />
+                        <StatsCard icon={<FaCalendarAlt />} count={15} label="Events Hosted" suffix="+" />
                         <div className="col-span-2">
                             <div className="bg-white dark:bg-slate-900 p-2 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 h-64 overflow-hidden">
                                 <iframe

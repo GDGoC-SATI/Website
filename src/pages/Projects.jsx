@@ -47,6 +47,7 @@ const Projects = () => {
     const projects = [
         {
             title: "GDG Website",
+            image: "../assets/projects/web-preview.jpeg",
             description: "The official website for GDG on Campus SATI Vidisha, built with React and Tailwind CSS.",
             techStack: ["React", "Tailwind", "Framer Motion"],
             links: { github: "https://github.com/GDGoC-SATI/Website", live: "https://gdgoc-sati.vercel.app/" }

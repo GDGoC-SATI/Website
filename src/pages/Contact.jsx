@@ -36,6 +36,9 @@ const FAQItem = ({ question, answer }) => {
 };
 
 const Contact = () => {
+    const [subject, setSubject] = useState("General Inquiry");
+    const [isSubjectOpen, setIsSubjectOpen] = useState(false);
+    const subjects = ["General Inquiry", "Sponsorship", "Collaboration", "Report Issue"];
     const faqs = [
         {
             question: "How can I join the GDG community?",
@@ -144,14 +147,42 @@ const Contact = () => {
                                 <input type="email" className="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:border-google-blue focus:ring-1 focus:ring-google-blue transition-all" placeholder="john@example.com" />
                             </div>
 
-                            <div>
+                            <div className="relative">
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Subject</label>
-                                <select className="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:border-google-blue focus:ring-1 focus:ring-google-blue transition-all">
-                                    <option>General Inquiry</option>
-                                    <option>Sponsorship</option>
-                                    <option>Collaboration</option>
-                                    <option>Report Issue</option>
-                                </select>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsSubjectOpen(!isSubjectOpen)}
+                                    className="w-full px-4 py-3 flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:border-google-blue focus:ring-1 focus:ring-google-blue transition-all text-slate-700 dark:text-slate-300"
+                                >
+                                    <span>{subject}</span>
+                                    <FaChevronDown className={`transition-transform duration-300 ${isSubjectOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                
+                                <AnimatePresence mode='wait'>
+                                    {isSubjectOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            className="absolute z-50 top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 overflow-hidden py-2"
+                                        >
+                                            {subjects.map((s) => (
+                                                <button
+                                                    key={s}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSubject(s);
+                                                        setIsSubjectOpen(false);
+                                                    }}
+                                                    className={`w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${subject === s ? 'text-google-blue font-bold bg-google-blue/5' : 'text-slate-600 dark:text-slate-300'}`}
+                                                >
+                                                    {s}
+                                                </button>
+                                            ))}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                                {isSubjectOpen && <div className="fixed inset-0 z-[40]" onClick={() => setIsSubjectOpen(false)} />}
                             </div>
 
                             <div>

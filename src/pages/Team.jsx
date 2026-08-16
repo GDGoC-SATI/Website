@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaLinkedin, FaGithub, FaTwitter, FaInstagram, FaCode, FaCamera, FaCalendarAlt, FaBullhorn, FaTimes, FaGraduationCap, FaLayerGroup, FaExternalLinkAlt } from 'react-icons/fa';
+import { leads, teams } from '../data/teamData';
 
 // --- Components ---
 
@@ -55,7 +56,7 @@ const ProfileModal = ({ member, onClose }) => {
                                         {member.name.charAt(0)}
                                     </span>
                                 )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
+                                {/* <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div> */}
                             </div>
                             <div className="absolute bottom-2 right-2 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 text-google-blue">
                                 <FaCode size={14} style={{ color: themeColor }} />
@@ -64,15 +65,21 @@ const ProfileModal = ({ member, onClose }) => {
 
                         {/* Quick Actions (Socials) */}
                         <div className="flex gap-2 mb-0 pl-5">
-                            <a href="#" className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:scale-110 transition-transform hover:bg-[#0077b5] hover:text-white">
-                                <FaLinkedin size={18} />
-                            </a>
-                            <a href="#" className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:scale-110 transition-transform hover:bg-pink-600 hover:text-white">
-                                <FaInstagram size={18} />
-                            </a>
-                            <a href="#" className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:scale-110 transition-transform hover:bg-slate-900 dark:hover:bg-white hover:text-white dark:hover:text-black">
-                                <FaGithub size={18} />
-                            </a>
+                            {member.socials?.linkedin && (
+                                <a href={member.socials.linkedin} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:scale-110 transition-transform hover:bg-[#0077b5] hover:text-white">
+                                    <FaLinkedin size={18} />
+                                </a>
+                            )}
+                            {member.socials?.instagram && (
+                                <a href={member.socials.instagram} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:scale-110 transition-transform hover:bg-pink-600 hover:text-white">
+                                    <FaInstagram size={18} />
+                                </a>
+                            )}
+                            {member.socials?.github && (
+                                <a href={member.socials.github} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:scale-110 transition-transform hover:bg-slate-900 dark:hover:bg-white hover:text-white dark:hover:text-black">
+                                    <FaGithub size={18} />
+                                </a>
+                            )}
                         </div>
                     </div>
 
@@ -90,6 +97,12 @@ const ProfileModal = ({ member, onClose }) => {
                         <p className="text-base font-medium" style={{ color: themeColor }}>
                             {member.role}
                         </p>
+                        {member.class && (
+                            <div className="flex items-center gap-2 mt-1 text-slate-500 dark:text-slate-400 text-sm">
+                                <FaGraduationCap size={14} style={{ color: themeColor }} />
+                                <span>{member.class}</span>
+                            </div>
+                        )}
 
                         <div className="my-6 h-px w-full bg-slate-100 dark:bg-slate-800"></div>
 
@@ -120,11 +133,11 @@ const ProfileModal = ({ member, onClose }) => {
                             </div>
                         </div>
 
-                        <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-center">
+                        {/* <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-center">
                             <button className="text-xs font-bold tracking-widest uppercase text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-2">
                                 View Full Profile <FaExternalLinkAlt size={10} />
                             </button>
-                        </div>
+                        </div> */}
 
                     </div>
                 </div>
@@ -164,9 +177,15 @@ const ProfileCard = ({ member, onClick, color = '#4285F4' }) => {
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1 group-hover:text-google-blue transition-colors">
                     {member.name}
                 </h3>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-4 uppercase tracking-wider text-[10px]">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider text-[10px]">
                     {member.role}
                 </p>
+                {member.class && (
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-1">
+                        <FaGraduationCap size={10} /> {member.class}
+                    </p>
+                )}
+                {!member.class && <div className="mb-4" />}
 
                 <div className="flex flex-wrap justify-center gap-2 mb-4">
                     {member.tags.slice(0, 2).map((tag, idx) => (
@@ -219,385 +238,8 @@ const ToggleButton = ({ icon: Icon, color, isActive, onClick, label }) => (
 // --- Main Page Component ---
 
 const Team = () => {
-    const [activeTeam, setActiveTeam] = useState(null);
+    const [activeTeam, setActiveTeam] = useState('technical');
     const [selectedMember, setSelectedMember] = useState(null);
-
-    // Verified Asset Paths:
-    // Sanidhya: sanidhya.jpeg
-    // Pankaj: pankaj.jpeg
-    // Anuj: anuj.jpeg
-    // Manraj: manraj.jpeg
-    // Suprabhat: suprabhat.jpeg
-    // Kalp: kalp.jpeg & kalp.jpg (using jpeg as preference)
-    // Roshni: roshni.jpeg
-    // Kazim: kazim.jpeg
-    // Ritika: ritika.jpeg
-    // Arpit: arpit.jpg
-    // Danish: danish.jpeg
-    // Deepti: deepti.jpeg
-    // Rudransh: rudransh.jpeg
-    // Akash: akash.jpeg
-    // Taufiq: taufiq.jpeg
-    // Deepak: Deepak.jpg
-    // Hardik: Hardik.jpg
-    // Aryaman: Aryaman.jpg
-    // Nikhil: nikhil.jpeg
-    // Kaustubh: kaustubh.jpeg
-    // Safal: safal.jpeg
-
-    // Notes:
-    // Dakshesh -> Initial
-    // Abhishek -> Initial
-    // Vinayak -> Initial
-    // Adarsh -> Initial
-    // Saiyed -> Initial
-    // Shreya -> Initial
-    // Harshwardhan -> Initial
-    // Devanshu -> Initial
-    // Utkarsh -> Initial
-    // Mairaz -> Initial
-    // Shrishti -> Initial
-    // Suryansh -> Initial
-    // Dewanshi -> Initial
-    // Ronak -> Initial
-    // Nakul -> Initial
-    // Anushka -> Initial
-    // Megha -> Initial
-
-    const leads = [
-        {
-            name: 'Sanidhya Sahu',
-            role: 'Organiser',
-            bio: 'Leading the GDG chapter with a vision to empower developers and foster innovation through community collaboration.',
-            image: '../assets/core team/profile/sanidhya.jpeg',
-            tags: ['Leadership', 'Management', 'Public Speaking'],
-            team: 'Lead'
-        },
-        {
-            name: 'Pankaj Yadav',
-            role: 'Co-organiser',
-            bio: 'Driving strategic initiatives and ensuring smooth execution of chapter operations to maximize impact.',
-            image: '../assets/core team/profile/pankaj.jpeg',
-            tags: ['Strategy', 'Operations', 'Community'],
-            team: 'Lead'
-        },
-        {
-            name: 'Anuj Jain',
-            role: 'Technical Lead',
-            bio: 'Overseeing technical projects and guiding the team to build robust, scalable solutions using cutting-edge technologies.',
-            image: '../assets/core team/profile/anuj.jpeg',
-            tags: ['Full Stack', 'Cloud', 'Architecture'],
-            team: 'Lead'
-        },
-        {
-            name: 'Manraj Gupta',
-            role: 'Executive Lead',
-            bio: 'Coordinating between teams to ensure alignment with chapter goals and efficient resource utilization.',
-            image: '../assets/core team/profile/manraj.jpeg',
-            tags: ['Leadership', 'Execution', 'Planning'],
-            team: 'Lead'
-        },
-    ];
-
-    const teams = {
-        technical: {
-            title: 'Technical Team',
-            color: '#EA4335', // Google Red
-            members: [
-                {
-                    name: 'Kalp Soni',
-                    role: 'ML Head',
-                    bio: 'Passionate about Machine Learning and AI, leading the team to explore new frontiers in intelligent systems.',
-                    image: '../assets/core team/profile/kalp.jpeg',
-                    tags: ['Python', 'TensorFlow', 'AI'],
-                    team: 'Technical'
-                },
-                {
-                    name: 'Nikhil Kushwaha',
-                    role: 'IOT head',
-                    bio: 'Bridging the physical and digital worlds through innovative IoT solutions and hardware hacking.',
-                    image: '../assets/core team/profile/nikhil.jpeg',
-                    tags: ['IoT', 'Arduino', 'Sensors'],
-                    team: 'Technical'
-                },
-                {
-                    name: 'Kaustubh Awasthi',
-                    role: 'Cloud Head',
-                    bio: 'Architecting cloud-native solutions and promoting scalable infrastructure practices within the community.',
-                    image: '../assets/core team/profile/kaustubh.jpeg',
-                    tags: ['AWS', 'GCP', 'DevOps'],
-                    team: 'Technical'
-                },
-                {
-                    name: 'Shreya Mangal',
-                    role: 'Technical Lead',
-                    bio: 'Focused on creating seamless web experiences and mentoring junior developers in best practices.',
-                    image: null,
-                    tags: ['Web Dev', 'Frontend', 'React'],
-                    team: 'Technical'
-                },
-                {
-                    name: 'Harshwardhan Soni',
-                    role: 'Technical Lead',
-                    bio: 'Enthusiastic about backend systems and database optimization for high-performance applications.',
-                    image: null,
-                    tags: ['Backend', 'Node.js', 'SQL'],
-                    team: 'Technical'
-                },
-                {
-                    name: 'Devanshu Vishwakarma',
-                    role: 'Technical Lead',
-                    bio: 'Developing cross-platform mobile applications and exploring new frameworks for efficient development.',
-                    image: null,
-                    tags: ['Mobile Dev', 'Flutter', 'UI/UX'],
-                    team: 'Technical'
-                },
-                {
-                    name: 'Utkarsh Vishwakarma',
-                    role: 'Technical Lead',
-                    bio: 'Specializing in algorithmic problem solving and competitive programming to tackle complex challenges.',
-                    image: null,
-                    tags: ['Algorithms', 'C++', 'Data Structures'],
-                    team: 'Technical'
-                },
-                {
-                    name: 'Deepak Kumar Gupta',
-                    role: 'Technical Lead',
-                    bio: 'Dedicated to software engineering principles and building reliable, maintainable codebases.',
-                    image: '../assets/core team/profile/Deepak.jpg',
-                    tags: ['Software Eng', 'Java', 'Systems'],
-                    team: 'Technical'
-                },
-                {
-                    name: 'Nakul Chourey',
-                    role: 'Technical Team',
-                    bio: 'Exploring various tech stacks and contributing to open source projects to learn and grow.',
-                    image: null,
-                    tags: ['Development', 'Open Source', 'Git'],
-                    team: 'Technical'
-                },
-                {
-                    name: 'Anushka Rai',
-                    role: 'Technical Team',
-                    bio: 'Passionate about coding and eager to apply technical skills to solve real-world problems.',
-                    image: null,
-                    tags: ['Coding', 'Problem Solving', 'Tech'],
-                    team: 'Technical'
-                },
-            ]
-        },
-        media: {
-            title: 'Media Team',
-            color: '#4285F4', // Google Blue
-            members: [
-                {
-                    name: 'Roshni Rajani',
-                    role: 'Design Head',
-                    bio: 'Crafting visual stories and ensuring a consistent, appealing brand identity for the chapter.',
-                    image: '../assets/core team/profile/roshni.jpeg',
-                    tags: ['UI/UX', 'Figma', 'Branding'],
-                    team: 'Media'
-                },
-                {
-                    name: 'Kazim Sheikh',
-                    role: 'Social Media Head',
-                    bio: 'Engaging our community through creative content strategies and active social media presence.',
-                    image: '../assets/core team/profile/kazim.jpeg',
-                    tags: ['Social Media', 'Marketing', 'Content'],
-                    team: 'Media'
-                },
-                {
-                    name: 'Ritika Jain',
-                    role: 'Content & Engagement Head',
-                    bio: 'Curating compelling content and fostering meaningful interactions to keep the community vibrant.',
-                    image: '../assets/core team/profile/ritika.jpeg',
-                    tags: ['Content Writing', 'Engagement', 'Storytelling'],
-                    team: 'Media'
-                },
-                {
-                    name: 'Safal Tiwari',
-                    role: 'Media Lead',
-                    bio: 'Capturing moments and creating high-quality visual assets to document our journey.',
-                    image: '../assets/core team/profile/safal.jpeg',
-                    tags: ['Photography', 'Editing', 'Media'],
-                    team: 'Media'
-                },
-                {
-                    name: 'Taufiq Lohar',
-                    role: 'Media Lead',
-                    bio: 'Specializing in video production and visual storytelling to highlight chapter achievements.',
-                    image: '../assets/core team/profile/taufiq.jpeg',
-                    tags: ['Videography', 'Premiere Pro', 'Creativity'],
-                    team: 'Media'
-                },
-                {
-                    name: 'Saiyed Rehan Ali',
-                    role: 'Media Lead',
-                    bio: 'Bringing creativity to life through graphic design and multimedia content creation.',
-                    image: null,
-                    tags: ['Graphic Design', 'Visual Arts', 'Media'],
-                    team: 'Media'
-                },
-                {
-                    name: 'Ronak Kushwah',
-                    role: 'Social Media Team',
-                    bio: 'Assisting in managing social channels and analyzing metrics to improve outreach.',
-                    image: null,
-                    tags: ['Analytics', 'Socials', 'Growth'],
-                    team: 'Media'
-                },
-            ]
-        },
-        events: {
-            title: 'Events Team',
-            color: '#34A853', // Google Green
-            members: [
-                {
-                    name: 'Vinayak Mawat',
-                    role: 'Event Lead',
-                    bio: 'Orchestrating events from conception to execution, ensuring memorable experiences for attendees.',
-                    image: null,
-                    tags: ['Event Management', 'Planning', 'Coordination'],
-                    team: 'Events'
-                },
-                {
-                    name: 'Aryaman Sahu',
-                    role: 'Event Lead',
-                    bio: 'Managing onsite logistics and ensuring everything runs smoothly during chapter activities.',
-                    image: '../assets/core team/profile/Aryaman.jpg',
-                    tags: ['Logistics', 'Operations', 'Teamwork'],
-                    team: 'Events'
-                },
-                {
-                    name: 'Abhishek yadav',
-                    role: 'Event Head',
-                    bio: 'Leading the events verticals to ensure quality and consistency in all our community gatherings.',
-                    image: null,
-                    tags: ['Leadership', 'Event Strategy', 'Public Relations'],
-                    team: 'Events'
-                },
-                {
-                    name: 'Mairaz Khan',
-                    role: 'Event Lead',
-                    bio: 'Passionate about creating engaging event environments and fostering networking opportunities.',
-                    image: null,
-                    tags: ['Networking', 'Hospitality', 'Events'],
-                    team: 'Events'
-                },
-
-                {
-                    name: 'Dewanshi Pardhi',
-                    role: 'Event Team',
-                    bio: 'Supporting event operations and helping to create a welcoming atmosphere for all members.',
-                    image: null,
-                    tags: ['Support', 'Organization', 'Volunteering'],
-                    team: 'Events'
-                },
-            ]
-        },
-        management: {
-            title: 'Management Team',
-            color: '#FBBC04', // Google Yellow
-            members: [
-                {
-                    name: 'Suprabhat Upadhyay',
-                    role: 'Co-executive head',
-                    bio: 'Assisting in executive decisions and streamlining operational workflows for better efficiency.',
-                    image: '../assets/core team/profile/suprabhat.jpeg',
-                    tags: ['Management', 'Operations', 'Leadership'],
-                    team: 'Management'
-                },
-                {
-                    name: 'Arpit bansal',
-                    role: 'Logistics Head',
-                    bio: 'Ensuring all resources and materials are available and properly managed for every event.',
-                    image: '../assets/core team/profile/arpit.jpg',
-                    tags: ['Logistics', 'Supply Chain', 'Resource Mgmt'],
-                    team: 'Management'
-                },
-                {
-                    name: 'Danish Khan',
-                    role: 'Finance & Sponsorship Head',
-                    bio: 'Managing chapter finances and building partnerships to sustain and grow our community initiatives.',
-                    image: '../assets/core team/profile/danish.jpeg',
-                    tags: ['Finance', 'Sponsorship', 'Partnerships'],
-                    team: 'Management'
-                },
-                {
-                    name: 'Dakshesh Jat',
-                    role: 'Management Head',
-                    bio: 'Overseeing general management tasks and ensuring team cohesion and productivity.',
-                    image: null,
-                    tags: ['Administration', 'Team Building', 'Management'],
-                    team: 'Management'
-                },
-                {
-                    name: 'Deepti Rai',
-                    role: 'Public Relations Head',
-                    bio: 'Managing external communications and building a positive public image for the chapter.',
-                    image: '../assets/core team/profile/deepti.jpeg',
-                    tags: ['PR', 'Communication', 'Media Relations'],
-                    team: 'Management'
-                },
-                {
-                    name: 'Rudransh Rai',
-                    role: 'Community Outreach Head',
-                    bio: 'Connecting with the broader community and expanding our reach to new members and groups.',
-                    image: '../assets/core team/profile/rudransh.jpeg',
-                    tags: ['Outreach', 'Community Building', 'Networking'],
-                    team: 'Management'
-                },
-                {
-                    name: 'Akash Tripathi',
-                    role: 'Google Ambassador',
-                    bio: 'Representing GDG on campus and promoting Google technologies to students and peers.',
-                    image: '../assets/core team/profile/akash.jpeg',
-                    tags: ['Ambassadorship', 'Promotion', 'Google Tech'],
-                    team: 'Management'
-                },
-                {
-                    name: 'Adarsh Soni',
-                    role: 'Management Lead',
-                    bio: 'Leading management initiatives to improve organizational structure and team workflow.',
-                    image: null,
-                    tags: ['Leadership', 'Organization', 'Planning'],
-                    team: 'Management'
-                },
-                {
-                    name: 'Hardik Kumar Sinha',
-                    role: 'PR & Sponsor',
-                    bio: 'Working on securing sponsorships and maintaining good relationships with our partners.',
-                    image: '../assets/core team/profile/Hardik.jpg',
-                    tags: ['Sponsorship', 'PR', 'Negotiation'],
-                    team: 'Management'
-                },
-                {
-                    name: 'Shrishti Tiwari',
-                    role: 'Management Team',
-                    bio: 'Contributing to administrative tasks and ensuring the smooth running of daily operations.',
-                    image: null,
-                    tags: ['Administration', 'Support', 'Management'],
-                    team: 'Management'
-                },
-                {
-                    name: 'Suryansh Gupta',
-                    role: 'Management Team',
-                    bio: 'Helping to coordinate team activities and maintain organized records for the chapter.',
-                    image: null,
-                    tags: ['Coordination', 'Records', 'Organization'],
-                    team: 'Management'
-                },
-                {
-                    name: 'Megha Singh',
-                    role: 'PR & Sponsor',
-                    bio: 'Assisting with public relations efforts and sponsorship drives to support chapter events.',
-                    image: null,
-                    tags: ['PR', 'Sponsorship', 'Communication'],
-                    team: 'Management'
-                },
-            ]
-        }
-    };
 
     return (
         <div className="min-h-screen pb-10 bg-white dark:bg-slate-950 transition-colors duration-500">
@@ -714,7 +356,7 @@ const Team = () => {
                                 animate={{ opacity: 1 }}
                                 className="text-center text-slate-400 py-10"
                             >
-                                <p className="text-lg">Select a team above to view members</p>
+                                <p className="text-lg">Select a team button above to view members</p>
                             </motion.div>
                         )}
                     </AnimatePresence>
