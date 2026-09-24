@@ -23,7 +23,7 @@ const CTA = () => {
     };
 
     return (
-        <section className="py-24 relative overflow-hidden flex justify-center items-center bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+        <section className="py-24 relative overflow-hidden flex justify-center items-center bg-slate-50 dark:bg-slate-900/50">
             {/* Background Pattern */}
             <div className="absolute inset-0 bg-grid opacity-30 pointer-events-none"></div>
 

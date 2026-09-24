@@ -8,14 +8,14 @@ import CTA from '../components/home/CTA';
 
 const Home = () => {
     return (
-        <>
+        <div className="bg-slate-50 dark:bg-slate-900/50 transition-colors duration-300">
             <Hero />
             <WhatWeDo />
             <TeamPreview />
             <SocialMedia />
             <ContactTeaser />
             <CTA />
-        </>
+        </div>
     );
 };
 

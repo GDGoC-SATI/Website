@@ -16,7 +16,7 @@ const SocialMedia = () => {
     const reelIds = [...originalReelIds, ...originalReelIds]; // Duplicate for seamless loop
 
     return (
-        <section className="py-20 relative overflow-hidden bg-slate-50 dark:bg-[#0B1221]">
+        <section className="py-20 relative overflow-hidden bg-slate-50 dark:bg-slate-900/50">
             {/* Background blobs */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-google-yellow/10 rounded-full blur-3xl -z-10 translate-x-1/2"></div>
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-google-red/10 rounded-full blur-3xl -z-10 -translate-x-1/2"></div>
@@ -36,7 +36,7 @@ const SocialMedia = () => {
                         </p>
 
                         <a
-                            href="https://www.instagram.com/gdgoc.sati/"
+                            href="https://www.instagram.com/gdgsatividisha"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white font-bold hover:shadow-xl hover:scale-105 transition-all shadow-lg group"

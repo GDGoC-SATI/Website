@@ -88,7 +88,7 @@ Stay updated with our latest news, events, and announcements through our officia
 -   **Official Website**: [gdgoc-sati.vercel.app](https://gdgoc-sati.vercel.app)
 -   **Community Platform**: [GDG Community Page](https://gdg.community.dev/gdg-on-campus-samrat-ashok-technological-institute-vidisha-india/)
 -   **LinkedIn**: [GDGoC-SATI on LinkedIn](https://www.linkedin.com/company/gdgoc-sati/)
--   **Instagram**: [@gdgoc.sati](https://www.instagram.com/gdgoc.sati/)
+-   **Instagram**: [@gdgsatividisha](https://www.instagram.com/gdgsatividisha/)
 -   **YouTube**: [GDGoC-SATI YouTube Channel](https://www.youtube.com/@GDGoCSATI)
 -   **GitHub**: [GDGoC-SATI Organization](https://github.com/GDGoC-SATI)
 

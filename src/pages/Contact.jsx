@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { FaEnvelope, FaMapMarkerAlt, FaDiscord, FaWhatsapp, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaEnvelope, FaMapMarkerAlt, FaDiscord, FaWhatsapp, FaChevronDown, FaChevronUp, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import { api } from '../services/api';
 
 const FAQItem = ({ question, answer }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -36,9 +37,44 @@ const FAQItem = ({ question, answer }) => {
 };
 
 const Contact = () => {
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [successMsg, setSuccessMsg] = useState('');
+    const [errorMsg, setErrorMsg] = useState('');
+
     const [subject, setSubject] = useState("General Inquiry");
     const [isSubjectOpen, setIsSubjectOpen] = useState(false);
     const subjects = ["General Inquiry", "Sponsorship", "Collaboration", "Report Issue"];
+
+    const handleFormSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setSuccessMsg('');
+        setErrorMsg('');
+        try {
+            const res = await api.contact.submit({
+                firstName,
+                lastName,
+                email,
+                subject,
+                message
+            });
+            if (res.success) {
+                setSuccessMsg('Thank you! Your message has been sent successfully to the GDG team.');
+                setFirstName('');
+                setLastName('');
+                setEmail('');
+                setMessage('');
+            }
+        } catch (err) {
+            setErrorMsg(err.message || 'Failed to send message. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
     const faqs = [
         {
             question: "How can I join the GDG community?",
@@ -130,21 +166,54 @@ const Contact = () => {
 
                     {/* Right Form */}
                     <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800">
-                        <form className="space-y-6">
+                        {successMsg && (
+                            <div className="mb-6 p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 text-sm flex items-center gap-3">
+                                <FaCheckCircle className="shrink-0 text-base" />
+                                <span>{successMsg}</span>
+                            </div>
+                        )}
+                        {errorMsg && (
+                            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm flex items-center gap-3">
+                                <FaExclamationCircle className="shrink-0 text-base" />
+                                <span>{errorMsg}</span>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleFormSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">First Name</label>
-                                    <input type="text" className="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:border-google-blue focus:ring-1 focus:ring-google-blue transition-all" placeholder="John" />
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">First Name *</label>
+                                    <input 
+                                        type="text" 
+                                        required
+                                        value={firstName}
+                                        onChange={(e) => setFirstName(e.target.value)}
+                                        className="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:border-google-blue focus:ring-1 focus:ring-google-blue transition-all" 
+                                        placeholder="John" 
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Last Name</label>
-                                    <input type="text" className="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:border-google-blue focus:ring-1 focus:ring-google-blue transition-all" placeholder="Doe" />
+                                    <input 
+                                        type="text" 
+                                        value={lastName}
+                                        onChange={(e) => setLastName(e.target.value)}
+                                        className="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:border-google-blue focus:ring-1 focus:ring-google-blue transition-all" 
+                                        placeholder="Doe" 
+                                    />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email Address</label>
-                                <input type="email" className="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:border-google-blue focus:ring-1 focus:ring-google-blue transition-all" placeholder="john@example.com" />
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email Address *</label>
+                                <input 
+                                    type="email" 
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:border-google-blue focus:ring-1 focus:ring-google-blue transition-all" 
+                                    placeholder="john@example.com" 
+                                />
                             </div>
 
                             <div className="relative">
@@ -186,12 +255,23 @@ const Contact = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Message</label>
-                                <textarea rows="4" className="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:border-google-blue focus:ring-1 focus:ring-google-blue transition-all resize-none" placeholder="How can we help you?"></textarea>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Message *</label>
+                                <textarea 
+                                    rows="4" 
+                                    required
+                                    value={message}
+                                    onChange={(e) => setMessage(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:border-google-blue focus:ring-1 focus:ring-google-blue transition-all resize-none" 
+                                    placeholder="How can we help you?"
+                                ></textarea>
                             </div>
 
-                            <button type="button" className="w-full py-4 bg-google-blue hover:bg-blue-600 text-white font-bold rounded-lg transition-colors shadow-lg shadow-google-blue/20">
-                                Send Message
+                            <button 
+                                type="submit" 
+                                disabled={loading}
+                                className="w-full py-4 bg-google-blue hover:bg-blue-600 text-white font-bold rounded-lg transition-colors shadow-lg shadow-google-blue/20 disabled:opacity-50"
+                            >
+                                {loading ? 'Sending Message...' : 'Send Message'}
                             </button>
                         </form>
                     </div>
