@@ -22,11 +22,12 @@
   .dark {}
 
   html {
-    @apply overflow-x-hidden;
+    overflow-x: clip;
   }
 
   body {
-    @apply font-body text-slate-900 dark:text-slate-50 transition-colors duration-300 overflow-x-hidden;
+    @apply font-body text-slate-900 dark:text-slate-50 transition-colors duration-300;
+    overflow-x: clip;
   }
 
   h1,
@@ -43,7 +44,13 @@
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 0px;
+}
+
+::-webkit-scrollbar:horizontal {
+  display: none !important;
+  height: 0px !important;
 }
 
 ::-webkit-scrollbar-track {
@@ -58,17 +65,18 @@
   @apply bg-slate-400 dark:bg-slate-600;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
+/* Hide scrollbar for all browsers */
+.hide-scrollbar::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  /* IE and Edge */
-  scrollbar-width: none;
-  /* Firefox */
+.hide-scrollbar,
+.no-scrollbar {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
 }
 
 @keyframes scroll-vertical {

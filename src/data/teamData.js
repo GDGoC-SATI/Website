@@ -457,7 +457,7 @@ export const teams = {
                 role: 'PR & Sponsor',
                 class: 'AIADS - 2nd Year',
                 bio: 'Working on securing sponsorships and maintaining good relationships with our partners.',
-                image: '../assets/core team/profile/hardik.jpg',
+                image: '../assets/core team/profile/hardik.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/hardik-kumar-sinha/',
                     github: 'https://github.com/hksinha510',
