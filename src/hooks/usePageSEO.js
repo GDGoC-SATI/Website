@@ -91,7 +91,7 @@ export function getTitleForPath(pathname) {
  * @param {string} [options.path] - e.g. '/events'
  * @param {string} [options.image] - Custom og:image URL
  */
-export function usePageSEO({ title, description, path = '', image = `${BASE_URL}/assets/favicon.png` }) {
+export function usePageSEO({ title, description, path = '', image = `${BASE_URL}/preview.png` }) {
   useEffect(() => {
     // 1. Update Title in Browser Tab
     const fullTitle = title ? `${title} | ${SITE_BRAND}` : `${SITE_BRAND} | Google Developer Groups`;
@@ -118,6 +118,10 @@ export function usePageSEO({ title, description, path = '', image = `${BASE_URL}
     setMeta('og:title', fullTitle, true);
     setMeta('twitter:title', fullTitle);
     setMeta('og:image', image, true);
+    setMeta('og:image:secure_url', image, true);
+    setMeta('og:image:type', 'image/png', true);
+    setMeta('og:image:width', '1080', true);
+    setMeta('og:image:height', '1080', true);
     setMeta('twitter:image', image);
 
     const canonicalUrl = `${BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
