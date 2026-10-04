@@ -10,11 +10,14 @@ import {
   FaCheck,
   FaGithub,
   FaLinkedin,
-  FaTwitter,
   FaInstagram,
   FaGlobe,
+  FaImage,
 } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 import { useAuth } from '../../context/AuthContext';
+
+const DEFAULT_BANNER_URL = 'https://gdgocsati.vercel.app/assets/banner_default.png';
 
 const ProfileModal = () => {
   const { user, isProfileOpen, setIsProfileOpen, updateProfile } = useAuth();
@@ -22,6 +25,7 @@ const ProfileModal = () => {
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
   const [avatar, setAvatar] = useState('');
+  const [banner, setBanner] = useState(DEFAULT_BANNER_URL);
   const [socials, setSocials] = useState({
     github: '',
     linkedin: '',
@@ -39,6 +43,7 @@ const ProfileModal = () => {
       setUsername(user.username || '');
       setBio(user.bio || '');
       setAvatar(user.avatar || '');
+      setBanner(user.banner || DEFAULT_BANNER_URL);
       setSocials({
         github: user.socials?.github || '',
         linkedin: user.socials?.linkedin || '',
@@ -57,7 +62,7 @@ const ProfileModal = () => {
     setSuccessMsg('');
     setErrorMsg('');
     try {
-      const res = await updateProfile({ name, username, bio, avatar, socials });
+      const res = await updateProfile({ name, username, bio, avatar, banner: banner || DEFAULT_BANNER_URL, socials });
       if (res.success) {
         setSuccessMsg('Profile updated successfully!');
         setTimeout(() => setSuccessMsg(''), 3000);
@@ -83,17 +88,28 @@ const ProfileModal = () => {
           className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden"
         >
           {/* Header */}
-          <div className="relative h-28 bg-gradient-to-r from-google-blue via-blue-600 to-indigo-600 p-6 flex justify-between items-start">
-            <div className="text-white">
-              <h3 className="text-xl font-bold">User Profile</h3>
-              <p className="text-white/80 text-xs mt-0.5">Manage your personal information</p>
+          <div className="relative h-28 sm:h-36 w-full overflow-hidden bg-slate-200 dark:bg-slate-800">
+            <img
+              src={banner || DEFAULT_BANNER_URL}
+              alt="Profile Banner"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = DEFAULT_BANNER_URL;
+              }}
+              className="w-full h-full object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/30 p-5 flex justify-between items-start">
+              <div className="text-white">
+                <h3 className="text-lg sm:text-xl font-bold">User Profile</h3>
+                <p className="text-white/80 text-xs mt-0.5">Manage your personal information</p>
+              </div>
+              <button
+                onClick={() => setIsProfileOpen(false)}
+                className="p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors"
+              >
+                <FaTimes size={16} />
+              </button>
             </div>
-            <button
-              onClick={() => setIsProfileOpen(false)}
-              className="p-2 rounded-full bg-black/20 hover:bg-black/40 text-white transition-colors"
-            >
-              <FaTimes size={16} />
-            </button>
           </div>
 
           {/* Profile Picture Overlap */}
@@ -203,6 +219,31 @@ const ProfileModal = () => {
             </div>
 
             <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  Banner (Cover) Image URL
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setBanner(DEFAULT_BANNER_URL)}
+                  className="text-[11px] text-google-blue hover:underline"
+                >
+                  Reset Banner
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={banner}
+                  onChange={(e) => setBanner(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:border-google-blue outline-none text-slate-800 dark:text-white"
+                />
+                <FaImage className="absolute left-3 top-2.5 text-slate-400 text-xs" />
+              </div>
+            </div>
+
+            <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
                 Bio / About You
               </label>
@@ -249,12 +290,12 @@ const ProfileModal = () => {
                 <div className="relative">
                   <input
                     type="url"
-                    placeholder="Twitter / X URL"
+                    placeholder="https://x.com/username"
                     value={socials.twitter}
                     onChange={(e) => setSocials({ ...socials, twitter: e.target.value })}
                     className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:border-google-blue outline-none text-slate-800 dark:text-white"
                   />
-                  <FaTwitter className="absolute left-2.5 top-2 text-[#1DA1F2] text-xs" />
+                  <FaXTwitter className="absolute left-2.5 top-2 text-slate-800 dark:text-slate-200 text-xs" />
                 </div>
 
                 {/* Instagram */}

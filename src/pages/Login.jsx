@@ -15,8 +15,15 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import GoogleAuthButton from '../components/auth/GoogleAuthButton';
+import usePageSEO from '../hooks/usePageSEO';
 
 const Login = () => {
+  usePageSEO({
+    title: 'Sign In',
+    description: 'Log in to your GDG on Campus SATI Vidisha community account using Email, OTP, or Google single sign-on.',
+    path: '/login',
+  });
+
   // Tabs: 'password' | 'otp'
   const [authTab, setAuthTab] = useState('password');
 
@@ -235,7 +242,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen pt-28 pb-16 flex items-center justify-center px-4 bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen pt-15 pb-16 flex items-center justify-center px-4 bg-slate-50 dark:bg-slate-950">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -286,11 +293,10 @@ const Login = () => {
                   setAuthTab('password');
                   setError('');
                 }}
-                className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all text-center ${
-                  authTab === 'password'
+                className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all text-center ${authTab === 'password'
                     ? 'bg-slate-900 text-white dark:bg-slate-800 dark:text-white shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 Password
               </button>
@@ -300,11 +306,10 @@ const Login = () => {
                   setAuthTab('otp');
                   setError('');
                 }}
-                className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all text-center ${
-                  authTab === 'otp'
+                className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all text-center ${authTab === 'otp'
                     ? 'bg-slate-900 text-white dark:bg-slate-800 dark:text-white shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 Email OTP
               </button>

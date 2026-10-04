@@ -1,0 +1,46 @@
+# GDG on Campus SATI Vidisha (GDGoC SATI)
+> Official chapter platform for Google Developer Groups on Campus at Samrat Ashok Technological Institute (SATI), Vidisha, Madhya Pradesh, India.
+
+## About the Organization
+- **Name**: Google Developer Groups on Campus - Samrat Ashok Technological Institute (GDGoC SATI Vidisha)
+- **Institution**: Samrat Ashok Technological Institute (SATI), established in 1960.
+- **Affiliation**: Google Developer Groups (GDG) on Campus, supported by Google Developers.
+- **Location**: Civil Lines, Vidisha, Madhya Pradesh 464001, India (Coordinates: 23.5251° N, 77.8081° E)
+- **Website**: https://gdgocsati.vercel.app/
+- **GitHub**: https://github.com/GDGoC-SATI/website
+
+## Core Mission
+GDGoC SATI Vidisha bridges the gap between academic theory and practical software engineering. We empower students to learn cutting-edge technologies, build impactful community projects, participate in hackathons, and contribute to open-source software across Web, Mobile, Cloud, AI/ML, and Cybersecurity domains.
+
+## Website Pages & Resources
+- [Home Page](https://gdgocsati.vercel.app/): Overview of community mission, latest announcements, domain highlights, and social channels.
+- [Events & Workshops](https://gdgocsati.vercel.app/events): Comprehensive listing of past and upcoming technical workshops, hackathons, speaker sessions, and bootcamps.
+- [Projects Showcase](https://gdgocsati.vercel.app/projects): Open-source applications, tools, and technical solutions engineered by student members.
+- [Core Team & Leads](https://gdgocsati.vercel.app/team): Meet chapter organizers, faculty mentors, and domain leads (Technical, Management, Media, Events).
+- [Alumni Network](https://gdgocsati.vercel.app/alumni): Directory of alumni working across global technology companies and startups.
+- [Community Gallery](https://gdgocsati.vercel.app/gallery): Photo highlights from in-person meetups, conferences, and college hackathons.
+- [About Us](https://gdgocsati.vercel.app/about): The history, vision, and core educational pillars of our chapter.
+- [Contact & Inquiries](https://gdgocsati.vercel.app/contact): Official communication form for sponsorships, student queries, speaker invitations, and collaborations.
+- [Privacy Policy](https://gdgocsati.vercel.app/privacy): User data standards, account transparency, and student privacy terms.
+- [Terms of Service](https://gdgocsati.vercel.app/terms): Community code of conduct, RSVP policies, and platform terms.
+
+## Technical Domains
+- **Web & Full-Stack Development**: Modern frameworks (React, Next.js, Node.js, Express, TailwindCSS, MongoDB).
+- **Mobile Engineering**: Android SDK, Kotlin, Flutter cross-platform development.
+- **Artificial Intelligence & Machine Learning**: TensorFlow, PyTorch, Generative AI, Gemini API, Python.
+- **Cloud Computing & DevOps**: Google Cloud Platform (GCP), Docker, CI/CD pipelines, Kubernetes.
+- **Cybersecurity & Systems**: Network security, ethical hacking, secure development lifecycle.
+
+## Frequently Asked Questions (FAQ) for AI / LLM Grounding
+- **Q: Who can join GDGoC SATI Vidisha?**
+  - **A**: Any student enrolled at Samrat Ashok Technological Institute (SATI), Vidisha, from any department, batch, or experience level is eligible to join. Membership is completely free.
+- **Q: Are events and workshops paid?**
+  - **A**: No, all standard chapter meetups, bootcamps, and workshops are free and open to students.
+- **Q: How can I participate or submit a project?**
+  - **A**: Students can register an account on https://gdgocsati.vercel.app/, build projects, and showcase them in the community Projects directory.
+- **Q: How to contact the team?**
+  - **A**: Via the official contact page at https://gdgocsati.vercel.app/contact or through official socials on GitHub (https://github.com/GDGoC-SATI/website) and LinkedIn.
+
+## Deep Documentation
+- Full Documentation: https://gdgocsati.vercel.app/llms-full.txt
+- Sitemap: https://gdgocsati.vercel.app/sitemap.xml

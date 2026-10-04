@@ -29,9 +29,10 @@ const Footer = () => {
         {
             title: "Resources",
             links: [
-                { name: "Brand Kit", path: "/brand" }, // Placeholder
-                { name: "Code of Conduct", path: "/code-of-conduct" },
-                { name: "Terms & Conditions", path: "/terms" },
+                { name: "Privacy Policy", path: "/privacy" },
+                { name: "Terms of Service", path: "/terms" },
+                { name: "Brand Kit", path: "/brand" },
+                { name: "Contact Us", path: "/contact" },
             ]
         }
     ];
@@ -41,7 +42,7 @@ const Footer = () => {
         { icon: <TbBrandLinkedin />, href: "https://www.linkedin.com/company/gdgoc-sati/", label: "LinkedIn" },
         { icon: <TbBrandInstagram />, href: "https://www.instagram.com/gdgsatividisha/", label: "Instagram" },
         { icon: <TbBrandYoutube />, href: "https://www.youtube.com/@GDGoCSATI", label: "YouTube" },
-        { icon: <TbBrandGithub />, href: "https://github.com/GDGoC-SATI", label: "GitHub" },
+        { icon: <TbBrandGithub />, href: "https://github.com/GDGoC-SATI/website", label: "GitHub" },
     ];
 
     return (
@@ -122,9 +123,16 @@ const Footer = () => {
 
                 <div className="border-t border-slate-200 dark:border-slate-800 pt-8 mt-8 text-center text-sm text-slate-500 dark:text-slate-500">
                     <p>&copy; {currentYear} Google Developer Groups On Campus - SATI Vidisha. All rights reserved.</p>
-                    <div className="flex justify-center gap-8 mt-4">
-                        <span className="flex items-center gap-2">
-                            {/* <span className="flex h-2 w-2 rounded-full bg-google-blue"></span> */}
+                    <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6 mt-4 text-xs">
+                        <Link to="/privacy" className="hover:text-google-blue dark:hover:text-google-blue transition-colors">
+                            Privacy Policy
+                        </Link>
+                        <span>•</span>
+                        <Link to="/terms" className="hover:text-google-blue dark:hover:text-google-blue transition-colors">
+                            Terms of Service
+                        </Link>
+                        <span>•</span>
+                        <span className="flex items-center gap-1.5">
                             Made with ❤️ by developers
                         </span>
                     </div>

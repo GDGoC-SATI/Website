@@ -1,0 +1,23 @@
+{
+  "name": "GDG on Campus SATI Vidisha",
+  "short_name": "GDGoC SATI",
+  "description": "Official community platform for Google Developer Groups on Campus at Samrat Ashok Technological Institute, Vidisha.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#4285F4",
+  "icons": [
+    {
+      "src": "/assets/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

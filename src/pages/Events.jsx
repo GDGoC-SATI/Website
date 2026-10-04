@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, memo } from 'react';
 import { motion, useScroll, useSpring } from 'framer-motion';
 import {
   FaCalendarAlt,
@@ -18,9 +18,12 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { eventsData as initialEvents } from '../data/eventsData';
 import { useAuth } from '../context/AuthContext';
 import ViewToggle from '../components/common/ViewToggle';
+import Pagination from '../components/common/Pagination';
+import { useDebounce } from '../hooks/useDebounce';
+import { usePageSEO } from '../hooks/usePageSEO';
 
-// --- Event List Item (for List View) ---
-const EventListItem = ({
+// --- Event List Item (Memoized for zero redundant re-renders) ---
+const EventListItem = memo(({
   id,
   title,
   date,
@@ -103,10 +106,10 @@ const EventListItem = ({
       </div>
     </motion.div>
   );
-};
+});
 
-// --- Event Card (Exact Original with Admin Controls) ---
-const EventCard = ({
+// --- Event Card (Memoized for zero redundant re-renders) ---
+const EventCard = memo(({
   id,
   title,
   date,
@@ -131,9 +134,8 @@ const EventCard = ({
       whileInView={{ opacity: 1, x: 0, y: 0 }}
       viewport={{ once: true, margin: '-50px' }}
       transition={{ duration: 0.6, delay: 0.1 }}
-      className={`relative md:w-[calc(50%-2rem)] mb-12 md:mb-24 ${
-        isEven ? 'md:ml-auto md:pl-8 pl-8' : 'md:mr-auto md:pr-8 pl-8'
-      }`}
+      className={`relative md:w-[calc(50%-2rem)] mb-12 md:mb-24 ${isEven ? 'md:ml-auto md:pl-8 pl-8' : 'md:mr-auto md:pr-8 pl-8'
+        }`}
     >
       {/* Timeline Connector Dot & Date */}
       <div
@@ -247,7 +249,7 @@ const EventCard = ({
       </div>
     </motion.div>
   );
-};
+});
 
 // --- Edit/Add Event Modal ---
 const EventModal = ({ event, onClose, onSave, isNew = false }) => {
@@ -400,8 +402,14 @@ const EventModal = ({ event, onClose, onSave, isNew = false }) => {
   );
 };
 
-// --- Main Events Component (Exact Original) ---
+// --- Main Events Component ---
 const Events = () => {
+  usePageSEO({
+    title: 'Events & Timeline',
+    description: 'Explore tech workshops, hackathons, speaker meetups, and developer gatherings organized by GDG on Campus SATI Vidisha.',
+    path: '/events',
+  });
+
   const { isAdmin } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialYear = searchParams.get('year') || 'All';
@@ -410,12 +418,28 @@ const Events = () => {
 
   const [events, setEvents] = useState(initialEvents);
   const [filterYear, setFilterYearState] = useState(initialYear);
-  const [searchQuery, setSearchQueryState] = useState(initialQuery);
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [view, setViewState] = useState(initialView);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 6;
+
+  // Debounced search query prevents excessive recalculation and router thrashing
+  const debouncedSearch = useDebounce(searchQuery, 250);
+
+  // Sync URL search parameters on debounced value change
+  useEffect(() => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (!debouncedSearch.trim()) next.delete('q');
+      else next.set('q', debouncedSearch);
+      return next;
+    }, { replace: true });
+  }, [debouncedSearch, setSearchParams]);
 
   const setFilterYear = (yr) => {
     setFilterYearState(yr);
+    setCurrentPage(1);
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       if (yr === 'All') next.delete('year');
@@ -424,14 +448,9 @@ const Events = () => {
     }, { replace: true });
   };
 
-  const setSearchQuery = (q) => {
-    setSearchQueryState(q);
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (!q.trim()) next.delete('q');
-      else next.set('q', q);
-      return next;
-    }, { replace: true });
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
   };
 
   const setView = (v) => {
@@ -479,37 +498,46 @@ const Events = () => {
     }
   };
 
-  // Filter logic
-  const filteredEvents = events.filter((event) => {
-    const matchesYear =
-      filterYear === 'All' ? true : event.date.includes(filterYear);
-    const matchesSearch =
-      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesYear && matchesSearch;
-  });
+  // Memoized Filtered Events
+  const filteredEvents = useMemo(() => {
+    return events.filter((event) => {
+      const matchesYear = filterYear === 'All' ? true : event.date.includes(filterYear);
+      const query = debouncedSearch.toLowerCase().trim();
+      const matchesSearch =
+        !query ||
+        event.title.toLowerCase().includes(query) ||
+        event.description.toLowerCase().includes(query) ||
+        event.location.toLowerCase().includes(query);
+      return matchesYear && matchesSearch;
+    });
+  }, [events, filterYear, debouncedSearch]);
+
+  // Paginated subset of events
+  const paginatedEvents = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    return filteredEvents.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [filteredEvents, currentPage]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-500 pb-20 pt-10">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-500 pb-20">
       {/* Scroll Progress Bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-google-blue z-50 origin-left"
         style={{ scaleX }}
       />
 
-      {/* Header (Exact Original) */}
-      <div className="relative py-12 overflow-hidden">
+      {/* Header Banner - Standardized across pages */}
+      <div className="relative bg-slate-50/70 dark:bg-slate-900/40 pt-15 pb-14 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <span className="inline-block py-1 px-3 rounded-full bg-google-blue/10 text-google-blue text-xs font-bold tracking-widest uppercase mb-4">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-google-blue/10 text-google-blue border border-google-blue/20 text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-4">
             Timeline
           </span>
-          <h1 className="text-5xl md:text-6xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight">
-            Our <span className="text-google-blue">Journey</span> & Events
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tight mb-4">
+            Our <span className="text-google-blue">Events</span> & Timeline
           </h1>
-          <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Explore our past workshops, hackathons, and speaker sessions. Learn, build, and grow with
-            the community.
+          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            Explore workshops, hackathons, and community gatherings.
           </p>
 
           {/* Admin Add Event Button */}
@@ -550,7 +578,7 @@ const Events = () => {
               type="text"
               placeholder="Search events, topics, or venues..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className="w-full pl-11 pr-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 focus:outline-none focus:border-google-blue text-sm text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
             />
           </div>
@@ -567,9 +595,8 @@ const Events = () => {
                   <span>{filterYear === 'All' ? 'All Years' : filterYear}</span>
                 </div>
                 <FaChevronDown
-                  className={`text-slate-400 transition-transform duration-200 ${
-                    isDropdownOpen ? 'rotate-180' : ''
-                  }`}
+                  className={`text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''
+                    }`}
                 />
               </button>
 
@@ -587,11 +614,10 @@ const Events = () => {
                           setFilterYear(year);
                           setIsDropdownOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${
-                          filterYear === year
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${filterYear === year
                             ? 'text-google-blue font-bold'
                             : 'text-slate-600 dark:text-slate-300'
-                        }`}
+                          }`}
                       >
                         {year === 'All' ? 'All Years' : year}
                       </button>
@@ -616,20 +642,20 @@ const Events = () => {
         ) : view === 'list' ? (
           /* List View */
           <div className="space-y-3 relative z-10">
-            {filteredEvents.map((event, index) => (
+            {paginatedEvents.map((event, index) => (
               <EventListItem
                 key={event.id}
                 {...event}
-                index={index}
+                index={(currentPage - 1) * PAGE_SIZE + index}
                 isAdmin={isAdmin}
                 onEdit={() =>
                   setModalState({
                     event,
-                    index,
+                    index: events.findIndex((e) => e.id === event.id),
                     isNew: false,
                   })
                 }
-                onDelete={() => handleDeleteEvent(index)}
+                onDelete={() => handleDeleteEvent(events.findIndex((e) => e.id === event.id))}
               />
             ))}
           </div>
@@ -640,29 +666,43 @@ const Events = () => {
             <div className="absolute top-0 bottom-0 left-[23px] md:left-1/2 w-0.5 bg-gradient-to-b from-google-blue via-google-red to-google-yellow -translate-x-1/2" />
 
             <div className="relative z-10">
-              {filteredEvents.map((event, index) => (
-                <EventCard
-                  key={event.id}
-                  {...event}
-                  index={index}
-                  isAdmin={isAdmin}
-                  canMoveUp={index > 0}
-                  canMoveDown={index < filteredEvents.length - 1}
-                  onMoveUp={() => handleMoveEvent(index, -1)}
-                  onMoveDown={() => handleMoveEvent(index, 1)}
-                  onEdit={() =>
-                    setModalState({
-                      event,
-                      index,
-                      isNew: false,
-                    })
-                  }
-                  onDelete={() => handleDeleteEvent(index)}
-                />
-              ))}
+              {paginatedEvents.map((event, index) => {
+                const globalIndex = events.findIndex((e) => e.id === event.id);
+                return (
+                  <EventCard
+                    key={event.id}
+                    {...event}
+                    index={(currentPage - 1) * PAGE_SIZE + index}
+                    isAdmin={isAdmin}
+                    canMoveUp={globalIndex > 0}
+                    canMoveDown={globalIndex < events.length - 1}
+                    onMoveUp={() => handleMoveEvent(globalIndex, -1)}
+                    onMoveDown={() => handleMoveEvent(globalIndex, 1)}
+                    onEdit={() =>
+                      setModalState({
+                        event,
+                        index: globalIndex,
+                        isNew: false,
+                      })
+                    }
+                    onDelete={() => handleDeleteEvent(globalIndex)}
+                  />
+                );
+              })}
             </div>
           </div>
         )}
+
+        {/* Pagination Controls */}
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filteredEvents.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={(p) => {
+            setCurrentPage(p);
+            window.scrollTo({ top: 380, behavior: 'smooth' });
+          }}
+        />
       </div>
 
       {/* Admin Event Edit/Add Modal */}

@@ -4,13 +4,9 @@ import { FaInstagram } from 'react-icons/fa';
 const SocialMedia = () => {
     // Real Instagram Reel IDs provided by User
     const originalReelIds = [
-        "DTImL4iiUp7",
-        "DS9vqKRES2h",
-        "DRIFnFgDTsH",
-        "DQGWFargpVM",
-        "DPDnb5OEYIh",
-        "DAgUphgAxGn",
-        "CwUVzKzNGNd",
+        "Dd8SoS5k6DN",
+        "DeEdRZYiHgp",
+       
     ];
 
     const reelIds = [...originalReelIds, ...originalReelIds]; // Duplicate for seamless loop
@@ -47,12 +43,12 @@ const SocialMedia = () => {
 
                         <div className="mt-12 flex items-center justify-center lg:justify-start gap-8">
                             <div className="text-center">
-                                <span className="block text-3xl font-bold text-slate-900 dark:text-white">12+</span>
+                                <span className="block text-3xl font-bold text-slate-900 dark:text-white">15+</span>
                                 <span className="text-sm text-slate-500 dark:text-slate-400">Events</span>
                             </div>
                             <div className="w-px h-12 bg-slate-200 dark:bg-slate-700"></div>
                             <div className="text-center">
-                                <span className="block text-3xl font-bold text-slate-900 dark:text-white">700+</span>
+                                <span className="block text-3xl font-bold text-slate-900 dark:text-white">100+</span>
                                 <span className="text-sm text-slate-500 dark:text-slate-400">Followers</span>
                             </div>
                             {/* <div className="w-px h-12 bg-slate-200 dark:bg-slate-700"></div> */}

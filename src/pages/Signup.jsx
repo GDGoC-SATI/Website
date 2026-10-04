@@ -16,8 +16,15 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import GoogleAuthButton from '../components/auth/GoogleAuthButton';
+import usePageSEO from '../hooks/usePageSEO';
 
 const Signup = () => {
+  usePageSEO({
+    title: 'Create Account',
+    description: 'Join the GDG on Campus SATI Vidisha student developer community, build open source projects, and attend hackathons.',
+    path: '/signup',
+  });
+
   // Step: 'details' | 'otp'
   const [step, setStep] = useState('details');
 
@@ -142,7 +149,7 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen pt-28 pb-16 flex items-center justify-center px-4 bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen pt-15 pb-16 flex items-center justify-center px-4 bg-slate-50 dark:bg-slate-950">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -283,6 +290,18 @@ const Signup = () => {
                       <span>{loading ? 'Sending Code...' : 'Get Started'}</span>
                       <FaArrowRight size={12} />
                     </button>
+
+                    <p className="text-[11px] text-center text-slate-400 dark:text-slate-500 mt-2">
+                      By creating an account, you agree to our{' '}
+                      <Link to="/terms" className="text-google-green hover:underline">
+                        Terms of Service
+                      </Link>{' '}
+                      and{' '}
+                      <Link to="/privacy" className="text-google-green hover:underline">
+                        Privacy Policy
+                      </Link>
+                      .
+                    </p>
                   </form>
                 </motion.div>
               )}

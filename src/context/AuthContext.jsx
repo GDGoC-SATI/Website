@@ -116,6 +116,22 @@ export const AuthProvider = ({ children }) => {
     return res;
   };
 
+  const deleteAccount = async () => {
+    try {
+      await api.auth.deleteAccount();
+    } catch (err) {
+      console.warn('API delete account error (proceeding with client cleanup):', err.message);
+    }
+    if (user) {
+      localStorage.removeItem(`gdg_profile_meta_${user.username}`);
+      localStorage.removeItem(`gdg_profile_meta_${user._id}`);
+      localStorage.removeItem(`gdg_privacy_${user.username}`);
+      localStorage.removeItem(`gdg_privacy_${user._id}`);
+    }
+    logout();
+    return { success: true };
+  };
+
   const refreshUser = async () => {
     if (!token) return;
     try {
@@ -149,6 +165,7 @@ export const AuthProvider = ({ children }) => {
         resetPasswordWithOtp,
         googleAuth,
         logout,
+        deleteAccount,
         updateProfile,
         refreshUser,
         isProfileOpen,

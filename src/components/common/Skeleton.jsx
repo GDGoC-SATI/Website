@@ -67,10 +67,10 @@ export const TableSkeleton = ({ rows = 5 }) => (
 );
 
 export const ProfileSkeleton = () => (
-  <div className="min-h-screen pt-24 sm:pt-28 pb-20 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
+  <div className="min-h-screen pt-15 sm:pt-15 pb-20 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-     
-      
+
+
 
       {/* Main Profile Header Card */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
@@ -122,7 +122,7 @@ export const ProfileSkeleton = () => (
 );
 
 export const SettingsSkeleton = () => (
-  <div className="min-h-screen pt-24 sm:pt-28 pb-20 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
+  <div className="min-h-screen pt-15 sm:pt-15 pb-20 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
@@ -161,7 +161,7 @@ export const SettingsSkeleton = () => (
 );
 
 export const AdminSkeleton = () => (
-  <div className="min-h-screen pt-28 pb-16 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-950">
+  <div className="min-h-screen pt-15 pb-16 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-950">
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -200,3 +200,24 @@ export const AdminSkeleton = () => (
     </div>
   </div>
 );
+
+export const PageSkeleton = () => (
+  <div className="min-h-screen pt-20 pb-20 bg-slate-50 dark:bg-slate-950 transition-colors duration-200">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      {/* Header Skeleton */}
+      <div className="max-w-2xl mx-auto text-center space-y-3 pt-6 pb-2">
+        <Shimmer className="h-6 w-32 mx-auto rounded-full" />
+        <Shimmer className="h-10 w-2/3 mx-auto rounded-xl" />
+        <Shimmer className="h-4 w-4/5 mx-auto rounded-md" />
+      </div>
+
+      {/* Grid of Skeleton Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <CardSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  </div>
+);
+

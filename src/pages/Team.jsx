@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaLinkedin,
@@ -21,6 +21,7 @@ import {
 } from 'react-icons/fa';
 import { leads as initialLeads, teams as initialTeams } from '../data/teamData';
 import { useAuth } from '../context/AuthContext';
+import usePageSEO from '../hooks/usePageSEO';
 
 // --- Profile Details Modal (Exact Original) ---
 const ProfileModal = ({ member, onClose }) => {
@@ -174,10 +175,11 @@ const ProfileModal = ({ member, onClose }) => {
 };
 
 // --- Edit/Add Member Modal for Admin ---
-const MemberEditModal = ({ member, onClose, onSave, isNew = false }) => {
+const MemberEditModal = ({ member, onClose, onSave, isNew = false, currentDomain = 'technical' }) => {
   const [formData, setFormData] = useState({
     name: member?.name || '',
     role: member?.role || '',
+    domain: currentDomain || (member?.team === 'Lead' ? 'lead' : (member?.team?.toLowerCase() || 'technical')),
     class: member?.class || '',
     bio: member?.bio || '',
     image: member?.image || '',
@@ -203,7 +205,7 @@ const MemberEditModal = ({ member, onClose, onSave, isNew = false }) => {
       },
       tags: formData.tags ? formData.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
     };
-    onSave(updated);
+    onSave(updated, formData.domain);
     onClose();
   };
 
@@ -237,14 +239,15 @@ const MemberEditModal = ({ member, onClose, onSave, isNew = false }) => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Role *
+                Position / Role *
               </label>
               <input
                 type="text"
                 required
+                placeholder="e.g. Technical Lead, Member"
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white outline-none focus:border-google-blue"
@@ -252,16 +255,33 @@ const MemberEditModal = ({ member, onClose, onSave, isNew = false }) => {
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Class / Year
+                Domain / Team (Shift Domain) *
               </label>
-              <input
-                type="text"
-                value={formData.class}
-                onChange={(e) => setFormData({ ...formData, class: e.target.value })}
-                placeholder="e.g. CSE - 3rd Year"
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white outline-none focus:border-google-blue"
-              />
+              <select
+                value={formData.domain}
+                onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white outline-none focus:border-google-blue capitalize"
+              >
+                <option value="technical">Technical Team</option>
+                <option value="media">Media Team</option>
+                <option value="events">Events Team</option>
+                <option value="management">Management Team</option>
+                <option value="lead">Chapter Leads</option>
+              </select>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Class / Year
+            </label>
+            <input
+              type="text"
+              value={formData.class}
+              onChange={(e) => setFormData({ ...formData, class: e.target.value })}
+              placeholder="e.g. CSE - 3rd Year"
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white outline-none focus:border-google-blue"
+            />
           </div>
 
           <div>
@@ -474,12 +494,56 @@ const ProfileCard = ({
   );
 };
 
-// --- Toggle Button (Exact Original) ---
-const ToggleButton = ({ icon: Icon, color, isActive, onClick, label }) => (
+// --- Domain Buttons Config ---
+const DOMAIN_BUTTONS = [
+  { key: 'technical', label: 'Technical', icon: FaCode, color: '#EA4335' },
+  { key: 'media', label: 'Media', icon: FaCamera, color: '#4285F4' },
+  { key: 'events', label: 'Events', icon: FaCalendarAlt, color: '#34A853' },
+  { key: 'management', label: 'Management', icon: FaBullhorn, color: '#FBBC04' },
+];
+
+// --- Toggle Button with Domain Indicator Tooltip ---
+const ToggleButton = ({
+  icon: Icon,
+  color,
+  isActive,
+  onClick,
+  label,
+  tooltip,
+  showTooltip,
+}) => (
   <button
     onClick={onClick}
     className="relative flex flex-col items-center justify-center transition-all duration-300 group"
   >
+    {/* Staggered Domain Tooltip */}
+    <AnimatePresence>
+      {showTooltip && (
+        <motion.div
+          initial={{ opacity: 0, y: 8, scale: 0.82 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 6, scale: 0.82 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          className="absolute -top-11 left-1/2 -translate-x-1/2 z-30 pointer-events-none flex flex-col items-center whitespace-nowrap"
+        >
+          <div
+            className="px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide shadow-lg border flex items-center gap-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-slate-800 dark:text-slate-100 border-slate-200/90 dark:border-slate-700/90"
+            style={{
+              boxShadow: `0 4px 14px -1px ${color}45`,
+            }}
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse"
+              style={{ backgroundColor: color }}
+            />
+            <span>{tooltip}</span>
+          </div>
+          {/* Downward pointing triangle indicator */}
+          <div className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-slate-200 dark:border-t-slate-700 -mt-[1px]" />
+        </motion.div>
+      )}
+    </AnimatePresence>
+
     <div
       className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-white shadow-md transition-all duration-300 
                 ${
@@ -508,13 +572,71 @@ const ToggleButton = ({ icon: Icon, color, isActive, onClick, label }) => (
 
 // --- Main Page Component ---
 const Team = () => {
+  usePageSEO({
+    title: 'Core Team & Leads',
+    description: 'Meet the executive chapter leads, organizers, and student domain directors driving GDG on Campus SATI Vidisha.',
+    path: '/team',
+  });
   const { isAdmin } = useAuth();
   const [activeTeam, setActiveTeam] = useState('technical');
   const [selectedMember, setSelectedMember] = useState(null);
+  const [activeTooltipDomain, setActiveTooltipDomain] = useState(null);
+
+  // Cycling sequential tooltips on inactive domain buttons (2s initial delay, 2s per domain, then next, and so on)
+  useEffect(() => {
+    setActiveTooltipDomain(null);
+    const inactiveDomains = DOMAIN_BUTTONS.filter((d) => d.key !== activeTeam);
+    if (inactiveDomains.length === 0) return;
+
+    let step = 0; // 0 = 2s gap/initial delay, 1 = domain[0], 2 = domain[1], 3 = domain[2]
+
+    const interval = setInterval(() => {
+      step = (step + 1) % (inactiveDomains.length + 1);
+      if (step === 0) {
+        setActiveTooltipDomain(null);
+      } else {
+        setActiveTooltipDomain(inactiveDomains[step - 1].key);
+      }
+    }, 2000);
+
+    return () => {
+      clearInterval(interval);
+      setActiveTooltipDomain(null);
+    };
+  }, [activeTeam]);
 
   // Leads & Teams data stored in local state for live in-place admin operations
-  const [leadsList, setLeadsList] = useState(initialLeads);
-  const [teamsData, setTeamsData] = useState(initialTeams);
+  const [leadsList, setLeadsList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gdg_team_leads');
+      return saved ? JSON.parse(saved) : initialLeads;
+    } catch {
+      return initialLeads;
+    }
+  });
+
+  const [teamsData, setTeamsData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gdg_teams_data');
+      return saved ? JSON.parse(saved) : initialTeams;
+    } catch {
+      return initialTeams;
+    }
+  });
+
+  const saveLeadsToStorage = (updated) => {
+    setLeadsList(updated);
+    try {
+      localStorage.setItem('gdg_team_leads', JSON.stringify(updated));
+    } catch {}
+  };
+
+  const saveTeamsToStorage = (updated) => {
+    setTeamsData(updated);
+    try {
+      localStorage.setItem('gdg_teams_data', JSON.stringify(updated));
+    } catch {}
+  };
 
   // Edit Modal State
   const [editingTarget, setEditingTarget] = useState(null); // { type: 'lead' | 'team', teamKey?: string, index: number, member: object, isNew?: boolean }
@@ -527,12 +649,12 @@ const Team = () => {
     const temp = updated[index];
     updated[index] = updated[targetIndex];
     updated[targetIndex] = temp;
-    setLeadsList(updated);
+    saveLeadsToStorage(updated);
   };
 
   const handleDeleteLead = (index) => {
     if (window.confirm(`Delete chapter lead "${leadsList[index].name}"?`)) {
-      setLeadsList(leadsList.filter((_, i) => i !== index));
+      saveLeadsToStorage(leadsList.filter((_, i) => i !== index));
     }
   };
 
@@ -544,7 +666,7 @@ const Team = () => {
     const temp = members[index];
     members[index] = members[targetIndex];
     members[targetIndex] = temp;
-    setTeamsData({
+    saveTeamsToStorage({
       ...teamsData,
       [teamKey]: { ...teamsData[teamKey], members },
     });
@@ -554,55 +676,83 @@ const Team = () => {
     const memberName = teamsData[teamKey].members[index].name;
     if (window.confirm(`Delete team member "${memberName}"?`)) {
       const members = teamsData[teamKey].members.filter((_, i) => i !== index);
-      setTeamsData({
+      saveTeamsToStorage({
         ...teamsData,
         [teamKey]: { ...teamsData[teamKey], members },
       });
     }
   };
 
-  // Save changes from Edit Modal
-  const handleSaveMember = (savedMember) => {
+  // Save changes from Edit Modal with Domain Shifting
+  const handleSaveMember = (savedMember, newDomain) => {
     if (!editingTarget) return;
     const { type, teamKey, index, isNew } = editingTarget;
+    const originalDomain = type === 'lead' ? 'lead' : teamKey;
+    const targetDomain = newDomain || originalDomain;
 
-    if (type === 'lead') {
-      if (isNew) {
-        setLeadsList([...leadsList, savedMember]);
+    let updatedLeads = [...leadsList];
+    let updatedTeams = { ...teamsData };
+
+    if (isNew) {
+      if (targetDomain === 'lead') {
+        updatedLeads.push({ ...savedMember, team: 'Lead' });
       } else {
-        const updated = [...leadsList];
-        updated[index] = savedMember;
-        setLeadsList(updated);
+        const teamObj = updatedTeams[targetDomain] || updatedTeams.technical;
+        updatedTeams[targetDomain] = {
+          ...teamObj,
+          members: [...teamObj.members, { ...savedMember, team: teamObj.title }],
+        };
+        setActiveTeam(targetDomain);
       }
-    } else if (type === 'team') {
-      const members = [...teamsData[teamKey].members];
-      if (isNew) {
-        members.push(savedMember);
+    } else {
+      if (targetDomain === originalDomain) {
+        if (originalDomain === 'lead') {
+          updatedLeads[index] = savedMember;
+        } else {
+          const members = [...updatedTeams[originalDomain].members];
+          members[index] = savedMember;
+          updatedTeams[originalDomain] = { ...updatedTeams[originalDomain], members };
+        }
       } else {
-        members[index] = savedMember;
+        // Shifting domain!
+        if (originalDomain === 'lead') {
+          updatedLeads = updatedLeads.filter((_, i) => i !== index);
+        } else {
+          const origMembers = updatedTeams[originalDomain].members.filter((_, i) => i !== index);
+          updatedTeams[originalDomain] = { ...updatedTeams[originalDomain], members: origMembers };
+        }
+
+        if (targetDomain === 'lead') {
+          updatedLeads.push({ ...savedMember, team: 'Lead' });
+        } else {
+          const targetTeamObj = updatedTeams[targetDomain] || updatedTeams.technical;
+          updatedTeams[targetDomain] = {
+            ...targetTeamObj,
+            members: [...targetTeamObj.members, { ...savedMember, team: targetTeamObj.title }],
+          };
+          setActiveTeam(targetDomain);
+        }
       }
-      setTeamsData({
-        ...teamsData,
-        [teamKey]: { ...teamsData[teamKey], members },
-      });
     }
+
+    saveLeadsToStorage(updatedLeads);
+    saveTeamsToStorage(updatedTeams);
   };
 
   return (
     <div className="min-h-screen pb-10 bg-white dark:bg-slate-950 transition-colors duration-500">
-      {/* Header (Exact Original) */}
-      <div className="relative bg-slate-50 dark:bg-slate-900/50 py-10 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:20px_20px] opacity-20" />
+      {/* Header Banner - Standardized across pages */}
+      <div className="relative bg-slate-50/70 dark:bg-slate-900/40 pt-15 pb-14 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <span className="inline-block py-1 px-3 rounded-full bg-google-blue/10 text-google-blue text-xs font-bold tracking-widest uppercase mb-4">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-google-blue/10 text-google-blue border border-google-blue/20 text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-4">
             Community
           </span>
-          <h1 className="text-5xl md:text-6xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tight mb-4">
             Meet The <span className="text-google-blue">GDG</span> Crew
           </h1>
-          <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            The talented individuals working behind the scenes to bring you the best events, workshops,
-            and community experiences.
+          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            Passionate leaders and members powering our community.
           </p>
         </div>
       </div>
@@ -661,38 +811,29 @@ const Team = () => {
           </div>
         </div>
 
-        {/* Team Toggles & Grid (Exact Original) */}
+        {/* Team Toggles & Grid */}
         <div className="flex flex-col items-center space-y-12">
           {/* Toggles */}
-          <div className="flex flex-wrap justify-center gap-8 md:gap-12">
-            <ToggleButton
-              icon={FaCode}
-              color="#EA4335"
-              isActive={activeTeam === 'technical'}
-              onClick={() => setActiveTeam(activeTeam === 'technical' ? null : 'technical')}
-              label="Technical"
-            />
-            <ToggleButton
-              icon={FaCamera}
-              color="#4285F4"
-              isActive={activeTeam === 'media'}
-              onClick={() => setActiveTeam(activeTeam === 'media' ? null : 'media')}
-              label="Media"
-            />
-            <ToggleButton
-              icon={FaCalendarAlt}
-              color="#34A853"
-              isActive={activeTeam === 'events'}
-              onClick={() => setActiveTeam(activeTeam === 'events' ? null : 'events')}
-              label="Events"
-            />
-            <ToggleButton
-              icon={FaBullhorn}
-              color="#FBBC04"
-              isActive={activeTeam === 'management'}
-              onClick={() => setActiveTeam(activeTeam === 'management' ? null : 'management')}
-              label="Management"
-            />
+          <div className="flex flex-wrap justify-center gap-8 md:gap-12 pt-6">
+            {DOMAIN_BUTTONS.map((domain) => {
+              const count = teamsData[domain.key]?.members?.length || 0;
+              const isCurrent = activeTeam === domain.key;
+              const isTooltipVisible = !isCurrent && activeTooltipDomain === domain.key;
+              const tooltipLabel = `${domain.label} • ${count} ${count === 1 ? 'member' : 'members'}`;
+
+              return (
+                <ToggleButton
+                  key={domain.key}
+                  icon={domain.icon}
+                  color={domain.color}
+                  isActive={isCurrent}
+                  onClick={() => setActiveTeam(domain.key)}
+                  label={domain.label}
+                  tooltip={tooltipLabel}
+                  showTooltip={isTooltipVisible}
+                />
+              );
+            })}
           </div>
 
           {/* Active Team Grid */}
@@ -794,6 +935,7 @@ const Team = () => {
         <MemberEditModal
           member={editingTarget.member}
           isNew={editingTarget.isNew}
+          currentDomain={editingTarget.type === 'lead' ? 'lead' : editingTarget.teamKey}
           onClose={() => setEditingTarget(null)}
           onSave={handleSaveMember}
         />

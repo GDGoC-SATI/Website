@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, memo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -22,8 +22,11 @@ import { useAuth } from '../context/AuthContext';
 import { ItemEditorModal, DeleteConfirmModal } from '../components/admin/AdminModals';
 import { CardSkeleton } from '../components/common/Skeleton';
 import ViewToggle from '../components/common/ViewToggle';
+import Pagination from '../components/common/Pagination';
+import { useDebounce } from '../hooks/useDebounce';
+import { usePageSEO } from '../hooks/usePageSEO';
 
-const GalleryListItem = ({
+const GalleryListItem = memo(({
   album,
   onClick,
   isAdmin,
@@ -123,9 +126,9 @@ const GalleryListItem = ({
       </div>
     </motion.div>
   );
-};
+});
 
-const GalleryCard = ({
+const GalleryCard = memo(({
   album,
   onClick,
   isAdmin,
@@ -206,9 +209,8 @@ const GalleryCard = ({
         ) : null}
 
         <div
-          className={`w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-600 ${
-            album.coverImage ? 'hidden' : 'flex'
-          }`}
+          className={`w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-600 ${album.coverImage ? 'hidden' : 'flex'
+            }`}
         >
           <FaImages className="text-6xl opacity-30" />
         </div>
@@ -234,7 +236,7 @@ const GalleryCard = ({
       </motion.div>
     </div>
   );
-};
+});
 
 // Fullscreen Album Viewer & Image Manager
 const AlbumModal = ({ album, onClose, isAdmin, onAddImage, onRemoveImage }) => {
@@ -360,9 +362,8 @@ const AlbumModal = ({ album, onClose, isAdmin, onAddImage, onRemoveImage }) => {
               <button
                 key={idx}
                 onClick={() => setCurrentIdx(idx)}
-                className={`w-14 h-14 rounded-xl overflow-hidden shrink-0 border-2 transition-all ${
-                  currentIdx === idx ? 'border-google-blue scale-105 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'
-                }`}
+                className={`w-14 h-14 rounded-xl overflow-hidden shrink-0 border-2 transition-all ${currentIdx === idx ? 'border-google-blue scale-105 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'
+                  }`}
               >
                 <img src={img} alt="" className="w-full h-full object-cover" />
               </button>
@@ -375,6 +376,12 @@ const AlbumModal = ({ album, onClose, isAdmin, onAddImage, onRemoveImage }) => {
 };
 
 const Gallery = () => {
+  usePageSEO({
+    title: 'Community Gallery',
+    description: 'Visual highlights and photo memories from our workshops, hackathons, speaker meetups, and developer gatherings at GDG on Campus SATI Vidisha.',
+    path: '/gallery',
+  });
+
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedAlbum, setSelectedAlbum] = useState(null);
@@ -392,23 +399,34 @@ const Gallery = () => {
   const initialQuery = searchParams.get('q') || '';
   const initialView = searchParams.get('view') || (typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'grid');
 
-  const [searchQuery, setSearchQueryState] = useState(initialQuery);
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedYear, setSelectedYearState] = useState(initialYear);
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
   const [view, setViewState] = useState(initialView);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 6;
 
-  const setSearchQuery = (q) => {
-    setSearchQueryState(q);
+  // Debounced search query prevents excessive recalculation and router thrashing
+  const debouncedSearch = useDebounce(searchQuery, 250);
+
+  // Sync URL search parameters on debounced value change
+  useEffect(() => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      if (!q.trim()) next.delete('q');
-      else next.set('q', q);
+      if (!debouncedSearch.trim()) next.delete('q');
+      else next.set('q', debouncedSearch);
       return next;
     }, { replace: true });
+  }, [debouncedSearch, setSearchParams]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
   };
 
   const setSelectedYear = (yr) => {
     setSelectedYearState(yr);
+    setCurrentPage(1);
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       if (yr === 'All') next.delete('year');
@@ -426,18 +444,28 @@ const Gallery = () => {
     }, { replace: true });
   };
 
-  const availableYears = ['All', ...Array.from(new Set(albums.map((a) => a.year).filter(Boolean)))];
-  if (!availableYears.includes('2026')) availableYears.push('2026');
-  if (!availableYears.includes('2025')) availableYears.push('2025');
+  const availableYears = useMemo(() => {
+    const years = ['All', ...Array.from(new Set(albums.map((a) => a.year).filter(Boolean)))];
+    if (!years.includes('2026')) years.push('2026');
+    if (!years.includes('2025')) years.push('2025');
+    return years;
+  }, [albums]);
 
-  const filteredAlbums = albums.filter((a) => {
-    const q = searchQuery.toLowerCase();
-    const matchesSearch =
-      a.title?.toLowerCase().includes(q) ||
-      (a.type && a.type.toLowerCase().includes(q));
-    const matchesYear = selectedYear === 'All' || a.year === selectedYear;
-    return matchesSearch && matchesYear;
-  });
+  const filteredAlbums = useMemo(() => {
+    const q = debouncedSearch.toLowerCase().trim();
+    return albums.filter((a) => {
+      const matchesSearch = !q ||
+        a.title?.toLowerCase().includes(q) ||
+        (a.type && a.type.toLowerCase().includes(q));
+      const matchesYear = selectedYear === 'All' || a.year === selectedYear;
+      return matchesSearch && matchesYear;
+    });
+  }, [albums, debouncedSearch, selectedYear]);
+
+  const paginatedAlbums = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    return filteredAlbums.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [filteredAlbums, currentPage, PAGE_SIZE]);
 
   const fetchAlbums = async () => {
     try {
@@ -448,7 +476,7 @@ const Gallery = () => {
       } else {
         // Fallback demo album
         setAlbums([
-          
+
         ]);
       }
     } catch (err) {
@@ -533,42 +561,43 @@ const Gallery = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 pt-20">
-      {/* Header Banner */}
-      <div className="bg-slate-50/50 dark:bg-slate-900/40 py-20 border-b border-slate-100 dark:border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <div className="min-h-screen pb-24">
+      {/* Header Banner - Standardized across pages */}
+      <div className="relative bg-slate-50/70 dark:bg-slate-900/40 pt-15 pb-14 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-google-red/10 text-google-red border border-google-red/20 text-xs font-bold uppercase tracking-wider mb-4"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-google-red/10 text-google-red border border-google-red/20 text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-4"
           >
-            <span>Moments & Memories</span>
+            <span>Memories</span>
           </motion.div>
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-4"
+            transition={{ delay: 0.05 }}
+            className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tight mb-4"
           >
             Community <span className="text-google-red">Gallery</span>
           </motion.h1>
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-base md:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mb-8"
+            transition={{ delay: 0.1 }}
+            className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed"
           >
-            Visual highlights from our workshops, hackathons, speaker meetups, and developer gatherings.
+            Memorable moments from our hackathons and meetups.
           </motion.p>
 
           {/* Admin Add Album Button */}
           {isAdmin && (
-            <div className="flex justify-center">
+            <div className="mt-6 flex justify-center">
               <button
                 onClick={handleOpenAdd}
-                className="px-6 py-3 rounded-2xl bg-google-red hover:bg-red-600 text-white font-bold text-sm shadow-lg shadow-google-red/25 transition-all flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl bg-google-red hover:bg-red-600 text-white font-bold text-xs shadow-lg shadow-google-red/20 transition-all flex items-center gap-2"
               >
-                <FaPlus size={13} />
+                <FaPlus size={11} />
                 <span>Create New Album</span>
               </button>
             </div>
@@ -586,7 +615,7 @@ const Gallery = () => {
               type="text"
               placeholder="Search albums by title or tag..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className="w-full pl-11 pr-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 focus:outline-none focus:border-google-red text-sm text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
             />
           </div>
@@ -604,9 +633,8 @@ const Gallery = () => {
                   <span>{selectedYear === 'All' ? 'All Years' : selectedYear}</span>
                 </div>
                 <FaChevronDown
-                  className={`text-slate-400 transition-transform duration-200 ${
-                    isYearDropdownOpen ? 'rotate-180' : ''
-                  }`}
+                  className={`text-slate-400 transition-transform duration-200 ${isYearDropdownOpen ? 'rotate-180' : ''
+                    }`}
                 />
               </button>
 
@@ -625,11 +653,10 @@ const Gallery = () => {
                           setSelectedYear(year);
                           setIsYearDropdownOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${
-                          selectedYear === year
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${selectedYear === year
                             ? 'text-google-red font-bold'
                             : 'text-slate-600 dark:text-slate-300'
-                        }`}
+                          }`}
                       >
                         {year === 'All' ? 'All Years' : year}
                       </button>
@@ -648,53 +675,64 @@ const Gallery = () => {
         <div className="mt-4">
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map((n) => (
-              <CardSkeleton key={n} />
-            ))}
-          </div>
-        ) : filteredAlbums.length > 0 ? (
-          view === 'list' ? (
-            <div className="space-y-3">
-              {filteredAlbums.map((album, idx) => (
-                <GalleryListItem
-                  key={album._id || idx}
-                  album={album}
-                  onClick={(a) => setSelectedAlbum(a)}
-                  isAdmin={isAdmin}
-                  onEdit={handleOpenEdit}
-                  onDelete={handleOpenDelete}
-                  onMoveUp={() => handleMove(idx, -1)}
-                  onMoveDown={() => handleMove(idx, 1)}
-                  isFirst={idx === 0}
-                  isLast={idx === filteredAlbums.length - 1}
-                />
+              {[1, 2, 3].map((n) => (
+                <CardSkeleton key={n} />
               ))}
             </div>
+          ) : filteredAlbums.length > 0 ? (
+            view === 'list' ? (
+              <div className="space-y-3">
+                {paginatedAlbums.map((album, idx) => (
+                  <GalleryListItem
+                    key={album._id || idx}
+                    album={album}
+                    onClick={(a) => setSelectedAlbum(a)}
+                    isAdmin={isAdmin}
+                    onEdit={handleOpenEdit}
+                    onDelete={handleOpenDelete}
+                    onMoveUp={() => handleMove(idx, -1)}
+                    onMoveDown={() => handleMove(idx, 1)}
+                    isFirst={idx === 0}
+                    isLast={idx === filteredAlbums.length - 1}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {paginatedAlbums.map((album, idx) => (
+                  <GalleryCard
+                    key={album._id || idx}
+                    album={album}
+                    onClick={(a) => setSelectedAlbum(a)}
+                    isAdmin={isAdmin}
+                    onEdit={handleOpenEdit}
+                    onDelete={handleOpenDelete}
+                    onMoveUp={() => handleMove(idx, -1)}
+                    onMoveDown={() => handleMove(idx, 1)}
+                    isFirst={idx === 0}
+                    isLast={idx === filteredAlbums.length - 1}
+                  />
+                ))}
+              </div>
+            )
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredAlbums.map((album, idx) => (
-                <GalleryCard
-                  key={album._id || idx}
-                  album={album}
-                  onClick={(a) => setSelectedAlbum(a)}
-                  isAdmin={isAdmin}
-                  onEdit={handleOpenEdit}
-                  onDelete={handleOpenDelete}
-                  onMoveUp={() => handleMove(idx, -1)}
-                  onMoveDown={() => handleMove(idx, 1)}
-                  isFirst={idx === 0}
-                  isLast={idx === filteredAlbums.length - 1}
-                />
-              ))}
+            <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-8">
+              <FaImages className="text-4xl text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500 font-medium">No albums found matching your filter.</p>
             </div>
-          )
-        ) : (
-          <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-8">
-            <FaImages className="text-4xl text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500 font-medium">No albums found matching your filter.</p>
-          </div>
-        )}
-      </div>
+          )}
+
+          {/* Pagination Controls */}
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredAlbums.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={(p) => {
+              setCurrentPage(p);
+              window.scrollTo({ top: 380, behavior: 'smooth' });
+            }}
+          />
+        </div>
       </div>
 
       {/* Fullscreen Album Viewer & Photo Manager */}

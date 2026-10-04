@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -18,8 +18,11 @@ import { useAuth } from '../context/AuthContext';
 import { ItemEditorModal, DeleteConfirmModal } from '../components/admin/AdminModals';
 import { CardSkeleton } from '../components/common/Skeleton';
 import ViewToggle from '../components/common/ViewToggle';
+import Pagination from '../components/common/Pagination';
+import { useDebounce } from '../hooks/useDebounce';
+import { usePageSEO } from '../hooks/usePageSEO';
 
-const ProjectListItem = ({ project, isAdmin, onEdit, onDelete }) => {
+const ProjectListItem = memo(({ project, isAdmin, onEdit, onDelete }) => {
   const { title, description, techStack, links, image } = project;
   return (
     <motion.div
@@ -107,9 +110,9 @@ const ProjectListItem = ({ project, isAdmin, onEdit, onDelete }) => {
       </div>
     </motion.div>
   );
-};
+});
 
-const ProjectCard = ({ project, isAdmin, onEdit, onDelete }) => {
+const ProjectCard = memo(({ project, isAdmin, onEdit, onDelete }) => {
   const { title, description, techStack, links, image } = project;
   return (
     <motion.div
@@ -157,9 +160,8 @@ const ProjectCard = ({ project, isAdmin, onEdit, onDelete }) => {
           />
         ) : null}
         <div
-          className={`w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-600 ${
-            image ? 'hidden' : 'flex'
-          }`}
+          className={`w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-600 ${image ? 'hidden' : 'flex'
+            }`}
         >
           <FaCode className="text-6xl" />
         </div>
@@ -210,9 +212,14 @@ const ProjectCard = ({ project, isAdmin, onEdit, onDelete }) => {
       </div>
     </motion.div>
   );
-};
+});
 
 const Projects = () => {
+  usePageSEO({
+    title: 'Our Projects & Innovation',
+    description: 'Discover groundbreaking open source software, web apps, and machine learning projects built by developers at GDG on Campus SATI Vidisha.',
+    path: '/projects',
+  });
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -241,17 +248,27 @@ const Projects = () => {
   const initialQuery = searchParams.get('q') || '';
   const initialView = searchParams.get('view') || (typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'grid');
 
-  const [searchQuery, setSearchQueryState] = useState(initialQuery);
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [view, setViewState] = useState(initialView);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 6;
 
-  const setSearchQuery = (q) => {
-    setSearchQueryState(q);
+  // Debounced search query prevents excessive recalculation and router thrashing
+  const debouncedSearch = useDebounce(searchQuery, 250);
+
+  // Sync URL search parameters on debounced value change
+  useEffect(() => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      if (!q.trim()) next.delete('q');
-      else next.set('q', q);
+      if (!debouncedSearch.trim()) next.delete('q');
+      else next.set('q', debouncedSearch);
       return next;
     }, { replace: true });
+  }, [debouncedSearch, setSearchParams]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
   };
 
   const setView = (v) => {
@@ -263,13 +280,21 @@ const Projects = () => {
     }, { replace: true });
   };
 
-  const filteredProjects = projects.filter((p) => {
-    const q = searchQuery.toLowerCase();
-    const titleMatch = p.title?.toLowerCase().includes(q);
-    const descMatch = p.description?.toLowerCase().includes(q);
-    const techMatch = Array.isArray(p.techStack) && p.techStack.some((t) => t.toLowerCase().includes(q));
-    return titleMatch || descMatch || techMatch;
-  });
+  const filteredProjects = useMemo(() => {
+    const q = debouncedSearch.toLowerCase().trim();
+    if (!q) return projects;
+    return projects.filter((p) => {
+      const titleMatch = p.title?.toLowerCase().includes(q);
+      const descMatch = p.description?.toLowerCase().includes(q);
+      const techMatch = Array.isArray(p.techStack) && p.techStack.some((t) => t.toLowerCase().includes(q));
+      return titleMatch || descMatch || techMatch;
+    });
+  }, [projects, debouncedSearch]);
+
+  const paginatedProjects = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    return filteredProjects.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [filteredProjects, currentPage]);
 
   const fetchProjects = async () => {
     try {
@@ -361,41 +386,42 @@ const Projects = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 pt-20">
-      {/* Hero Banner */}
-      <div className="bg-slate-50/50 dark:bg-slate-900/40 py-20 border-b border-slate-100 dark:border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <div className="min-h-screen pb-24">
+      {/* Header Banner - Standardized across pages */}
+      <div className="relative bg-slate-50/70 dark:bg-slate-900/40 pt-15 pb-14 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-google-green/10 text-google-green border border-google-green/20 text-xs font-bold uppercase tracking-wider mb-4"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-google-green/10 text-google-green border border-google-green/20 text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-4"
           >
-            <span>Community Showcase</span>
+            <span>Showcase</span>
           </motion.div>
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-4"
+            transition={{ delay: 0.05 }}
+            className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tight mb-4"
           >
             Our <span className="text-google-green">Projects</span>
           </motion.h1>
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-base md:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mb-8"
+            transition={{ delay: 0.1 }}
+            className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed"
           >
-            Innovation in action. Discover groundbreaking projects crafted by the talented developers of GDG on Campus SATI Vidisha.
+            Discover innovative projects created by our community.
           </motion.p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             {/* Request Project Button */}
             <button
               onClick={scrollToRequestForm}
-              className="px-6 py-3 rounded-2xl bg-google-green hover:bg-green-600 text-white font-bold text-sm shadow-lg shadow-google-green/25 hover:shadow-xl transition-all flex items-center gap-2"
+              className="px-5 py-2.5 rounded-xl bg-google-green hover:bg-green-600 text-white font-bold text-xs shadow-lg shadow-google-green/20 hover:shadow-xl transition-all flex items-center gap-2"
             >
-              <FaPaperPlane size={13} />
+              <FaPaperPlane size={11} />
               <span>Request Your Project</span>
             </button>
 
@@ -403,9 +429,9 @@ const Projects = () => {
             {isAdmin && (
               <button
                 onClick={handleOpenAdd}
-                className="px-6 py-3 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-sm shadow-lg transition-all flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs shadow-md transition-all flex items-center gap-2"
               >
-                <FaPlus size={13} />
+                <FaPlus size={11} />
                 <span>Add Project</span>
               </button>
             )}
@@ -422,7 +448,7 @@ const Projects = () => {
               type="text"
               placeholder="Search projects by title, description, or stack..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className="w-full pl-11 pr-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 focus:outline-none focus:border-google-green text-sm text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
             />
           </div>
@@ -444,37 +470,48 @@ const Projects = () => {
               ))}
             </div>
           ) : filteredProjects.length > 0 ? (
-          view === 'list' ? (
-            <div className="space-y-3">
-              {filteredProjects.map((project) => (
-                <ProjectListItem
-                  key={project._id || project.title}
-                  project={project}
-                  isAdmin={isAdmin}
-                  onEdit={handleOpenEdit}
-                  onDelete={handleOpenDelete}
-                />
-              ))}
-            </div>
+            view === 'list' ? (
+              <div className="space-y-3">
+                {paginatedProjects.map((project) => (
+                  <ProjectListItem
+                    key={project._id || project.title}
+                    project={project}
+                    isAdmin={isAdmin}
+                    onEdit={handleOpenEdit}
+                    onDelete={handleOpenDelete}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {paginatedProjects.map((project) => (
+                  <ProjectCard
+                    key={project._id || project.title}
+                    project={project}
+                    isAdmin={isAdmin}
+                    onEdit={handleOpenEdit}
+                    onDelete={handleOpenDelete}
+                  />
+                ))}
+              </div>
+            )
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredProjects.map((project) => (
-                <ProjectCard
-                  key={project._id || project.title}
-                  project={project}
-                  isAdmin={isAdmin}
-                  onEdit={handleOpenEdit}
-                  onDelete={handleOpenDelete}
-                />
-              ))}
+            <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-8">
+              <FaCode className="text-4xl text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500 font-medium">No projects found matching your search.</p>
             </div>
-          )
-        ) : (
-          <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-8">
-            <FaCode className="text-4xl text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500 font-medium">No projects found matching your search.</p>
-          </div>
-        )}
+          )}
+
+          {/* Pagination Controls */}
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredProjects.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={(p) => {
+              setCurrentPage(p);
+              window.scrollTo({ top: 380, behavior: 'smooth' });
+            }}
+          />
         </div>
       </div>
 
@@ -530,7 +567,7 @@ const Projects = () => {
                   required
                   value={reqName}
                   onChange={(e) => setReqName(e.target.value)}
-                  placeholder="e.g. Safal Tiwari"
+                  placeholder="e.g. Your Name"
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-green text-sm text-slate-900 dark:text-white transition-colors"
                 />
               </div>

@@ -21,23 +21,28 @@ import {
   FaCamera,
   FaGithub,
   FaLinkedin,
-  FaTwitter,
   FaInstagram,
   FaGlobe,
+  FaLayerGroup,
+  FaImage,
 } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+
+export const DEFAULT_BANNER_URL = 'https://gdgoc-sati.vercel.app/assets/banner_default.png';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
 import { UserAvatar } from '../utils/avatarHelper';
 import { ProfileSkeleton } from '../components/common/Skeleton';
+import usePageSEO from '../hooks/usePageSEO';
 
 const renderSocialBadges = (socialObj) => {
   if (!socialObj) return null;
   const items = [
     { key: 'github', label: 'GitHub', icon: FaGithub, href: socialObj.github, color: 'hover:text-black dark:hover:text-white hover:border-slate-400' },
     { key: 'linkedin', label: 'LinkedIn', icon: FaLinkedin, href: socialObj.linkedin, color: 'hover:text-[#0A66C2] hover:border-[#0A66C2]' },
-    { key: 'twitter', label: 'Twitter', icon: FaTwitter, href: socialObj.twitter, color: 'hover:text-[#1DA1F2] hover:border-[#1DA1F2]' },
+    { key: 'twitter', label: 'X', icon: FaXTwitter, href: socialObj.twitter, color: 'hover:text-black dark:hover:text-white hover:border-black dark:hover:border-white' },
     { key: 'instagram', label: 'Instagram', icon: FaInstagram, href: socialObj.instagram, color: 'hover:text-[#E4405F] hover:border-[#E4405F]' },
     { key: 'website', label: 'Website', icon: FaGlobe, href: socialObj.website, color: 'hover:text-google-green hover:border-google-green' },
   ].filter((item) => Boolean(item.href && item.href.trim()));
@@ -83,14 +88,24 @@ const Profile = () => {
   const [otherLoading, setOtherLoading] = useState(false);
   const [otherError, setOtherError] = useState('');
 
+  const displayName = isViewingOther ? (otherUser?.name || paramUsername || 'Member') : (user?.name || 'Member');
+  usePageSEO({
+    title: `${displayName} - Developer Profile`,
+    description: `Developer profile, portfolio projects, and community achievements of ${displayName} at GDG on Campus SATI Vidisha.`,
+    path: paramUsername ? `/profile/${paramUsername}` : '/profile',
+  });
+
   // Edit Mode toggle
   const [isEditMode, setIsEditMode] = useState(false);
 
   // Profile fields state
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
+  const [position, setPosition] = useState('');
+  const [domain, setDomain] = useState('');
   const [bio, setBio] = useState('');
   const [avatar, setAvatar] = useState('');
+  const [banner, setBanner] = useState(DEFAULT_BANNER_URL);
   const [enrollmentNo, setEnrollmentNo] = useState('');
   const [college, setCollege] = useState('');
   const [skills, setSkills] = useState([]);
@@ -142,19 +157,20 @@ const Profile = () => {
             // Merge with any local extra data or privacy settings
             const localMeta = localStorage.getItem(getStorageKey(res.user.username)) || localStorage.getItem(getStorageKey(res.user._id));
             const localPrivacy = localStorage.getItem(getPrivacyKey(res.user.username)) || localStorage.getItem(getPrivacyKey(res.user._id));
-            
+
             let extra = {};
             if (localMeta) {
-              try { extra = JSON.parse(localMeta); } catch {}
+              try { extra = JSON.parse(localMeta); } catch { }
             }
             let privacy = {};
             if (localPrivacy) {
-              try { privacy = JSON.parse(localPrivacy); } catch {}
+              try { privacy = JSON.parse(localPrivacy); } catch { }
             }
 
             setOtherUser({
               ...res.user,
               ...extra,
+              banner: extra.banner || res.user.banner || DEFAULT_BANNER_URL,
               privacySettings: {
                 ...(res.user.privacySettings || {}),
                 ...privacy,
@@ -199,24 +215,30 @@ const Profile = () => {
         if (localMeta) {
           try {
             const parsed = JSON.parse(localMeta);
+            setPosition(parsed.position || user.position || '');
+            setDomain(parsed.domain || user.domain || '');
             setEnrollmentNo(parsed.enrollmentNo || user.enrollmentNo || '');
             setCollege(parsed.college || user.college || 'SATI Vidisha');
             setSkills(parsed.skills || user.skills || ['React', 'JavaScript', 'TailwindCSS']);
             setProjects(parsed.projects || user.projects || []);
             setAchievements(parsed.achievements || user.achievements || []);
+            setBanner(parsed.banner || user.banner || DEFAULT_BANNER_URL);
             setSocials({
               ...defaultSocials,
               ...(parsed.socials || {}),
             });
             return;
-          } catch {}
+          } catch { }
         }
 
+        setPosition(user.position || '');
+        setDomain(user.domain || '');
         setEnrollmentNo(user.enrollmentNo || '');
         setCollege(user.college || 'SATI Vidisha');
         setSkills(user.skills || ['React', 'JavaScript', 'TailwindCSS']);
         setProjects(user.projects || []);
         setAchievements(user.achievements || []);
+        setBanner(user.banner || DEFAULT_BANNER_URL);
         setSocials(defaultSocials);
       }
     }
@@ -233,8 +255,11 @@ const Profile = () => {
       const payload = {
         name,
         username,
+        position,
+        domain,
         bio,
         avatar,
+        banner: banner || DEFAULT_BANNER_URL,
         enrollmentNo,
         college,
         skills,
@@ -253,14 +278,50 @@ const Profile = () => {
         localStorage.setItem(
           getStorageKey(user.username || user._id),
           JSON.stringify({
+            position,
+            domain,
             enrollmentNo,
             college,
             skills,
             projects,
             achievements,
             socials,
+            banner: banner || DEFAULT_BANNER_URL,
           })
         );
+
+        // Sync with team page data if user is an existing or newly positioned member
+        try {
+          const teamsRaw = localStorage.getItem('gdg_teams_data');
+          if (teamsRaw && domain && domain !== 'community' && domain !== 'none') {
+            const parsedTeams = JSON.parse(teamsRaw);
+            let shifted = false;
+            // Remove from other domain if present
+            ['technical', 'media', 'events', 'management'].forEach((dKey) => {
+              if (parsedTeams[dKey]?.members) {
+                const existingIdx = parsedTeams[dKey].members.findIndex(
+                  (m) => m.name.toLowerCase() === name.toLowerCase()
+                );
+                if (existingIdx !== -1) {
+                  const [foundMember] = parsedTeams[dKey].members.splice(existingIdx, 1);
+                  if (parsedTeams[domain]) {
+                    parsedTeams[domain].members.push({
+                      ...foundMember,
+                      role: position || foundMember.role,
+                      team: parsedTeams[domain].title,
+                    });
+                    shifted = true;
+                  }
+                }
+              }
+            });
+            if (shifted) {
+              localStorage.setItem('gdg_teams_data', JSON.stringify(parsedTeams));
+            }
+          }
+        } catch (syncErr) {
+          console.warn('Team sync error:', syncErr);
+        }
       }
 
       setProfileSuccess('Profile updated successfully!');
@@ -436,7 +497,7 @@ const Profile = () => {
   if (isViewingOther) {
     if (otherError || !otherUser) {
       return (
-        <div className="min-h-screen pt-28 pb-20 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
+        <div className="min-h-screen pt-15 pb-20 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <button
               onClick={() => navigate(-1)}
@@ -462,12 +523,21 @@ const Profile = () => {
       );
     }
 
-    // Check if otherUser has private profile turned ON - Admins can view ANY profile
-    const isProfilePrivate = Boolean(otherUser.privacySettings?.isPrivate && !isAdmin);
-    const isEmailHidden = Boolean(otherUser.privacySettings?.hideEmail && !isAdmin);
+    // Admin profiles are private by default unless explicitly made public
+    // Other profiles are private if the user explicitly enabled isPrivate
+    // Admins can always view any profile
+    const isProfilePrivate = Boolean(
+      (otherUser.privacySettings?.isPrivate ?? (otherUser.role === 'admin')) && !isAdmin
+    );
+
+    // Email is hidden by default for ALL users (current & new) unless explicitly set to false (hideEmail === false)
+    // Admins can view emails for moderation/management
+    const isEmailHidden = Boolean(
+      (otherUser.privacySettings?.hideEmail !== false) && !isAdmin
+    );
 
     return (
-      <div className="min-h-screen pt-28 pb-20 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
+      <div className="min-h-screen pt-15 pb-20 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <button
             onClick={() => navigate(-1)}
@@ -478,9 +548,18 @@ const Profile = () => {
 
           {/* Profile Card Header */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden mb-8">
-            {/* Banner with clean gradient */}
-            <div className="h-20 sm:h-35 bg-gradient-to-r from-google-blue via-indigo-600 to-google-green relative">
-              <div className="absolute top-0 right-0 -mr-10 -mt-10 w-48 h-48 rounded-full bg-white/10 blur-xl"></div>
+            {/* Responsive LinkedIn-style Banner Image */}
+            <div className="h-32 sm:h-44 md:h-52 w-full relative overflow-hidden bg-slate-200 dark:bg-slate-800">
+              <img
+                src={otherUser.banner || DEFAULT_BANNER_URL}
+                alt={`${otherUser.name}'s Cover Banner`}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = DEFAULT_BANNER_URL;
+                }}
+                className="w-full h-full object-cover object-center transition-all duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10 pointer-events-none" />
             </div>
 
             {/* Profile Info Area (relative z-10 ensures it sits cleanly in stacking order) */}
@@ -514,14 +593,23 @@ const Profile = () => {
                     {otherUser.name}
                   </h1>
                   <span
-                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                      otherUser.role === 'admin'
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${otherUser.role === 'admin'
                         ? 'bg-google-red/10 text-google-red border border-google-red/20'
                         : 'bg-google-blue/10 text-google-blue border border-google-blue/20'
-                    }`}
+                      }`}
                   >
                     {otherUser.role === 'admin' ? 'Chapter Admin' : 'Community Member'}
                   </span>
+                  {otherUser.position && (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                      {otherUser.position}
+                    </span>
+                  )}
+                  {otherUser.domain && otherUser.domain !== 'community' && otherUser.domain !== 'none' && (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-google-green/10 text-google-green border border-google-green/20">
+                      {otherUser.domain.charAt(0).toUpperCase() + otherUser.domain.slice(1)} Domain
+                    </span>
+                  )}
                   {otherUser.privacySettings?.isPrivate && isAdmin && (
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-600 border border-amber-500/20">
                       Private (Admin Access)
@@ -596,6 +684,20 @@ const Profile = () => {
                       </p>
                     </div>
                   </div>
+
+                  {(otherUser.position || otherUser.domain) && (
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center gap-3 sm:col-span-2">
+                      <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0">
+                        <FaBriefcase size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] text-slate-400 font-medium">Chapter Position & Domain</p>
+                        <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
+                          {otherUser.position || 'Member'} {otherUser.domain ? `• ${otherUser.domain.charAt(0).toUpperCase() + otherUser.domain.slice(1)} Team` : ''}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Skills */}
@@ -737,17 +839,9 @@ const Profile = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen pt-28 pb-20 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
+    <div className="min-h-screen pt-15 pb-20 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Navigation Breadcrumb */}
-        <div className="mb-6 flex justify-between items-center">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-google-blue dark:text-slate-400 transition-colors"
-          >
-            <FaArrowLeft /> Back to Home
-          </Link>
-        </div>
+
 
         {/* Profile Notifications */}
         {profileSuccess && (
@@ -771,9 +865,28 @@ const Profile = () => {
 
         {/* Profile Header Card */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden mb-8">
-          {/* Banner with clean gradient */}
-          <div className="h-20 sm:h-35 bg-gradient-to-r from-google-blue via-indigo-600 to-google-green relative">
-            <div className="absolute top-0 right-0 -mr-10 -mt-10 w-48 h-48 rounded-full bg-white/10 blur-xl"></div>
+          {/* Responsive LinkedIn-style Banner Image */}
+          <div className="h-32 sm:h-44 md:h-52 w-full relative overflow-hidden bg-slate-200 dark:bg-slate-800 group">
+            <img
+              src={banner || DEFAULT_BANNER_URL}
+              alt="Profile Cover Banner"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = DEFAULT_BANNER_URL;
+              }}
+              className="w-full h-full object-cover object-center transition-all duration-300"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10 pointer-events-none" />
+
+            {/* Quick Trigger to Change Banner */}
+            <button
+              type="button"
+              onClick={() => setIsEditMode(true)}
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 px-3.5 py-1.5 rounded-xl bg-black/50 hover:bg-black/70 text-white text-xs font-semibold backdrop-blur-md transition-all flex items-center gap-1.5 shadow-lg active:scale-95"
+            >
+              <FaCamera size={12} />
+              <span className="hidden sm:inline">Change Cover</span>
+            </button>
           </div>
 
           {/* Profile Info Area (relative z-10 ensures it sits cleanly in stacking order) */}
@@ -832,14 +945,23 @@ const Profile = () => {
                   {user.name}
                 </h1>
                 <span
-                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                    user.role === 'admin'
+                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${user.role === 'admin'
                       ? 'bg-google-red/10 text-google-red border border-google-red/20'
                       : 'bg-google-blue/10 text-google-blue border border-google-blue/20'
-                  }`}
+                    }`}
                 >
                   {user.role === 'admin' ? 'Chapter Admin' : 'Community Member'}
                 </span>
+                {position && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                    {position}
+                  </span>
+                )}
+                {domain && domain !== 'community' && domain !== 'none' && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-google-green/10 text-google-green border border-google-green/20">
+                    {domain.charAt(0).toUpperCase() + domain.slice(1)} Domain
+                  </span>
+                )}
               </div>
 
               <p className="text-xs sm:text-sm text-google-blue font-semibold mt-1">
@@ -859,274 +981,340 @@ const Profile = () => {
         </div>
 
         {/* ==================================================== */}
-        {/* EDIT MODE INTERFACE */}
+        {/* EDIT PROFILE MODAL POPUP */}
         {/* ==================================================== */}
-        {isEditMode ? (
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-8"
-          >
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">
-              Edit Profile Details
-            </h2>
-            <p className="text-xs text-slate-500 mb-6">
-              Update your personal info, enrollment credentials, skills, and bio
-            </p>
-
-            <form onSubmit={handleProfileSave} className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-sm text-slate-900 dark:text-white"
-                    />
-                    <FaUser className="absolute left-3.5 top-3 text-slate-400 text-xs" />
+        <AnimatePresence>
+          {isEditMode && (
+            <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm overflow-y-auto">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                className="max-w-2xl w-full bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 my-8 max-h-[90vh] overflow-y-auto"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                      Edit Profile Details
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Update your personal info, position, domain, enrollment, and skills
+                    </p>
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Username
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3.5 top-2.5 text-slate-400 text-sm font-semibold">
-                      @
-                    </span>
-                    <input
-                      type="text"
-                      required
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value.toLowerCase().trim())}
-                      className="w-full pl-8 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-sm text-slate-900 dark:text-white"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Enrollment Number
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="e.g. 0108IT211045"
-                      value={enrollmentNo}
-                      onChange={(e) => setEnrollmentNo(e.target.value.toUpperCase().trim())}
-                      className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-sm text-slate-900 dark:text-white"
-                    />
-                    <FaIdCard className="absolute left-3.5 top-3 text-slate-400 text-xs" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    College / University
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="e.g. SATI Vidisha"
-                      value={college}
-                      onChange={(e) => setCollege(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-sm text-slate-900 dark:text-white"
-                    />
-                    <FaGraduationCap className="absolute left-3.5 top-3 text-slate-400 text-xs" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Avatar Image URL
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="url"
-                      placeholder="https://api.dicebear.com/..."
-                      value={avatar}
-                      onChange={(e) => setAvatar(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-sm text-slate-900 dark:text-white"
-                    />
-                    <FaCamera className="absolute left-3.5 top-3 text-slate-400 text-xs" />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Bio / About
-                </label>
-                <textarea
-                  rows="3"
-                  placeholder="Share a short bio about your tech interests, projects, or goals..."
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-sm text-slate-900 dark:text-white resize-none"
-                />
-              </div>
-
-              {/* Skills Editor */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Skills (Type skill and press Enter or Add)
-                </label>
-                <div className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    placeholder="e.g. React, Python, Cloud..."
-                    value={skillInput}
-                    onChange={(e) => setSkillInput(e.target.value)}
-                    onKeyDown={handleAddSkill}
-                    className="flex-1 px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-xs text-slate-900 dark:text-white"
-                  />
                   <button
                     type="button"
-                    onClick={handleAddSkill}
-                    className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold"
+                    onClick={() => setIsEditMode(false)}
+                    className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                   >
-                    Add
+                    <FaTimes size={16} />
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {skills.map((skill, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold"
-                    >
-                      {skill}
+
+                <form onSubmit={handleProfileSave} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Full Name
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          required
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-sm text-slate-900 dark:text-white"
+                        />
+                        <FaUser className="absolute left-3.5 top-3 text-slate-400 text-xs" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Username
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-2.5 text-slate-400 text-sm font-semibold">
+                          @
+                        </span>
+                        <input
+                          type="text"
+                          required
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value.toLowerCase().trim())}
+                          className="w-full pl-8 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-sm text-slate-900 dark:text-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Enrollment Number
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="e.g. 0108IT211045"
+                          value={enrollmentNo}
+                          onChange={(e) => setEnrollmentNo(e.target.value.toUpperCase().trim())}
+                          className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-sm text-slate-900 dark:text-white"
+                        />
+                        <FaIdCard className="absolute left-3.5 top-3 text-slate-400 text-xs" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                        College / University
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="e.g. SATI Vidisha"
+                          value={college}
+                          onChange={(e) => setCollege(e.target.value)}
+                          className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-sm text-slate-900 dark:text-white"
+                        />
+                        <FaGraduationCap className="absolute left-3.5 top-3 text-slate-400 text-xs" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Avatar Image URL
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="url"
+                          placeholder="https://api.dicebear.com/..."
+                          value={avatar}
+                          onChange={(e) => setAvatar(e.target.value)}
+                          className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-sm text-slate-900 dark:text-white"
+                        />
+                        <FaCamera className="absolute left-3.5 top-3 text-slate-400 text-xs" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Banner (Cover) Image URL & Live Preview */}
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                          Banner (Cover) Image URL
+                        </label>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          (recommended aspect ratio 4:1)
+                        </p>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => handleRemoveSkill(skill)}
-                        className="text-slate-400 hover:text-red-500"
+                        onClick={() => setBanner(DEFAULT_BANNER_URL)}
+                        className="text-xs text-google-blue hover:underline font-semibold self-start sm:self-auto"
                       >
-                        <FaTimes size={10} />
+                        Reset to Default GDG Banner
                       </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
+                    </div>
 
-              {/* Social Media Links Section */}
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
-                  <FaGlobe className="text-google-blue" /> Social Media & Portfolio Links
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  {/* GitHub */}
+                    <div className="relative">
+                      <input
+                        type="url"
+                        placeholder="Enter Image URL"
+                        value={banner}
+                        onChange={(e) => setBanner(e.target.value)}
+                        className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-sm text-slate-900 dark:text-white"
+                      />
+                      <FaImage className="absolute left-3.5 top-3 text-slate-400 text-xs" />
+                    </div>
+
+                    {/* Live Thumbnail Preview */}
+                    <div className="relative w-full h-24 sm:h-28 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                      <img
+                        src={banner || DEFAULT_BANNER_URL}
+                        alt="Banner Preview"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = DEFAULT_BANNER_URL;
+                        }}
+                        className="w-full h-full object-cover object-center"
+                      />
+                      <span className="absolute bottom-2 right-2 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-black/60 text-white backdrop-blur-sm">
+                        Cover Banner Preview
+                      </span>
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      GitHub URL
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      Bio / About
                     </label>
-                    <div className="relative">
-                      <input
-                        type="url"
-                        placeholder="https://github.com/username"
-                        value={socials.github}
-                        onChange={(e) => setSocials({ ...socials, github: e.target.value })}
-                        className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-xs text-slate-900 dark:text-white"
-                      />
-                      <FaGithub className="absolute left-3 top-2.5 text-slate-500 text-sm" />
-                    </div>
+                    <textarea
+                      rows="3"
+                      placeholder="Share a short bio about your tech interests, projects, or goals..."
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-sm text-slate-900 dark:text-white resize-none"
+                    />
                   </div>
 
-                  {/* LinkedIn */}
+                  {/* Skills Editor */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      LinkedIn URL
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      Skills (Type skill and press Enter or Add)
                     </label>
-                    <div className="relative">
+                    <div className="flex gap-2 mb-2">
                       <input
-                        type="url"
-                        placeholder="https://linkedin.com/in/username"
-                        value={socials.linkedin}
-                        onChange={(e) => setSocials({ ...socials, linkedin: e.target.value })}
-                        className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-xs text-slate-900 dark:text-white"
+                        type="text"
+                        placeholder="e.g. React, Python, Cloud..."
+                        value={skillInput}
+                        onChange={(e) => setSkillInput(e.target.value)}
+                        onKeyDown={handleAddSkill}
+                        className="flex-1 px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-xs text-slate-900 dark:text-white"
                       />
-                      <FaLinkedin className="absolute left-3 top-2.5 text-[#0A66C2] text-sm" />
+                      <button
+                        type="button"
+                        onClick={handleAddSkill}
+                        className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {skills.map((skill, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold"
+                        >
+                          {skill}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSkill(skill)}
+                            className="text-slate-400 hover:text-red-500"
+                          >
+                            <FaTimes size={10} />
+                          </button>
+                        </span>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Twitter / X */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Twitter / X URL
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="url"
-                        placeholder="https://twitter.com/username"
-                        value={socials.twitter}
-                        onChange={(e) => setSocials({ ...socials, twitter: e.target.value })}
-                        className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-xs text-slate-900 dark:text-white"
-                      />
-                      <FaTwitter className="absolute left-3 top-2.5 text-[#1DA1F2] text-sm" />
+                  {/* Social Media Links Section */}
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                      <FaGlobe className="text-google-blue" /> Social Media & Portfolio Links
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      {/* GitHub */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          GitHub URL
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="url"
+                            placeholder="https://github.com/username"
+                            value={socials.github}
+                            onChange={(e) => setSocials({ ...socials, github: e.target.value })}
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-xs text-slate-900 dark:text-white"
+                          />
+                          <FaGithub className="absolute left-3 top-2.5 text-slate-500 text-sm" />
+                        </div>
+                      </div>
+
+                      {/* LinkedIn */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          LinkedIn URL
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="url"
+                            placeholder="https://linkedin.com/in/username"
+                            value={socials.linkedin}
+                            onChange={(e) => setSocials({ ...socials, linkedin: e.target.value })}
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-xs text-slate-900 dark:text-white"
+                          />
+                          <FaLinkedin className="absolute left-3 top-2.5 text-[#0A66C2] text-sm" />
+                        </div>
+                      </div>
+
+                      {/* Twitter / X */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          X (formerly Twitter) URL
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="url"
+                            placeholder="https://x.com/username"
+                            value={socials.twitter}
+                            onChange={(e) => setSocials({ ...socials, twitter: e.target.value })}
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-xs text-slate-900 dark:text-white"
+                          />
+                          <FaXTwitter className="absolute left-3 top-2.5 text-slate-800 dark:text-slate-200 text-sm" />
+                        </div>
+                      </div>
+
+                      {/* Instagram */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Instagram URL
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="url"
+                            placeholder="https://instagram.com/username"
+                            value={socials.instagram}
+                            onChange={(e) => setSocials({ ...socials, instagram: e.target.value })}
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-xs text-slate-900 dark:text-white"
+                          />
+                          <FaInstagram className="absolute left-3 top-2.5 text-[#E4405F] text-sm" />
+                        </div>
+                      </div>
+
+                      {/* Website / Portfolio */}
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Website / Portfolio URL
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="url"
+                            placeholder="https://yourportfolio.dev"
+                            value={socials.website}
+                            onChange={(e) => setSocials({ ...socials, website: e.target.value })}
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-xs text-slate-900 dark:text-white"
+                          />
+                          <FaGlobe className="absolute left-3 top-2.5 text-google-green text-sm" />
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Instagram */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Instagram URL
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="url"
-                        placeholder="https://instagram.com/username"
-                        value={socials.instagram}
-                        onChange={(e) => setSocials({ ...socials, instagram: e.target.value })}
-                        className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-xs text-slate-900 dark:text-white"
-                      />
-                      <FaInstagram className="absolute left-3 top-2.5 text-[#E4405F] text-sm" />
-                    </div>
+                  <div className="flex items-center gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      type="submit"
+                      disabled={profileLoading}
+                      className="px-6 py-2.5 bg-google-blue hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-google-blue/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <FaSave /> {profileLoading ? 'Saving...' : 'Save Profile Changes'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditMode(false)}
+                      className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-700"
+                    >
+                      Cancel
+                    </button>
                   </div>
-
-                  {/* Website / Portfolio */}
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Website / Portfolio URL
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="url"
-                        placeholder="https://yourportfolio.dev"
-                        value={socials.website}
-                        onChange={(e) => setSocials({ ...socials, website: e.target.value })}
-                        className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-google-blue text-xs text-slate-900 dark:text-white"
-                      />
-                      <FaGlobe className="absolute left-3 top-2.5 text-google-green text-sm" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  type="submit"
-                  disabled={profileLoading}
-                  className="px-6 py-2.5 bg-google-blue hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-google-blue/20 transition-all flex items-center gap-2 disabled:opacity-50"
-                >
-                  <FaSave /> {profileLoading ? 'Saving...' : 'Save Profile Changes'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsEditMode(false)}
-                  className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-700"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        ) : null}
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
         {/* ==================================================== */}
         {/* NORMAL VIEW MODE CONTENT */}
@@ -1168,6 +1356,20 @@ const Profile = () => {
                   </p>
                 </div>
               </div>
+
+              {(position || domain) && (
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center gap-3 sm:col-span-2">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0">
+                    <FaBriefcase size={16} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] text-slate-400 font-medium">Chapter Position & Domain</p>
+                    <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
+                      {position || 'Member'} {domain ? `• ${domain.charAt(0).toUpperCase() + domain.slice(1)} Team` : ''}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Skills Pills */}
@@ -1211,7 +1413,7 @@ const Profile = () => {
                 renderSocialBadges(socials)
               ) : (
                 <p className="text-xs text-slate-400 italic">
-                  No social media profiles linked yet. Click Edit Profile to add GitHub, LinkedIn, Twitter, Instagram, or Portfolio.
+                  No social media profiles linked yet. Click Edit Profile to add GitHub, LinkedIn, X, Instagram, or Portfolio.
                 </p>
               )}
             </div>

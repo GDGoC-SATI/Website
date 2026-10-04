@@ -20,6 +20,7 @@ import {
 import { alumniData as initialAlumni } from '../data/alumniData';
 import { useAuth } from '../context/AuthContext';
 import ViewToggle from '../components/common/ViewToggle';
+import usePageSEO from '../hooks/usePageSEO';
 
 // --- Alumni List Item (for List View) ---
 const AlumniListItem = ({
@@ -538,6 +539,12 @@ const AlumniModal = ({ alumni, onClose, onSave, isNew = false }) => {
 
 // --- Main Alumni Component (Exact Original) ---
 const Alumni = () => {
+  usePageSEO({
+    title: 'Alumni Network',
+    description: 'Explore the journey and success of GDG on Campus SATI Vidisha alumni working at top technology companies and high-growth startups globally.',
+    path: '/alumni',
+  });
+
   const { isAdmin } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialBatch = searchParams.get('batch') || 'All';

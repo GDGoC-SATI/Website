@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const CTA = () => {
     const [formData, setFormData] = useState({
@@ -86,7 +87,14 @@ const CTA = () => {
                                 required
                             />
                             <label htmlFor="agreed" className="text-sm text-slate-500 dark:text-slate-400 text-left">
-                                I agree to receive newsletters and accept the <a href="#" className="text-google-blue hover:text-blue-600 dark:hover:text-blue-400 font-medium">Terms and Conditions</a>
+                                I agree to receive newsletters and accept the{' '}
+                                <Link to="/terms" className="text-google-blue hover:underline font-medium">
+                                    Terms of Service
+                                </Link>{' '}
+                                and{' '}
+                                <Link to="/privacy" className="text-google-blue hover:underline font-medium">
+                                    Privacy Policy
+                                </Link>
                             </label>
                         </div>
 
