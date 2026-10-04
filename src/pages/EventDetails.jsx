@@ -12,6 +12,7 @@ import {
 } from 'react-icons/fa';
 import { eventsData } from '../data/eventsData';
 import { useAuth } from '../context/AuthContext';
+import usePageSEO from '../hooks/usePageSEO';
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -22,18 +23,24 @@ const EventDetails = () => {
   const [event, setEvent] = useState(initialEvent);
   const [isEditing, setIsEditing] = useState(false);
 
+  usePageSEO({
+    title: event ? `${event.title} - Event` : 'Event Details',
+    description: event?.description ? event.description.slice(0, 160) : 'Event details and registrations for GDG on Campus SATI Vidisha.',
+    path: `/events/${id}`,
+  });
+
   // Form State for editing full content
   const [formData, setFormData] = useState(
     initialEvent
       ? {
-          title: initialEvent.title,
-          type: initialEvent.type,
-          date: initialEvent.date,
-          location: initialEvent.location,
-          description: initialEvent.description,
-          imageUrl: initialEvent.imageUrl,
-          originalUrl: initialEvent.originalUrl,
-        }
+        title: initialEvent.title,
+        type: initialEvent.type,
+        date: initialEvent.date,
+        location: initialEvent.location,
+        description: initialEvent.description,
+        imageUrl: initialEvent.imageUrl,
+        originalUrl: initialEvent.originalUrl,
+      }
       : {}
   );
 
@@ -51,7 +58,7 @@ const EventDetails = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 pt-24">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 pt-15">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top Header: Back Button and Admin Edit Button */}
         <div className="flex items-center justify-between mb-8">

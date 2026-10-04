@@ -15,8 +15,15 @@ import {
 } from 'react-icons/fa';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useNotifications } from '../context/NotificationContext';
+import usePageSEO from '../hooks/usePageSEO';
 
 const Notifications = () => {
+  usePageSEO({
+    title: 'Notifications & Alerts',
+    description: 'View chapter notifications, event RSVP updates, community announcements, and messages.',
+    path: '/notifications',
+  });
+
   const {
     notifications,
     unreadCount,
@@ -152,17 +159,9 @@ const Notifications = () => {
   };
 
   return (
-    <div className="min-h-screen pt-24 sm:pt-28 pb-20 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
+    <div className="min-h-screen pt-15 sm:pt-15 pb-20 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Navigation Breadcrumb */}
-        <div className="mb-6 flex justify-between items-center">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-google-blue dark:text-slate-400 transition-colors"
-          >
-            <FaArrowLeft /> Back to Home
-          </Link>
-        </div>
+
 
         {/* Header (Avyukt UI reference) */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -248,19 +247,17 @@ const Notifications = () => {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
-                  activeCategory === cat.id
-                    ? 'bg-google-blue text-white shadow-sm'
-                    : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${activeCategory === cat.id
+                  ? 'bg-google-blue text-white shadow-sm'
+                  : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
               >
                 <span>{cat.label}</span>
                 <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                    activeCategory === cat.id
-                      ? 'bg-white/20 text-white'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                  }`}
+                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${activeCategory === cat.id
+                    ? 'bg-white/20 text-white'
+                    : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                    }`}
                 >
                   {cat.count}
                 </span>
@@ -280,8 +277,8 @@ const Notifications = () => {
               {searchQuery
                 ? `No notifications matching "${searchQuery}".`
                 : activeCategory === 'unread'
-                ? 'All caught up! You have read all notifications.'
-                : 'Your notifications inbox is clean.'}
+                  ? 'All caught up! You have read all notifications.'
+                  : 'Your notifications inbox is clean.'}
             </p>
           </div>
         ) : (
@@ -297,20 +294,18 @@ const Notifications = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     onClick={() => markAsRead(notif.id)}
-                    className={`p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border transition-all cursor-pointer hover:shadow-md ${
-                      notif.unread
-                        ? 'border-google-blue/30 bg-blue-50/20 dark:bg-blue-950/10 shadow-sm'
-                        : 'border-slate-100 dark:border-slate-800/80 hover:border-slate-200 dark:hover:border-slate-700'
-                    }`}
+                    className={`p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border transition-all cursor-pointer hover:shadow-md ${notif.unread
+                      ? 'border-google-blue/30 bg-blue-50/20 dark:bg-blue-950/10 shadow-sm'
+                      : 'border-slate-100 dark:border-slate-800/80 hover:border-slate-200 dark:hover:border-slate-700'
+                      }`}
                   >
                     {/* Header Row of Notification */}
                     <div className="flex items-center justify-between gap-3 mb-3">
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         {/* Status Dot */}
                         <div
-                          className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                            notif.unread ? 'bg-google-blue animate-pulse' : 'bg-slate-300 dark:bg-slate-700'
-                          }`}
+                          className={`w-2.5 h-2.5 rounded-full shrink-0 ${notif.unread ? 'bg-google-blue animate-pulse' : 'bg-slate-300 dark:bg-slate-700'
+                            }`}
                         />
 
                         {/* Category Icon */}

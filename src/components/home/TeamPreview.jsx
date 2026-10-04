@@ -22,7 +22,7 @@ const TeamCard = ({ card, isAdmin, onEdit }) => (
         alt={card.title}
         className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
         onError={(e) => {
-          e.target.src = '/assets/core team/technical_team.jpeg';
+          e.target.src = '/assets/core_team/technical_team.jpeg';
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -50,11 +50,11 @@ const CTACard = ({ cta, isAdmin, onEdit }) => (
 
     <div className="h-48 overflow-hidden relative rounded-2xl bg-slate-100 dark:bg-slate-800">
       <img
-        src={cta.image || '/assets/core team/group_image3.jpeg'}
+        src={cta.image || '/assets/core_team/group_image3.jpeg'}
         alt="Community"
         className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
         onError={(e) => {
-          e.target.src = '/assets/core team/group_image3.jpeg';
+          e.target.src = '/assets/core_team/group_image3.jpeg';
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -86,35 +86,35 @@ const defaultData = {
       title: 'Technical Team',
       description:
         'Architects of digital innovation, crafting robust solutions and pioneering future technologies to build a smarter world.',
-      image: '/assets/core team/technical_team.jpeg',
+      image: '/assets/core_team/technical_team.jpeg',
     },
     {
       id: 'social',
       title: 'Social Media Team',
       description:
         'The digital storytellers, amplifying our voice and connecting with the community through engaging and creative content.',
-      image: '/assets/core team/social_team.jpeg',
+      image: '/assets/core_team/social_team.jpeg',
     },
     {
       id: 'events',
       title: 'Events Team',
       description:
         'The masterminds behind the curtain, orchestrating seamless experiences that bring people together and spark inspiration.',
-      image: '/assets/core team/events_team.jpeg',
+      image: '/assets/core_team/events_team.jpeg',
     },
     {
       id: 'management',
       title: 'Marketing & Finance',
       description:
         'The strategic engines, driving growth and ensuring sustainable success through smart resource management and outreach.',
-      image: '/assets/core team/management_team.jpeg',
+      image: '/assets/core_team/management_team.jpeg',
     },
   ],
   cta: {
     id: 'cta',
     title: 'Join Our whatsapp community and be the part of it!!',
     description: 'The Nexus of Next, Where Minds Merge to Redefine Tomorrow. be the part of it!!',
-    image: '/assets/core team/group_image3.jpeg',
+    image: '/assets/core_team/group_image3.jpeg',
     link: 'https://chat.whatsapp.com/HY4x1jtPfbh6EDh1JPFWda',
   },
 };

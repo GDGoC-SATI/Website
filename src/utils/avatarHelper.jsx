@@ -2,8 +2,8 @@ import React from 'react';
 
 /**
  * Computes 2-letter avatar initials for email/regular users:
- * - First character of first word + first character of second word (e.g. "Safal Tiwari" -> "ST")
- * - If only one word: first two letters uppercase (e.g. "Safal" -> "SA")
+ * - First character of first word + first character of second word (e.g. "Your Name" -> "YN")
+ * - If only one word: first two letters uppercase (e.g. "Name" -> "N")
  */
 export const getUserInitials = (name, email) => {
   if (name && name.trim()) {

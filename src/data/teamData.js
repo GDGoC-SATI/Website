@@ -10,7 +10,7 @@ export const leads = [
         role: 'Organiser',
         class: 'IOT - Final Year',
         bio: 'Leading the GDG chapter with a vision to empower developers and foster innovation through community collaboration.',
-        image: '../assets/core team/profile/sanidhya.jpeg',
+        image: '../assets/core_team/profile/sanidhya.jpeg',
         socials: {
             linkedin: 'https://www.linkedin.com/in/sanidhya-sahu/',
             github: 'https://github.com/isanidhya',
@@ -24,7 +24,7 @@ export const leads = [
         role: 'Co-organiser',
         class: 'IOT - Final Year',
         bio: 'Creative Developer',
-        image: '../assets/core team/profile/pankaj.jpeg',
+        image: '../assets/core_team/profile/pankaj.jpeg',
         socials: {
             linkedin: 'https://www.linkedin.com/in/pankaj-yadav-5998b3249/',
             github: 'https://github.com/theopendraft?tab=repositories',
@@ -38,12 +38,12 @@ export const leads = [
         role: 'Technical Lead',
         class: 'IOT - Final Year',
         bio: 'Overseeing technical projects and guiding the team to build robust, scalable solutions using cutting-edge technologies.',
-        image: '../assets/core team/profile/anuj.jpeg',
+        image: '../assets/core_team/profile/anuj.jpeg',
         socials: {
             linkedin: 'https://www.linkedin.com/in/anujjainbatu/',
             github: 'https://github.com/anujjainbatu',
-            
-        },            
+
+        },
         tags: ['Full Stack', 'Cloud', 'Architecture'],
         team: 'Lead'
     },
@@ -52,7 +52,7 @@ export const leads = [
         role: 'Executive Lead',
         class: 'IT - Final Year',
         bio: 'Coordinating between teams to ensure alignment with chapter goals and efficient resource utilization.',
-        image: '../assets/core team/profile/manraj.jpeg',
+        image: '../assets/core_team/profile/manraj.jpeg',
         socials: {
             linkedin: 'https://www.linkedin.com/in/manraj-gupta/',
             portfolio: 'https://manraj.vercel.app/',
@@ -72,7 +72,7 @@ export const teams = {
                 role: 'ML Head',
                 class: 'IT - Pre Final Year',
                 bio: 'Passionate about Machine Learning and AI, leading the team to explore new frontiers in intelligent systems.',
-                image: '../assets/core team/profile/kalp.jpeg',
+                image: '../assets/core_team/profile/kalp.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/kalp-soni-1b3084275/',
                 },
@@ -84,7 +84,7 @@ export const teams = {
                 role: 'IOT head',
                 class: 'EE - Pre Final Year',
                 bio: 'Bridging the physical and digital worlds through innovative IoT solutions and hardware hacking.',
-                image: '../assets/core team/profile/nikhil.jpeg',
+                image: '../assets/core_team/profile/nikhil.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/nikhil-kushwah-664304218/',
                 },
@@ -96,7 +96,7 @@ export const teams = {
                 role: 'Cloud Head',
                 class: 'CSE - Pre Final Year',
                 bio: 'Architecting cloud-native solutions and promoting scalable infrastructure practices within the community.',
-                image: '../assets/core team/profile/kaustubh.jpeg',
+                image: '../assets/core_team/profile/kaustubh.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/kawasthi2889/',
                 },
@@ -108,7 +108,7 @@ export const teams = {
                 role: 'Technical Lead',
                 class: 'IT - 2nd Year',
                 bio: '2nd yr Student pursuing Btech from SATI. Skills include C, Python, and Web Dev. Deeply interested in DSA and problem-solving.',
-                image: '../assets/core team/profile/shreya.jpeg',
+                image: '../assets/core_team/profile/shreya.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/shreya-mangal',
                     github: 'https://github.com/shreya-4567',
@@ -117,13 +117,13 @@ export const teams = {
                 tags: ['Web Dev', 'Frontend', 'React'],
                 team: 'Technical'
             },
-           
+
             {
                 name: 'Devanshu Vishwakarma',
                 role: 'Technical Lead',
                 class: 'IT - 2nd Year',
                 bio: 'MERN stack developer skilled in MongoDB, Express, Node.js, React.js, and Java.',
-                image: '../assets/core team/profile/devanshu.png',
+                image: '../assets/core_team/profile/devanshu.png',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/devanshu-vishwakarma/',
                     github: 'https://github.com/devanshu-2004',
@@ -137,11 +137,11 @@ export const teams = {
                 role: 'Technical Lead',
                 class: 'AIADS - 2nd Year',
                 bio: 'Specializing in algorithmic problem solving and competitive programming to tackle complex challenges.',
-                image: '../assets/core team/profile/utkarsh.jpg',
+                image: '../assets/core_team/profile/utkarsh.jpg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/utkarsh-vish/',
                     github: 'https://github.com/UtkiVish',
-                    
+
                 },
                 tags: ['Algorithms', 'C++', 'Data Structures'],
                 team: 'Technical'
@@ -151,7 +151,7 @@ export const teams = {
                 role: 'Technical Lead',
                 class: 'IT - 2nd Year',
                 bio: 'Passionate Computer Science student with interests in AI/ML,Blockchain, and IoT. Skilled in building innovative, user-focused solutions and eager to contribute, learn, and grow within the tech community.',
-                image: '../assets/core team/profile/deepak.jpg',
+                image: '../assets/core_team/profile/deepak.jpg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/deepak-kumar-gupta',
                     github: 'https://github.com/deepak004-g',
@@ -160,12 +160,12 @@ export const teams = {
                 tags: ['Software Eng', 'Java', 'Systems'],
                 team: 'Technical'
             },
-              {
+            {
                 name: 'Aashutosh Singh Baghel',
                 role: 'Technical Lead',
                 class: 'CSE - 2nd Year',
                 bio: 'I praise the Omnissiah. Xfce Rocks. C/C++, Python',
-                image: '../assets/core team/profile/aashutosh.jpeg',
+                image: '../assets/core_team/profile/aashutosh.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/aashutosh-singh-baghel',
                     github: 'https://github.com/thunder-thigh',
@@ -174,12 +174,12 @@ export const teams = {
                 tags: ['C/C++', 'Python', 'Xfce'],
                 team: 'Technical'
             },
-             {
+            {
                 name: 'Harshwardhan Soni',
                 role: 'Technical Lead',
                 class: 'CSE - 2nd Year',
                 bio: 'Enthusiastic about backend systems and database optimization for high-performance applications.',
-                image:null,
+                image: null,
                 tags: ['Backend', 'Node.js', 'SQL'],
                 team: 'Technical'
             },
@@ -188,7 +188,7 @@ export const teams = {
                 role: 'Technical Team',
                 class: 'CSE(BC) - 1st Year',
                 bio: 'Exploring various tech stacks and contributing to open source projects to learn and grow.',
-                image: '../assets/core team/profile/nakul.jpeg',
+                image: '../assets/core_team/profile/nakul.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/nakul-chourey-29i/',
                 },
@@ -200,7 +200,7 @@ export const teams = {
                 role: 'Technical Team',
                 class: 'CSE - 1st Year',
                 bio: '1st year \nBasic programming (C)\nHTML CSS ( Basics)\nDSA ( Beginner level)\nPython ( currently learning) \nPublic speaking \nGood communication skills',
-                image: '../assets/core team/profile/anushka.jpg',
+                image: '../assets/core_team/profile/anushka.jpg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/anushka-rai1606',
                     github: 'https://github.com/nushoncodes',
@@ -209,8 +209,8 @@ export const teams = {
                 tags: ['Coding', 'Problem Solving', 'Tech'],
                 team: 'Technical'
             },
-          
-           
+
+
         ]
     },
     media: {
@@ -222,8 +222,8 @@ export const teams = {
                 role: 'Design Head',
                 class: 'AIADS - Pre Final Year',
                 bio: 'Crafting visual stories and ensuring a consistent, appealing brand identity for the chapter.',
-                image: '../assets/core team/profile/roshni.jpeg',
-                socials: {  
+                image: '../assets/core_team/profile/roshni.jpeg',
+                socials: {
                     linkedin: 'https://www.linkedin.com/in/roshni-rajani/',
                     instagram: 'https://www.instagram.com/iroshnirajani/'
                 },
@@ -235,7 +235,7 @@ export const teams = {
                 role: 'Social Media Head',
                 class: 'CSE(BC) - Pre Final Year',
                 bio: 'Engaging our community through creative content strategies and active social media presence.',
-                image: '../assets/core team/profile/kazim.jpeg',
+                image: '../assets/core_team/profile/kazim.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/kazim-sheikh-713287312/',
                     instagram: 'https://www.instagram.com/_kazim.fr/'
@@ -248,7 +248,7 @@ export const teams = {
                 role: 'Content & Engagement Head',
                 class: 'CSE(BC) - Pre Final Year',
                 bio: 'Curating compelling content and fostering meaningful interactions to keep the community vibrant.',
-                image: '../assets/core team/profile/ritika.jpeg',
+                image: '../assets/core_team/profile/ritika.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/ritika-jain17/',
                     instagram: 'https://www.instagram.com/__ri.mi/'
@@ -261,7 +261,7 @@ export const teams = {
                 role: 'Media Lead',
                 class: 'IOT - 2nd Year',
                 bio: 'Capturing moments and creating high-quality visual assets to document our journey.',
-                image: '../assets/core team/profile/safal.jpeg',
+                image: '../assets/core_team/profile/safal.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/safal-tiwari/',
                     instagram: 'https://www.instagram.com/itz_safal_/',
@@ -275,10 +275,10 @@ export const teams = {
                 role: 'Media Lead',
                 class: 'CSE - 2nd Year',
                 bio: 'Specializing in video production and visual storytelling to highlight chapter achievements.',
-                image: '../assets/core team/profile/taufiq.jpeg',
+                image: '../assets/core_team/profile/taufiq.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/taufiq-lohar-3023ab344/',
-                    
+
                 },
                 tags: ['Videography', 'Premiere Pro', 'Creativity'],
                 team: 'Media'
@@ -288,7 +288,7 @@ export const teams = {
                 role: 'Lead Graphic Designer',
                 class: 'IOT - 2nd Year',
                 bio: "Hi, I'm Rehan! I'm the Lead Graphic Designer for GDG On Campus SATI. I love blending art with technology. Whether I'm designing a sleek UI, or writing code, my goal is to make complex tech look great and easy to understand for everyone.",
-                image: '../assets/core team/profile/rehan.jpeg',
+                image: '../assets/core_team/profile/rehan.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/saiyed-rehan-ali-23b88532b',
                     github: 'https://github.com/Saiyedrehanali-cloud',
@@ -302,7 +302,7 @@ export const teams = {
                 role: 'Social Media Team',
                 class: 'AIML - 1st Year',
                 bio: 'Assisting in managing social channels and analyzing metrics to improve outreach.',
-                image: '../assets/core team/profile/ronak.jpeg',
+                image: '../assets/core_team/profile/ronak.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/vlronak/',
                     instagram: 'https://www.instagram.com/ronak._.kushwah/'
@@ -316,12 +316,51 @@ export const teams = {
         title: 'Events Team',
         color: '#34A853', // Google Green
         members: [
+              {
+                name: 'Suprabhat Upadhyay',
+                role: 'Co-executive head',
+                class: 'IT - Pre Final Year',
+                bio: 'Assisting in executive decisions and streamlining operational workflows for better efficiency.',
+                image: '../assets/core_team/profile/suprabhat.jpeg',
+                socials: {
+                    linkedin: 'https://www.linkedin.com/in/suprabhat-upadhyay-ab996031a/',
+                    instagram: 'https://www.instagram.com/upadhyay_1409/', github: 'https://github.com/suprabhat1409-art',
+                },
+                tags: ['Management', 'Operations', 'Leadership'],
+                team: 'Management'
+            },
+            {
+                name: 'Arpit bansal',
+                role: 'Logistics Head',
+                class: 'CSE(BC) - Pre Final Year',
+                bio: 'Ensuring all resources and materials are available and properly managed for every event.',
+                image: '../assets/core_team/profile/arpit.jpg',
+                socials: {
+                    linkedin: 'https://www.linkedin.com/in/arpit-bansal-711858293/',
+                    instagram: 'https://www.instagram.com/_arppitt._/'
+                },
+                tags: ['Logistics', 'Supply Chain', 'Resource Mgmt'],
+                team: 'Management'
+            },
+              {
+                name: 'Dakshesh Jat',
+                role: 'Management Head',
+                class: 'CSE - Pre Final Year',
+                bio: 'Overseeing general management tasks and ensuring team cohesion and productivity.',
+                image: '../assets/core_team/profile/dakshesh.jpg',
+                socials: {
+                    linkedin: 'https://www.linkedin.com/in/dakshesh-jat/',
+
+                },
+                tags: ['Administration', 'Team Building', 'Management'],
+                team: 'Management'
+            },
             {
                 name: 'Vinayak Mawat',
                 role: 'Event Lead',
                 class: 'IOT - 2nd Year',
                 bio: 'Orchestrating events from conception to execution, ensuring memorable experiences for attendees.',
-                image: '../assets/core team/profile/vinayak.jpg',
+                image: '../assets/core_team/profile/vinayak.jpg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/vinayak-mawat-881011333/',
                     instagram: 'https://www.instagram.com/_vinayak_mawat_/'
@@ -334,7 +373,7 @@ export const teams = {
                 role: 'Event Lead',
                 class: 'IOT - 2nd Year',
                 bio: 'Event logistics and technical coordination for chapter activities.',
-                image: '../assets/core team/profile/aryaman.jpg',
+                image: '../assets/core_team/profile/aryaman.jpg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/aryamansahu08',
                     github: 'https://github.com/aryamansahu11',
@@ -348,8 +387,8 @@ export const teams = {
                 role: 'Event Team',
                 class: 'AIADS - 1st Year',
                 bio: 'Supporting event operations and helping to create a welcoming atmosphere for all members.',
-                image: '../assets/core team/profile/dewanshi.jpeg',
-                
+                image: '../assets/core_team/profile/dewanshi.jpeg',
+
                 tags: ['Support', 'Organization', 'Volunteering'],
                 team: 'Events'
             },
@@ -359,38 +398,13 @@ export const teams = {
         title: 'Management Team',
         color: '#FBBC04', // Google Yellow
         members: [
-            {
-                name: 'Suprabhat Upadhyay',
-                role: 'Co-executive head',
-                class: 'IT - Pre Final Year',
-                bio: 'Assisting in executive decisions and streamlining operational workflows for better efficiency.',
-                image: '../assets/core team/profile/suprabhat.jpeg',
-                socials: {
-                    linkedin: 'https://www.linkedin.com/in/suprabhat-upadhyay-ab996031a/',
-                    instagram: 'https://www.instagram.com/upadhyay_1409/',                   github: 'https://github.com/suprabhat1409-art',
-                },
-                tags: ['Management', 'Operations', 'Leadership'],
-                team: 'Management'
-            },
-            {
-                name: 'Arpit bansal',
-                role: 'Logistics Head',
-                class: 'CSE(BC) - Pre Final Year',
-                bio: 'Ensuring all resources and materials are available and properly managed for every event.',
-                image: '../assets/core team/profile/arpit.jpg',
-                socials: {
-                    linkedin: 'https://www.linkedin.com/in/arpit-bansal-711858293/',
-                    instagram: 'https://www.instagram.com/_arppitt._/'
-                },
-                tags: ['Logistics', 'Supply Chain', 'Resource Mgmt'],
-                team: 'Management'
-            },
+          
             {
                 name: 'Danish Khan',
                 role: 'Finance & Sponsorship Head',
                 class: 'CSE(BC) - Pre Final Year',
                 bio: 'Managing chapter finances and building partnerships to sustain and grow our community initiatives.',
-                image: '../assets/core team/profile/danish.jpeg',
+                image: '../assets/core_team/profile/danish.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/danish-khan-cse/',
                     instagram: 'https://www.instagram.com/danish_khan_7387/'
@@ -398,25 +412,13 @@ export const teams = {
                 tags: ['Finance', 'Sponsorship', 'Partnerships'],
                 team: 'Management'
             },
-            {
-                name: 'Dakshesh Jat',
-                role: 'Management Head',
-                class: 'CSE - Pre Final Year',
-                bio: 'Overseeing general management tasks and ensuring team cohesion and productivity.',
-                image: '../assets/core team/profile/dakshesh.jpg',
-                socials: {
-                    linkedin: 'https://www.linkedin.com/in/dakshesh-jat/',
-                  
-                },
-                tags: ['Administration', 'Team Building', 'Management'],
-                team: 'Management'
-            },
+          
             {
                 name: 'Deepti Rai',
                 role: 'Public Relations Head',
                 class: 'IT - Pre Final Year',
                 bio: 'Data analytics, Data Science, ML, Gen-AI',
-                image: '../assets/core team/profile/deepti.jpeg',
+                image: '../assets/core_team/profile/deepti.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/deepti-rai-77517a2a2',
                     github: 'https://github.com/Deepti618',
@@ -430,10 +432,10 @@ export const teams = {
                 role: 'Community Outreach Head',
                 class: 'IT - Pre Final Year',
                 bio: 'Community outreach and growth lead.',
-                image: '../assets/core team/profile/rudransh.jpeg   ',
+                image: '../assets/core_team/profile/rudransh.jpeg   ',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/rudransh-rai-a32426315',
-                   
+
                     instagram: 'https://www.instagram.com/r5anxh'
                 },
                 tags: ['Outreach', 'Community Building', 'Networking'],
@@ -444,7 +446,7 @@ export const teams = {
                 role: 'Google Ambassador',
                 class: 'CSE(BC) - Pre Final Year',
                 bio: 'Representing GDG on campus and promoting Google technologies to students and peers.',
-                image: '../assets/core team/profile/akash.jpeg',
+                image: '../assets/core_team/profile/akash.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/akash-tripathi-16b96a239/',
                     instagram: 'https://www.instagram.com/infinityakash97/'
@@ -457,11 +459,11 @@ export const teams = {
                 role: 'PR & Sponsor',
                 class: 'AIADS - 2nd Year',
                 bio: 'Working on securing sponsorships and maintaining good relationships with our partners.',
-                image: '../assets/core team/profile/hardik.jpeg',
+                image: '../assets/core_team/profile/hardik.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/hardik-kumar-sinha/',
                     github: 'https://github.com/hksinha510',
-                    instagram:'https://www.instagram.com/har.dikks/'
+                    instagram: 'https://www.instagram.com/har.dikks/'
                 },
                 tags: ['Sponsorship', 'PR', 'Negotiation'],
                 team: 'Management'
@@ -471,7 +473,7 @@ export const teams = {
                 role: 'Management Team',
                 class: 'AIML - 1st Year',
                 bio: 'Python learner with knowledge of its libraries, now exploring Machine Learning and AI technologies.',
-                image: '../assets/core team/profile/shristi.jpeg',
+                image: '../assets/core_team/profile/shristi.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/shristi-tiwari-18a85437b',
                     github: 'https://github.com/st0845320-bit',
@@ -485,7 +487,7 @@ export const teams = {
                 role: 'Management Team',
                 class: 'AIML - 1st Year',
                 bio: 'Helping to coordinate team activities and maintain organized records for the chapter.',
-                image: '../assets/core team/profile/suryansh.jpeg',
+                image: '../assets/core_team/profile/suryansh.jpeg',
                 socials: {
                     linkedin: 'https://www.linkedin.com/in/suryansh08/',
                     instagram: 'https://www.instagram.com/suryansh08_/'
@@ -498,7 +500,7 @@ export const teams = {
                 role: 'PR & Sponsor',
                 class: 'CSE(BC) - 1st Year',
                 bio: 'Assisting with public relations efforts and sponsorship drives to support chapter events.',
-                image: '../assets/core team/profile/megha.jpeg',
+                image: '../assets/core_team/profile/megha.jpeg',
                 tags: ['PR', 'Sponsorship', 'Communication'],
                 team: 'Management'
             },

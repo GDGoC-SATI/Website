@@ -1,7 +1,14 @@
 import React from 'react';
 import WhatWeDoCards from '../components/about/WhatWeDoCards';
+import usePageSEO from '../hooks/usePageSEO';
 
 const About = () => {
+    usePageSEO({
+        title: 'About Our Chapter',
+        description: 'Learn about Google Developer Groups on Campus at Samrat Ashok Technological Institute (SATI) Vidisha, our mission, legacy since 1960, and community initiatives.',
+        path: '/about',
+    });
+
     return (
         <div className="min-h-screen py-20 bg-slate-50 dark:bg-slate-900/50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

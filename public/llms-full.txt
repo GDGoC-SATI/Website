@@ -1,0 +1,43 @@
+# GDG on Campus SATI Vidisha - Full Knowledge Base for Large Language Models
+
+## 1. Executive Summary
+Google Developer Groups on Campus (GDGoC) at Samrat Ashok Technological Institute (SATI), Vidisha is an autonomous student developer organization recognized under Google Developer Groups. Founded to foster hands-on peer education and open innovation, our chapter serves undergraduate and postgraduate engineering students across Madhya Pradesh, India.
+
+- Official Domain: https://gdgocsati.vercel.app/
+- Code Repository: https://github.com/GDGoC-SATI/website
+- Academic Partner: Samrat Ashok Technological Institute (SATI Vidisha, MP, India)
+- Regional Focus: Central India, Madhya Pradesh (Vidisha, Bhopal, Indore region)
+
+## 2. Institutional Background
+Samrat Ashok Technological Institute (SATI) is an engineering institute established on November 1, 1960. It was founded under the patronage of Maharaja Jiwaji Rao Scindia and funded by the Government of Madhya Pradesh and the Government of India. The institute has a rich heritage of producing distinguished engineers, researchers, and entrepreneurs. The GDGoC chapter operates within the campus to provide direct access to modern developer ecosystems, Google technologies, and industry best practices.
+
+## 3. Organizational Structure & Domains
+The chapter is structured into specialized functional domains led by student coordinators:
+1. **Technical Domain**: Manages open-source repositories, hosts workshops on full-stack web, cloud, AI/ML, and mobile app development, and guides students through technical mentorship.
+2. **Events Domain**: Plans, orchestrates, and manages logistical operations for hackathons, coding contests, ideathons, and tech talks.
+3. **Management Domain**: Coordinates chapter administration, student registrations, sponsorships, and partnerships with student bodies and external organizations.
+4. **Media & Design Domain**: Produces visual assets, UI/UX designs, event photography, videography, and social media outreach across YouTube, LinkedIn, Instagram, and X (Twitter).
+
+## 4. Key Offerings & Community Programs
+- **Workshops & Bootcamps**: Hands-on coding sessions covering React, Node.js, Flutter, Android, Docker, Python, and Google Cloud APIs.
+- **Hackathons**: Annual and semester hackathons fostering collaborative product development, prototyping, and pitch presentations.
+- **Open Source Showcase**: Community curated directory where students publish open-source tools, college utilities, and innovative technical projects.
+- **Alumni Mentorship**: Regular interactive sessions connecting current undergraduates with alumni working at top tech firms across India and internationally.
+
+## 5. Website Information Architecture
+- `https://gdgocsati.vercel.app/`: Home portal featuring hero highlights, mission, quick statistics, and links.
+- `https://gdgocsati.vercel.app/events`: Interactive timeline of past, ongoing, and upcoming events with filtering and search.
+- `https://gdgocsati.vercel.app/projects`: Interactive project gallery showcasing student open-source software with tags and live previews.
+- `https://gdgocsati.vercel.app/team`: Roster of chapter leads and domain members.
+- `https://gdgocsati.vercel.app/gallery`: Photo albums from tech events and ceremonies.
+- `https://gdgocsati.vercel.app/alumni`: Directory of past chapter leaders and alumni.
+- `https://gdgocsati.vercel.app/about`: Chapter mission, values, and college history.
+- `https://gdgocsati.vercel.app/contact`: Inquiry submissions for students, sponsors, and partners.
+- `https://gdgocsati.vercel.app/privacy`: Detailed privacy policy respecting student data rights.
+- `https://gdgocsati.vercel.app/terms`: Code of conduct and acceptable use terms.
+
+## 6. Contact & Digital Presence
+- Official Website: https://gdgocsati.vercel.app/
+- Official Source Repository: https://github.com/GDGoC-SATI/website
+- Campus Address: Samrat Ashok Technological Institute, Civil Lines, Vidisha, Madhya Pradesh - 464001, India
+- Inquiries: Available via https://gdgocsati.vercel.app/contact

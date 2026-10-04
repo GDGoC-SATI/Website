@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FaEnvelope, FaMapMarkerAlt, FaDiscord, FaWhatsapp, FaChevronDown, FaChevronUp, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../services/api';
+import usePageSEO from '../hooks/usePageSEO';
 
 const FAQItem = ({ question, answer }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -37,6 +38,12 @@ const FAQItem = ({ question, answer }) => {
 };
 
 const Contact = () => {
+    usePageSEO({
+        title: 'Contact Us & Community Inquiries',
+        description: 'Get in touch with GDG on Campus SATI Vidisha organizers for collaborations, sponsorships, mentorship, or chapter queries.',
+        path: '/contact',
+    });
+
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
