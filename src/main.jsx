@@ -10,4 +10,15 @@ createRoot(document.getElementById('root')).render(
       <App />
     </BrowserRouter>
   </StrictMode>,
-)
+);
+
+// Register Service Worker silently in the background for PWA (no popups)
+if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js', { scope: '/' })
+      .catch((err) => {
+        console.debug('Service Worker registration skipped/failed:', err);
+      });
+  });
+}

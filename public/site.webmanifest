@@ -1,11 +1,18 @@
 {
+  "id": "https://gdgocsati.vercel.app/",
   "name": "GDG on Campus SATI Vidisha",
   "short_name": "GDGoC SATI",
   "description": "Official community platform for Google Developer Groups on Campus at Samrat Ashok Technological Institute, Vidisha.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "window-controls-overlay"],
+  "orientation": "portrait-primary",
   "background_color": "#0f172a",
   "theme_color": "#4285F4",
+  "categories": ["education", "community", "technology"],
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/favicon.png",
@@ -18,6 +25,58 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/preview.png",
+      "sizes": "1080x1080",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Events & Workshops",
+      "short_name": "Events",
+      "description": "Browse upcoming tech events and workshops",
+      "url": "/events",
+      "icons": [{ "src": "/favicon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Projects Showcase",
+      "short_name": "Projects",
+      "description": "Explore community open source projects",
+      "url": "/projects",
+      "icons": [{ "src": "/favicon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Core Team & Leads",
+      "short_name": "Team",
+      "description": "Meet executive chapter leads and directors",
+      "url": "/team",
+      "icons": [{ "src": "/favicon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Event Gallery",
+      "short_name": "Gallery",
+      "description": "Event highlights and memories",
+      "url": "/gallery",
+      "icons": [{ "src": "/favicon.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/preview.png",
+      "sizes": "1080x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "GDG on Campus SATI Vidisha Home"
+    },
+    {
+      "src": "/preview.png",
+      "sizes": "1080x1080",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "GDG on Campus SATI Vidisha Mobile"
     }
   ]
 }
