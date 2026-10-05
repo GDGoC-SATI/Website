@@ -29,7 +29,7 @@ import {
 import { FaXTwitter } from 'react-icons/fa6';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-export const DEFAULT_BANNER_URL = 'https://gdgoc-sati.vercel.app/assets/banner_default.png';
+export const DEFAULT_BANNER_URL = 'https://res.cloudinary.com/lydk5lda/image/upload/v1791159511/banner_default.png';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
