@@ -17,7 +17,7 @@ import {
 import { FaXTwitter } from 'react-icons/fa6';
 import { useAuth } from '../../context/AuthContext';
 
-const DEFAULT_BANNER_URL = 'https://gdgocsati.vercel.app/assets/banner_default.png';
+const DEFAULT_BANNER_URL = 'https://res.cloudinary.com/lydk5lda/image/upload/v1791159511/banner_default.png';
 
 const ProfileModal = () => {
   const { user, isProfileOpen, setIsProfileOpen, updateProfile } = useAuth();
