@@ -644,35 +644,38 @@ const Alumni = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#fafafa] dark:bg-slate-950 transition-colors duration-500 pt-10 pb-40 relative">
+    <div className="min-h-screen bg-[#fafafa] dark:bg-slate-950 transition-colors duration-500 pb-40 relative">
       {/* Background Ambience (Exact Original) */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[-10%] right-[-5%] w-[70vw] h-[70vw] bg-google-blue/5 blur-[160px] rounded-full animate-pulse" />
         <div className="absolute bottom-[-5%] left-[-10%] w-[60vw] h-[60vw] bg-google-red/5 blur-[140px] rounded-full animate-pulse-slow" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Header (Exact Original) */}
-        <div className="mb-16 text-center">
+      {/* Header Banner - Standardized across pages */}
+      <div className="relative bg-slate-50/70 dark:bg-slate-900/40 pt-15 pb-14 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden mb-12">
+        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-google-blue/10 text-google-blue text-xs font-black uppercase tracking-widest mb-8"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-google-blue/10 text-google-blue border border-google-blue/20 text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-4"
           >
-            <FaRocket /> Community Legacy
+            <FaRocket className="text-xs" />
+            <span>Community Legacy</span>
           </motion.div>
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-6xl md:text-8xl lg:text-9xl font-black text-slate-900 dark:text-white tracking-tighter mb-4"
+            transition={{ delay: 0.05 }}
+            className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tight mb-4"
           >
-            Our <span className="text-google-blue">Alumni.</span>
+            Our <span className="text-google-blue">Alumni</span>
           </motion.h1>
           <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="max-w-2xl mx-auto text-lg text-slate-500 dark:text-slate-400 font-light"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed"
           >
             Search through our archive of legends who shaped the tech ecosystem at SATI.
           </motion.p>
@@ -706,6 +709,9 @@ const Alumni = () => {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
         {/* Sticky Filter Controls Bar with View Switcher */}
         <div className="sticky top-[88px] md:top-[96px] z-30 mb-12 p-3 sm:p-4 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-md flex flex-col md:flex-row items-center gap-3">

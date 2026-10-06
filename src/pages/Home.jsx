@@ -4,7 +4,6 @@ import WhatWeDo from '../components/home/WhatWeDo';
 import SocialMedia from '../components/home/SocialMedia';
 import TeamPreview from '../components/home/TeamPreview';
 import ContactTeaser from '../components/home/ContactTeaser';
-import CTA from '../components/home/CTA';
 import usePageSEO from '../hooks/usePageSEO';
 
 const Home = () => {
@@ -21,7 +20,6 @@ const Home = () => {
             <TeamPreview />
             <SocialMedia />
             <ContactTeaser />
-            <CTA />
         </div>
     );
 };

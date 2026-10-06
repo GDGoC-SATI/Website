@@ -3,17 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 const images = [
-    "/assets/core_team/group_image.jpeg",
-    "/assets/core_team/group_image2.jpeg",
-    "/assets/core_team/group_image3.jpeg",
-    "/assets/core_team/group_image4.jpeg"
+    "https://res.cloudinary.com/lydk5lda/image/upload/v1791189659/group_image.jpg",
+    "https://res.cloudinary.com/lydk5lda/image/upload/v1791189661/group_image2.jpg",
+    "https://res.cloudinary.com/lydk5lda/image/upload/v1791189662/group_image3.jpg",
+    "https://res.cloudinary.com/lydk5lda/image/upload/v1791189664/group_image4.jpg"
 ];
 
 const mobileImages = [
-    "/assets/core_team/group_image_phone.jpeg",
-    "/assets/core_team/group_image2_phone.jpeg",
-    "/assets/core_team/group_image3_phone.jpeg",
-    "/assets/core_team/group_image.jpeg" // Fallback for the 4th image
+    "https://res.cloudinary.com/lydk5lda/image/upload/v1791189659/group_image_phone.jpg",
+    "https://res.cloudinary.com/lydk5lda/image/upload/v1791189661/group_image2_phone.jpg",
+    "https://res.cloudinary.com/lydk5lda/image/upload/v1791189662/group_image3_phone.jpg",
+    "https://res.cloudinary.com/lydk5lda/image/upload/v1791189661/group_image2_phone.jpg" // Fallback for the 4th image
 ];
 
 const Hero = () => {
