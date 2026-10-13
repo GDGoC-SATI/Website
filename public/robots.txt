@@ -29,6 +29,6 @@ Allow: /
 User-agent: Applebot
 Allow: /
 
-# Sitemap & LLMs Documentation
+# Sitemap & Documentation
 Sitemap: https://gdgocsati.vercel.app/sitemap.xml
-LLMs: https://gdgocsati.vercel.app/llms.txt
+# LLMs: https://gdgocsati.vercel.app/llms.txt

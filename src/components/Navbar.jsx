@@ -277,12 +277,20 @@ const Navbar = () => {
                 </AnimatePresence>
               </div>
             ) : (
-              <Link
-                to="/signup"
-                className="ml-2 px-5 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-lg hover:shadow-xl"
-              >
-                Get Started
-              </Link>
+              <div className="flex items-center gap-1.5 ml-2">
+                <Link
+                  to="/login"
+                  className="px-3 py-1.5 rounded-full text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-google-blue dark:hover:text-google-blue hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all"
+                >
+                  Log In
+                </Link>
+                <Link
+                  to="/signup"
+                  className="px-4 py-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-lg hover:shadow-xl"
+                >
+                  Get Started
+                </Link>
+              </div>
             )}
           </div>
 
@@ -345,7 +353,6 @@ const Navbar = () => {
                       </div>
 
                       <div className="py-1 text-m">
-                       
                          {isAdmin && (
                           <Link
                             to="/admin"
@@ -369,7 +376,6 @@ const Navbar = () => {
                         >
                           <FaCog className="text-slate-400" size={11} /> Settings
                         </Link>
-                      
                       </div>
 
                       <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
@@ -389,10 +395,10 @@ const Navbar = () => {
               </div>
             ) : (
               <Link
-                to="/signup"
-                className="px-2.5 py-1 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold"
+                to="/login"
+                className="px-3 py-1 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold shadow"
               >
-                Get Started
+                Sign In
               </Link>
             )}
 
@@ -438,7 +444,24 @@ const Navbar = () => {
                 </Link>
               ))}
 
-              
+              {!isAuthenticated && (
+                <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2">
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="w-full text-center py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    to="/signup"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="w-full text-center py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-semibold shadow-md"
+                  >
+                    Get Started
+                  </Link>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
