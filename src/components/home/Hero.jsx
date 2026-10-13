@@ -13,7 +13,7 @@ const mobileImages = [
     "https://res.cloudinary.com/lydk5lda/image/upload/v1791189659/group_image_phone.jpg",
     "https://res.cloudinary.com/lydk5lda/image/upload/v1791189661/group_image2_phone.jpg",
     "https://res.cloudinary.com/lydk5lda/image/upload/v1791189662/group_image3_phone.jpg",
-    "https://res.cloudinary.com/lydk5lda/image/upload/v1791189661/group_image2_phone.jpg" // Fallback for the 4th image
+    "https://res.cloudinary.com/lydk5lda/image/upload/v1791189661/group_image2_phone.jpg" 
 ];
 
 const Hero = () => {
@@ -37,7 +37,7 @@ const Hero = () => {
     };
 
     return (
-        <section className="relative h-[100vh] min-h-[600px] w-full flex items-center justify-center overflow-hidden bg-slate-900">
+        <section className="relative h-[95vh] min-h-[600px] w-full flex items-center justify-center overflow-hidden bg-slate-900">
             {/* Background Slideshow */}
             <div className="absolute inset-0 z-0">
                 <AnimatePresence mode='wait'>
@@ -132,7 +132,7 @@ const Hero = () => {
             </div>
 
             {/* Scroll Indicator */}
-            <motion.div
+            {/* <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1, duration: 1 }}
@@ -141,7 +141,7 @@ const Hero = () => {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                 </svg>
-            </motion.div>
+            </motion.div> */}
         </section>
     );
 };

@@ -54,9 +54,9 @@ const request = async (endpoint, options = {}, ttl = DEFAULT_CACHE_TTL) => {
         headers,
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.message || 'Something went wrong');
+        throw new Error(data.message || `Server error (${res.status})`);
       }
 
       // Cache successful GET responses
@@ -79,6 +79,12 @@ const request = async (endpoint, options = {}, ttl = DEFAULT_CACHE_TTL) => {
       return data;
     } catch (error) {
       console.error(`API Error [${endpoint}]:`, error.message);
+      if (
+        error.name === 'TypeError' &&
+        (error.message.includes('fetch') || error.message.includes('NetworkError') || error.message.includes('Load failed'))
+      ) {
+        throw new Error('Please wait a few seconds and try again.');
+      }
       throw error;
     } finally {
       if (isCacheable) {

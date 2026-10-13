@@ -389,9 +389,6 @@ const SocialMedia = () => {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Phone Shadow/Glow */}
-                        <div className="absolute -inset-4 bg-gradient-to-tr from-purple-600 to-orange-600 rounded-[3.5rem] blur-xl opacity-30 -z-10 animate-pulse"></div>
                     </div>
 
                 </div>

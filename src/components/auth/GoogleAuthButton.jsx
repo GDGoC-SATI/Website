@@ -1,31 +1,55 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../../services/api';
 
+const DEFAULT_GOOGLE_CLIENT_ID = '128296171485-d505usb3dg5n83h6f5fgu7b7dqk4v1jf.apps.googleusercontent.com';
+
 const GoogleAuthButton = ({ onSuccess, onError, isSignup = false, disabled = false }) => {
   const buttonRef = useRef(null);
   const [loading, setLoading] = useState(false);
+  const [isGsiRendered, setIsGsiRendered] = useState(false);
   const [clientId, setClientId] = useState(
-    import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+    import.meta.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID
   );
 
-  // Fetch client ID if missing from env
+  // If client ID is default or missing, try fetching an updated one from backend without blocking
   useEffect(() => {
-    if (!clientId) {
+    if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
       api.auth.getGoogleClientId()
         .then((res) => {
-          if (res?.clientId) setClientId(res.clientId);
+          if (res?.clientId && res.clientId !== clientId) {
+            setClientId(res.clientId);
+          }
         })
-        .catch((err) => console.warn('Could not fetch google client id:', err));
+        .catch((err) => {
+          // Non-blocking: Server may be paused/starting, default client ID is already active
+          console.info('Using default Google client ID (backend paused or offline):', err.message);
+        });
     }
-  }, [clientId]);
+  }, []);
+
+  // Ensure Google Identity Services script is present in head
+  useEffect(() => {
+    if (!window.google?.accounts?.id) {
+      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+      if (!existingScript) {
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+    }
+  }, []);
 
   // Check and initialize Google Identity Services
   useEffect(() => {
     if (!clientId) return;
 
     let intervalId = null;
+    let attempts = 0;
 
     const renderGsiButton = () => {
+      attempts += 1;
       if (window.google?.accounts?.id && buttonRef.current) {
         if (intervalId) clearInterval(intervalId);
 
@@ -59,9 +83,18 @@ const GoogleAuthButton = ({ onSuccess, onError, isSignup = false, disabled = fal
             logo_alignment: 'left',
             width: Math.min(400, Math.max(240, containerWidth)),
           });
+
+          // Verify if iframe / button DOM nodes were rendered
+          setTimeout(() => {
+            if (buttonRef.current && buttonRef.current.children.length > 0) {
+              setIsGsiRendered(true);
+            }
+          }, 80);
         } catch (e) {
           console.warn('GSI renderButton error:', e);
         }
+      } else if (attempts > 30 && intervalId) {
+        clearInterval(intervalId);
       }
     };
 
@@ -80,24 +113,30 @@ const GoogleAuthButton = ({ onSuccess, onError, isSignup = false, disabled = fal
     if (disabled || loading) return;
     if (window.google?.accounts?.id) {
       try {
-        window.google.accounts.id.prompt();
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed()) {
+            console.info('GSI One Tap not displayed:', notification.getNotDisplayedReason?.());
+          }
+        });
       } catch (err) {
         console.warn('GSI prompt error:', err);
       }
+    } else {
+      onError?.('Google authentication is still initializing. Please wait a few seconds and try again.');
     }
   };
 
   return (
     <div className="relative w-full overflow-hidden rounded-xl group">
       {/* 
-        1. The ONLY visible button: 
-        Sleek themed button with the original 4-color Google icon matching the site's dark/light design.
+        1. The ALWAYS clickable themed button: 
+        Sleek button with the original 4-color Google icon matching the site's dark/light design.
       */}
       <button
         type="button"
         onClick={handleCustomClick}
         disabled={disabled || loading}
-        className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-sm group-hover:bg-slate-50 dark:group-hover:bg-slate-700/60 transition-all flex items-center justify-center gap-3 shadow-sm group-hover:shadow disabled:opacity-50 select-none"
+        className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-sm group-hover:bg-slate-50 dark:group-hover:bg-slate-700/60 transition-all flex items-center justify-center gap-3 shadow-sm group-hover:shadow disabled:opacity-50 select-none cursor-pointer"
       >
         {/* Original 4-color Google 'G' icon */}
         <svg
@@ -133,14 +172,17 @@ const GoogleAuthButton = ({ onSuccess, onError, isSignup = false, disabled = fal
       </button>
 
       {/* 
-        2. Invisible Google GSI button overlay:
-        The white Google button is rendered here but kept completely invisible (opacity-0),
-        allowing native clicks to trigger Google authentication without showing the white button.
+        2. Google GSI button overlay:
+        Rendered invisibly (opacity-0).
+        IMPORTANT: Only has pointer-events-auto when the GSI iframe is ACTUALLY rendered,
+        ensuring an empty overlay never blocks clicks if the server is paused or offline!
       */}
       <div
         ref={buttonRef}
-        className={`absolute inset-0 w-full h-full opacity-0 overflow-hidden cursor-pointer z-10 flex items-center justify-center pointer-events-auto [&>div]:!w-full [&>div]:!h-full [&_iframe]:!w-full [&_iframe]:!h-full [&_iframe]:!min-w-full [&_iframe]:cursor-pointer ${
-          disabled || loading ? 'pointer-events-none' : ''
+        className={`absolute inset-0 w-full h-full opacity-0 overflow-hidden z-10 flex items-center justify-center [&>div]:!w-full [&>div]:!h-full [&_iframe]:!w-full [&_iframe]:!h-full [&_iframe]:!min-w-full [&_iframe]:cursor-pointer ${
+          isGsiRendered && !disabled && !loading
+            ? 'pointer-events-auto cursor-pointer'
+            : 'pointer-events-none'
         }`}
         style={{
           transform: 'scale(1.15)',
