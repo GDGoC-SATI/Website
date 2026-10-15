@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback, useEffect, memo } from 'react';
-import { motion, useScroll, useSpring } from 'framer-motion';
+import React, { useState, useMemo, useEffect, memo, useRef } from 'react';
+import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
 import {
   FaCalendarAlt,
   FaMapMarkerAlt,
@@ -14,13 +14,41 @@ import {
   FaTimes,
   FaSave
 } from 'react-icons/fa';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { eventsData as initialEvents } from '../data/eventsData';
 import { useAuth } from '../context/AuthContext';
 import ViewToggle from '../components/common/ViewToggle';
 import Pagination from '../components/common/Pagination';
 import { useDebounce } from '../hooks/useDebounce';
 import { usePageSEO } from '../hooks/usePageSEO';
+
+// --- Exact FluxWave Curve Generators ---
+const generateHorizontalWave = (totalUnits = 3000) => {
+  let path = 'M 0 200';
+  const segmentWidth = 900;
+  const numSegments = Math.ceil(totalUnits / segmentWidth);
+  for (let i = 0; i < numSegments; i++) {
+    const x0 = i * segmentWidth;
+    path += ` C ${x0 + 300} 50, ${x0 + 600} 350, ${x0 + 900} 200`;
+  }
+  return path;
+};
+
+const generateVerticalWave = (count) => {
+  // Smooth continuous S-curve matching FluxWave mobile without jagged kinks
+  const cycles = Math.max(2, Math.ceil(count / 2));
+  const step = 1000 / cycles;
+  let path = 'M 50 0';
+  for (let i = 0; i < cycles; i++) {
+    const y0 = i * step;
+    const cp1y = Math.round(y0 + step * 0.333);
+    const cp2y = Math.round(y0 + step * 0.667);
+    const yEnd = Math.round((i + 1) * step);
+    path += ` C 150 ${cp1y}, -50 ${cp2y}, 50 ${yEnd}`;
+  }
+  return path;
+};
+
 
 // --- Event List Item (Memoized for zero redundant re-renders) ---
 const EventListItem = memo(({
@@ -108,148 +136,451 @@ const EventListItem = memo(({
   );
 });
 
-// --- Event Card (Memoized for zero redundant re-renders) ---
-const EventCard = memo(({
-  id,
-  title,
-  date,
-  location,
-  description,
-  imageUrl,
-  type,
-  index,
+// --- Desktop Journey Card (Scroll-revealed on Horizontal Track) ---
+const DesktopJourneyCard = memo(({
+  event,
   isAdmin,
-  onEdit,
-  onDelete,
+  canMoveUp,
+  canMoveDown,
   onMoveUp,
   onMoveDown,
-  canMoveUp,
-  canMoveDown
+  onEdit,
+  onDelete
 }) => {
-  const isEven = index % 2 === 0;
+  const { id, title, date, location, description, imageUrl, type } = event;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: isEven ? -50 : 50, y: 50 }}
-      whileInView={{ opacity: 1, x: 0, y: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
-      transition={{ duration: 0.6, delay: 0.1 }}
-      className={`relative md:w-[calc(50%-2rem)] mb-12 md:mb-24 ${isEven ? 'md:ml-auto md:pl-8 pl-8' : 'md:mr-auto md:pr-8 pl-8'
-        }`}
-    >
-      {/* Timeline Connector Dot & Date */}
-      <div
-        className={`absolute top-8 w-4 h-4 rounded-full bg-white border-4 border-google-blue z-10 shadow-[0_0_15px_rgba(66,133,244,0.5)] 
-                -left-[41px]
-                ${isEven ? 'md:-left-[calc(2rem+9px)]' : 'md:left-auto md:-right-[calc(2rem+9px)]'}`}
-      >
-        {/* Date Text (Desktop: Opposite Side, Mobile: Right of dot) */}
+    <div className="w-72 sm:w-80 lg:w-[21rem] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xl hover:shadow-2xl hover:shadow-google-blue/15 transition-all duration-300 group overflow-hidden relative">
+      {/* Admin Controls Overlay */}
+      {isAdmin && (
         <div
-          className={`hidden md:block absolute top-1/2 -translate-y-1/2 w-max text-sm font-bold text-slate-500 dark:text-slate-400
-                    ${isEven ? 'right-[calc(100%+1.5rem)]' : 'left-[calc(100%+1.5rem)]'}`}
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-2 right-2 z-30 flex items-center gap-1 bg-slate-900/90 dark:bg-slate-800/95 backdrop-blur-md px-1.5 py-0.5 rounded-lg shadow-xl border border-slate-700"
         >
-          {date.split(',')[0]}
-        </div>
-      </div>
-
-      {/* Mobile Date (Always visible on mobile, hidden on desktop) */}
-      <div className="md:hidden absolute -top-8 left-0 text-sm font-bold text-google-blue mb-2">
-        {date.split(',')[0]}
-      </div>
-
-      {/* Card Content */}
-      <div className="relative group">
-        {/* Admin In-place Controls */}
-        {isAdmin && (
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="absolute top-3 right-3 z-30 flex items-center gap-1 bg-slate-900/90 dark:bg-slate-800/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl shadow-xl border border-slate-700"
+          {canMoveUp && (
+            <button
+              title="Move Up"
+              onClick={onMoveUp}
+              className="p-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded transition-colors"
+            >
+              <FaArrowUp size={9} />
+            </button>
+          )}
+          {canMoveDown && (
+            <button
+              title="Move Down"
+              onClick={onMoveDown}
+              className="p-1 text-slate-300 hover:text-white hover:bg-slate-700 rounded transition-colors"
+            >
+              <FaArrowDown size={9} />
+            </button>
+          )}
+          <button
+            title="Edit Event"
+            onClick={onEdit}
+            className="p-1 text-google-blue hover:bg-google-blue/20 rounded transition-colors"
           >
-            {canMoveUp && (
-              <button
-                title="Move Up in timeline"
-                onClick={onMoveUp}
-                className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
-              >
-                <FaArrowUp size={11} />
-              </button>
-            )}
-            {canMoveDown && (
-              <button
-                title="Move Down in timeline"
-                onClick={onMoveDown}
-                className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
-              >
-                <FaArrowDown size={11} />
-              </button>
-            )}
-            <button
-              title="Edit Event"
-              onClick={onEdit}
-              className="p-1.5 text-google-blue hover:bg-google-blue/20 rounded-lg transition-colors"
-            >
-              <FaEdit size={11} />
-            </button>
-            <button
-              title="Delete Event"
-              onClick={onDelete}
-              className="p-1.5 text-google-red hover:bg-google-red/20 rounded-lg transition-colors"
-            >
-              <FaTrash size={11} />
-            </button>
+            <FaEdit size={9} />
+          </button>
+          <button
+            title="Delete Event"
+            onClick={onDelete}
+            className="p-1 text-google-red hover:bg-google-red/20 rounded transition-colors"
+          >
+            <FaTrash size={9} />
+          </button>
+        </div>
+      )}
+
+      {/* Image Banner */}
+      {imageUrl && (
+        <div className="relative w-full h-28 overflow-hidden bg-slate-100 dark:bg-slate-800">
+          <img
+            src={imageUrl}
+            alt={title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+          <div className="absolute top-2 left-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider text-google-blue border border-google-blue/30 shadow-sm">
+            {type}
+          </div>
+          <div className="absolute bottom-1.5 left-2.5 text-white text-[10px] font-semibold drop-shadow flex items-center gap-1">
+            <FaCalendarAlt size={9} className="text-google-yellow" />
+            <span>{date.split(',')[0]}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Content Area */}
+      <div className="p-3.5">
+        {!imageUrl && (
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-google-blue/10 text-google-blue border border-google-blue/20">
+              {type}
+            </span>
+            <span className="text-[10px] font-semibold text-google-blue">
+              {date.split(',')[0]}
+            </span>
           </div>
         )}
 
-        <Link to={`/events/${id}`} className="block">
-          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-700/50 shadow-lg hover:shadow-2xl hover:shadow-google-blue/10 transition-all duration-300 transform group-hover:-translate-y-2">
-            {/* Image Area */}
-            <div className="relative w-full overflow-hidden">
-              <img
-                src={imageUrl}
-                alt={title}
-                className="w-full h-auto object-contain transition-transform duration-700 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 mb-1 font-medium">
+          <FaMapMarkerAlt size={10} className="text-google-red shrink-0" />
+          <span className="truncate">{location}</span>
+        </div>
 
-              {/* Type Badge */}
-              <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">
-                {type}
-              </div>
-            </div>
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-google-blue transition-colors line-clamp-1 mb-1 leading-snug">
+          {title}
+        </h3>
 
-            {/* Content Area */}
-            <div className="p-6 md:p-8 relative">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-google-blue/5 rounded-full blur-3xl -z-10 transition-all group-hover:bg-google-blue/10" />
+        {/* <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed mb-2.5">
+          {description}
+        </p> */}
 
-              <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">
-                <FaMapMarkerAlt className="text-google-red" />
-                <span className="truncate max-w-[200px]">{location}</span>
-              </div>
+        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+          <span className="text-[10px] font-medium text-slate-400 truncate max-w-[120px]">
+            {date.split(',').slice(1).join(',')}
+          </span>
 
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3 leading-tight group-hover:text-google-blue transition-colors">
-                {title}
-              </h3>
-
-              <p className="text-slate-600 dark:text-slate-300 text-sm mb-6 line-clamp-2 leading-relaxed">
-                {description}
-              </p>
-
-              <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700/50">
-                <span className="text-xs font-medium text-slate-400">
-                  {date.split(',').slice(1).join(',')}
-                </span>
-
-                <span className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-google-blue group-hover:bg-google-blue group-hover:text-white transition-all duration-300">
-                  <FaArrowRight className="transform group-hover:translate-x-1 transition-transform" />
-                </span>
-              </div>
-            </div>
-          </div>
-        </Link>
+          <Link
+            to={`/events/${id}`}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 group-hover:bg-google-blue group-hover:text-white text-slate-700 dark:text-slate-200 text-[11px] font-bold transition-all shadow-sm"
+          >
+            <span>View Details</span>
+            <FaArrowRight size={9} className="transform group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 });
+
+// --- Mobile Journey Card (Scroll-revealed on Vertical Sine Wave) ---
+const MobileJourneyCard = memo(({
+  event,
+  isAdmin,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
+  onEdit,
+  onDelete
+}) => {
+  const { id, title, date, location, description, imageUrl, type } = event;
+
+  return (
+    <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-slate-200/80 dark:border-slate-800 shadow-xl relative group overflow-hidden">
+      {/* Admin Controls */}
+      {isAdmin && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-2 right-2 z-30 flex items-center gap-1 bg-slate-900/90 dark:bg-slate-800/95 backdrop-blur-md px-1.5 py-0.5 rounded-lg shadow border border-slate-700"
+        >
+          {canMoveUp && (
+            <button
+              title="Move Up"
+              onClick={onMoveUp}
+              className="p-1 text-slate-300 hover:text-white"
+            >
+              <FaArrowUp size={9} />
+            </button>
+          )}
+          {canMoveDown && (
+            <button
+              title="Move Down"
+              onClick={onMoveDown}
+              className="p-1 text-slate-300 hover:text-white"
+            >
+              <FaArrowDown size={9} />
+            </button>
+          )}
+          <button
+            title="Edit Event"
+            onClick={onEdit}
+            className="p-1 text-google-blue"
+          >
+            <FaEdit size={9} />
+          </button>
+          <button
+            title="Delete Event"
+            onClick={onDelete}
+            className="p-1 text-google-red"
+          >
+            <FaTrash size={9} />
+          </button>
+        </div>
+      )}
+
+      {imageUrl && (
+        <div className="relative w-full h-20 sm:h-28 rounded-xl overflow-hidden mb-2 bg-slate-100 dark:bg-slate-800">
+          <img
+            src={imageUrl}
+            alt={title}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+          <div className="absolute top-1.5 left-1.5 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider text-white">
+            {type}
+          </div>
+        </div>
+      )}
+
+      <div className="inline-block px-2 py-0.5 bg-google-blue/10 dark:bg-google-blue/20 text-google-blue text-[10px] font-bold rounded-full mb-1.5 uppercase tracking-wider">
+        {date.split(',')[0]}
+      </div>
+
+      <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white mb-1 line-clamp-2 leading-snug group-hover:text-google-blue transition-colors">
+        {title}
+      </h4>
+
+      <div className="flex items-center gap-1 text-[10px] sm:text-xs text-slate-400 mb-1.5">
+        <FaMapMarkerAlt size={9} className="text-google-red shrink-0" />
+        <span className="truncate">{location}</span>
+      </div>
+
+      <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 mb-2.5 leading-relaxed">
+        {description}
+      </p>
+
+      <Link
+        to={`/events/${id}`}
+        className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold text-google-blue hover:text-blue-600 transition-colors"
+      >
+        <span>View Details</span>
+        <FaArrowRight size={9} />
+      </Link>
+    </div>
+  );
+});
+
+// Google Official Brand Colors: Blue, Red, Yellow, Green
+const GOOGLE_BRAND_COLORS = ['#4285F4', '#EA4335', '#FBBC05', '#34A853'];
+
+const renderGoogleGradientStops = (cycles = 8) => {
+  const stops = [];
+  const totalStops = cycles * 4;
+  for (let i = 0; i <= totalStops; i++) {
+    const offset = `${((i / totalStops) * 100).toFixed(2)}%`;
+    const color = GOOGLE_BRAND_COLORS[i % GOOGLE_BRAND_COLORS.length];
+    stops.push(<stop key={i} offset={offset} stopColor={color} />);
+  }
+  return stops;
+};
+
+// --- Scroll Reveal Journey Component (Inspired by FluxWave 'The Journey') ---
+const EventsTimelineJourney = ({
+  events,
+  allEvents,
+  isAdmin,
+  onMoveUp,
+  onMoveDown,
+  onEdit,
+  onDelete
+}) => {
+  const containerRef = useRef(null);
+  const n = events.length;
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ['start start', 'end end']
+  });
+
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 90,
+    damping: 25,
+    restDelta: 0.001
+  });
+
+  // Dynamic Horizontal Track Sizing:
+  // Item 0 is initially placed at 32vw (clearly visible in viewport).
+  // Subsequent items spaced by 36vw.
+  const itemSpacingVw = 36;
+  const startOffsetVw = 32;
+  const trackWidthVw = n <= 1 ? 100 : Math.max(100, startOffsetVw + (n - 1) * itemSpacingVw + 40);
+  const maxTranslateVw = n <= 1 ? 0 : (startOffsetVw + (n - 1) * itemSpacingVw) - 50;
+
+  const xTransform = useTransform(smoothProgress, [0, 1], ['0vw', `-${maxTranslateVw}vw`]);
+
+  // Container height dynamically scaled to number of events
+  const containerHeightVh = n <= 1 ? 120 : Math.max(180, Math.min(600, n * 50 + 100));
+  const svgWidth = Math.max(2500, n * 500);
+
+  return (
+    <div className="w-full relative">
+      {/* DESKTOP HORIZONTAL SCROLL TIMELINE (≥ lg) */}
+      <div className="hidden lg:block">
+        <div
+          ref={containerRef}
+          className="relative z-10 w-full"
+          style={{ height: `${containerHeightVh}vh` }}
+        >
+          <div className="sticky top-20 h-[calc(100vh-5rem)] w-full overflow-hidden flex flex-col justify-center">
+            {/* Horizontally Moving Track */}
+            <motion.div
+              style={{ x: xTransform, width: `${trackWidthVw}vw` }}
+              className="flex h-full items-center relative"
+            >
+              {/* Central Horizontal SVG Wave */}
+              <svg
+                className="absolute top-1/2 -translate-y-1/2 w-full h-[400px] pointer-events-none drop-shadow-[0_0_15px_rgba(66,133,244,0.35)]"
+                viewBox={`0 0 ${svgWidth} 400`}
+                preserveAspectRatio="none"
+              >
+                <path
+                  d={generateHorizontalWave(svgWidth)}
+                  fill="none"
+                  stroke="url(#google_grad)"
+                  strokeWidth="5"
+                />
+                <defs>
+                  <linearGradient id="google_grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    {renderGoogleGradientStops(Math.max(6, n * 2))}
+                  </linearGradient>
+                </defs>
+              </svg>
+
+              {/* Event Nodes & Connected Cards */}
+              {events.map((event, idx) => {
+                const isTop = idx % 2 === 0;
+                const leftPosVw = n <= 1 ? 50 : startOffsetVw + idx * itemSpacingVw;
+                const globalIndex = allEvents.findIndex((e) => e.id === event.id);
+                const nodeColor = GOOGLE_BRAND_COLORS[idx % GOOGLE_BRAND_COLORS.length];
+
+                return (
+                  <div
+                    key={event.id}
+                    className="absolute flex flex-col items-center"
+                    style={{
+                      left: `${leftPosVw}vw`,
+                      top: '50%',
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  >
+                    {/* Center Glowing Dot Node in Google Brand Color */}
+                    <div
+                      className="w-10 h-10 rounded-full bg-white dark:bg-[#050505] border-4 z-20 flex items-center justify-center transition-transform hover:scale-125 duration-300"
+                      style={{
+                        borderColor: nodeColor,
+                        boxShadow: `0 0 20px ${nodeColor}80`,
+                      }}
+                    >
+                      <div
+                        className="w-4 h-4 rounded-full"
+                        style={{ backgroundColor: nodeColor }}
+                      />
+                    </div>
+
+                    {/* Alternating Card + Connector Line */}
+                    <div
+                      className={`absolute flex flex-col items-center ${
+                        isTop ? 'bottom-full mb-3' : 'top-full mt-3'
+                      }`}
+                    >
+                      <div
+                        className="w-1 h-12"
+                        style={{
+                          background: isTop
+                            ? `linear-gradient(to bottom, ${nodeColor}, transparent)`
+                            : `linear-gradient(to top, ${nodeColor}, transparent)`,
+                          order: isTop ? 2 : 1,
+                        }}
+                      />
+                      <div className={isTop ? 'order-1' : 'order-2'}>
+                        <DesktopJourneyCard
+                          event={event}
+                          isAdmin={isAdmin}
+                          canMoveUp={globalIndex > 0}
+                          canMoveDown={globalIndex < allEvents.length - 1}
+                          onMoveUp={() => onMoveUp(globalIndex)}
+                          onMoveDown={() => onMoveDown(globalIndex)}
+                          onEdit={() => onEdit(event, globalIndex)}
+                          onDelete={() => onDelete(globalIndex)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </motion.div>
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE / TABLET VERTICAL TIMELINE (< lg) */}
+      <div className="lg:hidden w-full px-3 sm:px-6 py-6 relative z-10 overflow-hidden">
+        <div className="relative w-full max-w-lg mx-auto py-4">
+          {/* Central Vertical Sine Wave SVG */}
+          <svg
+            className="absolute left-1/2 -translate-x-1/2 top-0 w-64 h-full z-0 pointer-events-none drop-shadow-[0_0_15px_rgba(66,133,244,0.35)]"
+            viewBox="0 0 100 1000"
+            preserveAspectRatio="none"
+          >
+            <path
+              d={generateVerticalWave(events.length)}
+              fill="none"
+              stroke="url(#google_grad-mobile)"
+              strokeWidth="3"
+            />
+            <defs>
+              <linearGradient id="google_grad-mobile" x1="0%" y1="0%" x2="0%" y2="100%">
+                {renderGoogleGradientStops(Math.max(6, n * 2))}
+              </linearGradient>
+            </defs>
+          </svg>
+
+          {/* Alternating Scroll Reveal Cards */}
+          <div className="space-y-16 sm:space-y-20 flex flex-col relative z-10">
+            {events.map((event, idx) => {
+              const isLeft = idx % 2 === 0;
+              const globalIndex = allEvents.findIndex((e) => e.id === event.id);
+              const nodeColor = GOOGLE_BRAND_COLORS[idx % GOOGLE_BRAND_COLORS.length];
+
+              return (
+                <motion.div
+                  key={event.id}
+                  initial={{ opacity: 0.15, scale: 0.9, x: isLeft ? -15 : 15 }}
+                  whileInView={{ opacity: 1, scale: 1, x: 0 }}
+                  viewport={{ once: false, amount: 0.2 }}
+                  transition={{ duration: 0.45, ease: 'easeOut' }}
+                  className={`flex w-full ${isLeft ? 'justify-start' : 'justify-end'} relative items-center`}
+                >
+                  {/* Central Node on Wave in Google Brand Color */}
+                  <div
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-[#050505] border-4 z-20 flex items-center justify-center pointer-events-none"
+                    style={{
+                      borderColor: nodeColor,
+                      boxShadow: `0 0 15px ${nodeColor}80`,
+                    }}
+                  >
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: nodeColor }}
+                    />
+                  </div>
+
+                  {/* Mobile Card */}
+                  <div className={`w-[45%] sm:w-[44%] ${isLeft ? 'pr-1' : 'pl-1'}`}>
+                    <MobileJourneyCard
+                      event={event}
+                      isAdmin={isAdmin}
+                      canMoveUp={globalIndex > 0}
+                      canMoveDown={globalIndex < allEvents.length - 1}
+                      onMoveUp={() => onMoveUp(globalIndex)}
+                      onMoveDown={() => onMoveDown(globalIndex)}
+                      onEdit={() => onEdit(event, globalIndex)}
+                      onDelete={() => onDelete(globalIndex)}
+                    />
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // --- Edit/Add Event Modal ---
 const EventModal = ({ event, onClose, onSave, isNew = false }) => {
@@ -414,7 +745,7 @@ const Events = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialYear = searchParams.get('year') || 'All';
   const initialQuery = searchParams.get('q') || '';
-  const initialView = searchParams.get('view') || (typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'grid');
+  const initialView = searchParams.get('view') || 'grid';
 
   const [events, setEvents] = useState(initialEvents);
   const [filterYear, setFilterYearState] = useState(initialYear);
@@ -461,6 +792,7 @@ const Events = () => {
       return next;
     }, { replace: true });
   };
+
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -512,7 +844,7 @@ const Events = () => {
     });
   }, [events, filterYear, debouncedSearch]);
 
-  // Paginated subset of events
+  // Paginated subset of events (strictly for list view)
   const paginatedEvents = useMemo(() => {
     const startIndex = (currentPage - 1) * PAGE_SIZE;
     return filteredEvents.slice(startIndex, startIndex + PAGE_SIZE);
@@ -520,7 +852,7 @@ const Events = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-500 pb-20">
-      {/* Scroll Progress Bar */}
+      {/* Top Scroll Progress Bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-google-blue z-50 origin-left"
         style={{ scaleX }}
@@ -534,7 +866,7 @@ const Events = () => {
             Timeline
           </span>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tight mb-4">
-            Our <span className="text-google-blue">Events</span> & Timeline
+            Our <span className="text-google-blue">Events</span>
           </h1>
           <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
             Explore workshops, hackathons, and community gatherings.
@@ -595,8 +927,9 @@ const Events = () => {
                   <span>{filterYear === 'All' ? 'All Years' : filterYear}</span>
                 </div>
                 <FaChevronDown
-                  className={`text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''
-                    }`}
+                  className={`text-slate-400 transition-transform duration-200 ${
+                    isDropdownOpen ? 'rotate-180' : ''
+                  }`}
                 />
               </button>
 
@@ -614,10 +947,11 @@ const Events = () => {
                           setFilterYear(year);
                           setIsDropdownOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${filterYear === year
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${
+                          filterYear === year
                             ? 'text-google-blue font-bold'
                             : 'text-slate-600 dark:text-slate-300'
-                          }`}
+                        }`}
                       >
                         {year === 'All' ? 'All Years' : year}
                       </button>
@@ -631,16 +965,20 @@ const Events = () => {
             <ViewToggle view={view} onViewChange={setView} />
           </div>
         </div>
+      </div>
 
-        {/* Content: List View vs Grid View (Timeline) */}
-        {filteredEvents.length === 0 ? (
+      {/* Content: List View vs Grid View (Timeline) */}
+      {filteredEvents.length === 0 ? (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
             <p className="text-base text-slate-500 dark:text-slate-400">
               No events found matching your criteria.
             </p>
           </div>
-        ) : view === 'list' ? (
-          /* List View */
+        </div>
+      ) : view === 'list' ? (
+        /* List View (Maintains Pagination) */
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-3 relative z-10">
             {paginatedEvents.map((event, index) => (
               <EventListItem
@@ -659,51 +997,32 @@ const Events = () => {
               />
             ))}
           </div>
-        ) : (
-          /* Grid View (Vertical Timeline) */
-          <div className="relative">
-            {/* Central Line */}
-            <div className="absolute top-0 bottom-0 left-[23px] md:left-1/2 w-0.5 bg-gradient-to-b from-google-blue via-google-red to-google-yellow -translate-x-1/2" />
 
-            <div className="relative z-10">
-              {paginatedEvents.map((event, index) => {
-                const globalIndex = events.findIndex((e) => e.id === event.id);
-                return (
-                  <EventCard
-                    key={event.id}
-                    {...event}
-                    index={(currentPage - 1) * PAGE_SIZE + index}
-                    isAdmin={isAdmin}
-                    canMoveUp={globalIndex > 0}
-                    canMoveDown={globalIndex < events.length - 1}
-                    onMoveUp={() => handleMoveEvent(globalIndex, -1)}
-                    onMoveDown={() => handleMoveEvent(globalIndex, 1)}
-                    onEdit={() =>
-                      setModalState({
-                        event,
-                        index: globalIndex,
-                        isNew: false,
-                      })
-                    }
-                    onDelete={() => handleDeleteEvent(globalIndex)}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Pagination Controls */}
-        <Pagination
-          currentPage={currentPage}
-          totalItems={filteredEvents.length}
-          pageSize={PAGE_SIZE}
-          onPageChange={(p) => {
-            setCurrentPage(p);
-            window.scrollTo({ top: 380, behavior: 'smooth' });
-          }}
-        />
-      </div>
+          {/* Pagination Controls - Strictly for list view */}
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredEvents.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={(p) => {
+              setCurrentPage(p);
+              window.scrollTo({ top: 380, behavior: 'smooth' });
+            }}
+          />
+        </div>
+      ) : (
+        /* Grid View: Full Width Viewport Screen (Line touches both edges) */
+        <div className="w-full relative overflow-x-clip">
+          <EventsTimelineJourney
+            events={filteredEvents}
+            allEvents={events}
+            isAdmin={isAdmin}
+            onMoveUp={(idx) => handleMoveEvent(idx, -1)}
+            onMoveDown={(idx) => handleMoveEvent(idx, 1)}
+            onEdit={(event, idx) => setModalState({ event, index: idx, isNew: false })}
+            onDelete={(idx) => handleDeleteEvent(idx)}
+          />
+        </div>
+      )}
 
       {/* Admin Event Edit/Add Modal */}
       {modalState && (

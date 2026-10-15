@@ -1,7 +1,25 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../../services/api';
 
-const DEFAULT_GOOGLE_CLIENT_ID = '128296171485-d505usb3dg5n83h6f5fgu7b7dqk4v1jf.apps.googleusercontent.com';
+// Default GDG Google Client ID
+const DEFAULT_GOOGLE_CLIENT_ID = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GOOGLE_CLIENT_ID) || '';
+
+function decodeJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    if (!base64Url) return null;
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
 
 const GoogleAuthButton = ({ onSuccess, onError, isSignup = false, disabled = false }) => {
   const buttonRef = useRef(null);
@@ -11,7 +29,7 @@ const GoogleAuthButton = ({ onSuccess, onError, isSignup = false, disabled = fal
     import.meta.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID
   );
 
-  // If client ID is default or missing, try fetching an updated one from backend without blocking
+  // If client ID is not defined in env, sync from backend without blocking
   useEffect(() => {
     if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
       api.auth.getGoogleClientId()
@@ -21,15 +39,14 @@ const GoogleAuthButton = ({ onSuccess, onError, isSignup = false, disabled = fal
           }
         })
         .catch((err) => {
-          // Non-blocking: Server may be paused/starting, default client ID is already active
-          console.info('Using default Google client ID (backend paused or offline):', err.message);
+          console.info('Using configured Google client ID:', err.message);
         });
     }
   }, []);
 
   // Ensure Google Identity Services script is present in head
   useEffect(() => {
-    if (!window.google?.accounts?.id) {
+    if (!window.google?.accounts?.id && !window.google?.accounts?.oauth2) {
       const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
       if (!existingScript) {
         const script = document.createElement('script');
@@ -41,7 +58,7 @@ const GoogleAuthButton = ({ onSuccess, onError, isSignup = false, disabled = fal
     }
   }, []);
 
-  // Check and initialize Google Identity Services
+  // Initialize Google Identity Services button overlay
   useEffect(() => {
     if (!clientId) return;
 
@@ -60,7 +77,14 @@ const GoogleAuthButton = ({ onSuccess, onError, isSignup = false, disabled = fal
               if (response?.credential) {
                 setLoading(true);
                 try {
-                  await onSuccess({ credential: response.credential });
+                  const decoded = decodeJwt(response.credential);
+                  await onSuccess({
+                    credential: response.credential,
+                    email: decoded?.email,
+                    name: decoded?.name,
+                    avatar: decoded?.picture,
+                    googleId: decoded?.sub,
+                  });
                 } catch (err) {
                   onError?.(err.message || 'Google authentication failed');
                 } finally {
@@ -84,12 +108,12 @@ const GoogleAuthButton = ({ onSuccess, onError, isSignup = false, disabled = fal
             width: Math.min(400, Math.max(240, containerWidth)),
           });
 
-          // Verify if iframe / button DOM nodes were rendered
+          // Check if Google rendered iframe
           setTimeout(() => {
             if (buttonRef.current && buttonRef.current.children.length > 0) {
               setIsGsiRendered(true);
             }
-          }, 80);
+          }, 100);
         } catch (e) {
           console.warn('GSI renderButton error:', e);
         }
@@ -108,29 +132,87 @@ const GoogleAuthButton = ({ onSuccess, onError, isSignup = false, disabled = fal
     };
   }, [clientId, isSignup, onSuccess, onError]);
 
-  // Fallback trigger if user clicks custom button directly
+  // Direct OAuth 2.0 popup trigger (used when clicking custom button or if overlay is blocked/unrendered)
   const handleCustomClick = () => {
     if (disabled || loading) return;
-    if (window.google?.accounts?.id) {
+
+    const activeClientId = clientId || DEFAULT_GOOGLE_CLIENT_ID;
+
+    // Method 1: Google OAuth2 Token Client Popup (official GIS popup flow)
+    if (window.google?.accounts?.oauth2) {
       try {
-        window.google.accounts.id.prompt((notification) => {
-          if (notification.isNotDisplayed()) {
-            console.info('GSI One Tap not displayed:', notification.getNotDisplayedReason?.());
-          }
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: activeClientId,
+          scope: 'email profile openid',
+          callback: async (tokenResponse) => {
+            if (tokenResponse.error) {
+              if (tokenResponse.error !== 'popup_closed_by_user') {
+                onError?.(tokenResponse.error_description || 'Google sign-in was canceled.');
+              }
+              return;
+            }
+
+            if (tokenResponse.access_token) {
+              setLoading(true);
+              try {
+                let profile = {};
+                try {
+                  const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+                  });
+                  if (res.ok) profile = await res.json();
+                } catch (e) {
+                  console.warn('Google userinfo fetch warn:', e);
+                }
+
+                await onSuccess({
+                  accessToken: tokenResponse.access_token,
+                  email: profile.email,
+                  name: profile.name,
+                  avatar: profile.picture,
+                  googleId: profile.sub,
+                });
+              } catch (err) {
+                onError?.(err.message || 'Google authentication failed');
+              } finally {
+                setLoading(false);
+              }
+            }
+          },
+          error_callback: (err) => {
+            console.warn('Google tokenClient error callback:', err);
+            if (window.google?.accounts?.id?.prompt) {
+              window.google.accounts.id.prompt();
+            } else {
+              onError?.('Google popup failed to open. Please check popup permissions.');
+            }
+          },
         });
+
+        tokenClient.requestAccessToken({ prompt: 'select_account' });
+        return;
       } catch (err) {
-        console.warn('GSI prompt error:', err);
+        console.warn('initTokenClient error, attempting One Tap prompt fallback:', err);
       }
+    }
+
+    // Method 2: Fallback to One Tap prompt if OAuth2 is unavailable
+    if (window.google?.accounts?.id?.prompt) {
+      window.google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed()) {
+          console.info('GSI One Tap not displayed:', notification.getNotDisplayedReason?.());
+        }
+      });
     } else {
-      onError?.('Google authentication is still initializing. Please wait a few seconds and try again.');
+      onError?.('Google authentication is loading. Please try again in a moment.');
     }
   };
 
   return (
     <div className="relative w-full overflow-hidden rounded-xl group">
       {/* 
-        1. The ALWAYS clickable themed button: 
-        Sleek button with the original 4-color Google icon matching the site's dark/light design.
+        1. Beautifully themed, responsive visible button:
+        Matching the site's dark/light design with official 4-color Google icon.
       */}
       <button
         type="button"
@@ -173,19 +255,19 @@ const GoogleAuthButton = ({ onSuccess, onError, isSignup = false, disabled = fal
 
       {/* 
         2. Google GSI button overlay:
-        Rendered invisibly (opacity-0).
-        IMPORTANT: Only has pointer-events-auto when the GSI iframe is ACTUALLY rendered,
-        ensuring an empty overlay never blocks clicks if the server is paused or offline!
+        Rendered with opacity-[0.001] so it is completely invisible to human eyes,
+        yet fully interactive so native clicks directly trigger Google popup.
+        When not rendered, clicks pass seamlessly to handleCustomClick.
       */}
       <div
         ref={buttonRef}
-        className={`absolute inset-0 w-full h-full opacity-0 overflow-hidden z-10 flex items-center justify-center [&>div]:!w-full [&>div]:!h-full [&_iframe]:!w-full [&_iframe]:!h-full [&_iframe]:!min-w-full [&_iframe]:cursor-pointer ${
+        className={`absolute inset-0 w-full h-full opacity-[0.001] overflow-hidden z-10 flex items-center justify-center [&>div]:!w-full [&>div]:!h-full [&_iframe]:!w-full [&_iframe]:!h-full [&_iframe]:!min-w-full [&_iframe]:cursor-pointer ${
           isGsiRendered && !disabled && !loading
             ? 'pointer-events-auto cursor-pointer'
             : 'pointer-events-none'
         }`}
         style={{
-          transform: 'scale(1.15)',
+          transform: 'scale(1.2)',
           transformOrigin: 'center',
         }}
         title={isSignup ? 'Sign up with Google' : 'Continue with Google'}

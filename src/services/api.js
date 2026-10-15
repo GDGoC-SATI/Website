@@ -114,7 +114,7 @@ export const api = {
     sendForgotPasswordOtp: (body) => request('/auth/forgot-password/send-otp', { method: 'POST', body: JSON.stringify(body) }),
     resetPasswordWithOtp: (body) => request('/auth/forgot-password/reset', { method: 'POST', body: JSON.stringify(body) }),
     googleAuth: (body) => request('/auth/google', { method: 'POST', body: JSON.stringify(body) }),
-    getGoogleClientId: () => request('/auth/google-client-id', {}, 30 * 60 * 1000),
+    getGoogleClientId: () => request('/auth/google-client-id', { skipCache: true }),
     getMe: (skipCache = false) => request('/auth/me', { skipCache }, 60 * 1000),
     getUserByUsername: (username) => request(`/auth/user/${username}`, {}, 2 * 60 * 1000),
     updateProfile: (body) => request('/auth/profile', { method: 'PUT', body: JSON.stringify(body) }),

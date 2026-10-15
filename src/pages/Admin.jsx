@@ -58,9 +58,9 @@ const Admin = () => {
   const [loginLoading, setLoginLoading] = useState(false);
 
   // Dashboard Data State - Persisted via URL query params
-  const validTabs = ['requests', 'queries', 'users', 'broadcast'];
+  const validTabs = ['users', 'requests', 'queries', 'broadcast'];
   const tabFromUrl = searchParams.get('tab');
-  const initialTab = validTabs.includes(tabFromUrl) ? tabFromUrl : 'requests';
+  const initialTab = validTabs.includes(tabFromUrl) ? tabFromUrl : 'users';
 
   const [activeTab, setActiveTabState] = useState(initialTab);
 
@@ -232,8 +232,8 @@ const Admin = () => {
   };
 
   const fillDefaultAdmin = () => {
-    setEmail('gdgocsati@gmail.com');
-    setPassword('Admin@GDG2024');
+    setEmail('admin_emain@gmail.com');
+    setPassword('Admin_password');
   };
 
   // Handle Admin Login
@@ -598,6 +598,15 @@ const Admin = () => {
           {/* Row 1: Section Navigation Tabs */}
           <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto hide-scrollbar no-scrollbar py-0.5">
             <button
+              onClick={() => setActiveTab('users')}
+              className={`py-2 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all relative whitespace-nowrap ${activeTab === 'users'
+                ? 'bg-google-blue text-white shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+            >
+              <span>Registered Users ({users.length})</span>
+            </button>
+            <button
               onClick={() => setActiveTab('requests')}
               className={`py-2 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all relative whitespace-nowrap ${activeTab === 'requests'
                 ? 'bg-google-blue text-white shadow-sm'
@@ -627,15 +636,7 @@ const Admin = () => {
               )}
             </button>
 
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`py-2 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all relative whitespace-nowrap ${activeTab === 'users'
-                ? 'bg-google-blue text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-            >
-              <span>Registered Users ({users.length})</span>
-            </button>
+           
 
             <button
               onClick={() => setActiveTab('broadcast')}
@@ -656,12 +657,12 @@ const Admin = () => {
               <input
                 type="text"
                 placeholder={
-                  activeTab === 'requests'
-                    ? 'Search project requests by title, submitter, tech stack...'
+                  activeTab === 'users'
+                    ? 'Search registered users by name, username, email...'
                     : activeTab === 'queries'
                       ? 'Search contact inquiries by name, email, subject...'
-                      : activeTab === 'users'
-                        ? 'Search registered users by name, username, email...'
+                      : activeTab === 'requests'
+                        ? 'Search project requests by title, submitter, tech stack...'
                         : 'Search broadcast announcements...'
                 }
                 value={searchQuery}
@@ -676,7 +677,131 @@ const Admin = () => {
           </div>
         </div>
 
-        {/* TAB 1: PROJECT ADDITION REQUESTS */}
+ {/* TAB 1: REGISTERED USERS */}
+        {activeTab === 'users' && (
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">
+              Registered Accounts ({users.length})
+            </h3>
+
+            {loading ? (
+              <TableSkeleton rows={5} />
+            ) : view === 'grid' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredUsers.map((u) => (
+                  <div
+                    key={u._id}
+                    className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <UserAvatar user={u} size="md" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                            {u.name}
+                          </p>
+                          <p className="text-xs text-google-blue truncate">@{u.username || 'user'}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate mb-3">{u.email}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${u.role === 'admin'
+                          ? 'bg-google-red/10 text-google-red border border-google-red/20'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                          }`}
+                      >
+                        {u.role}
+                      </span>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          title={`View @${u.username}'s Profile`}
+                          onClick={() => navigate(`/profile/${u.username || u._id}`)}
+                          className="px-2.5 py-1 rounded-lg bg-google-blue/10 hover:bg-google-blue text-google-blue hover:text-white transition-all text-xs font-semibold flex items-center gap-1"
+                        >
+                          <FaEye size={11} /> Profile
+                        </button>
+                        <button
+                          title="Delete User"
+                          onClick={() => handleDeleteUser(u._id)}
+                          className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                        >
+                          <FaTrash size={11} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="overflow-x-auto hide-scrollbar no-scrollbar">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 dark:border-slate-800 text-xs text-slate-400 uppercase tracking-wider">
+                      <th className="pb-3 font-semibold">User</th>
+                      <th className="pb-3 font-semibold">Username</th>
+                      <th className="pb-3 font-semibold">Email</th>
+                      <th className="pb-3 font-semibold">Role</th>
+                      <th className="pb-3 font-semibold">Joined Date</th>
+                      <th className="pb-3 font-semibold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {filteredUsers.map((u) => (
+                      <tr key={u._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                        <td className="py-4">
+                          <div className="flex items-center gap-3">
+                            <UserAvatar user={u} size="sm" />
+                            <span className="font-bold text-slate-900 dark:text-white">{u.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 text-slate-500">@{u.username || 'user'}</td>
+                        <td className="py-4 text-slate-600 dark:text-slate-300">{u.email}</td>
+                        <td className="py-4">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${u.role === 'admin'
+                              ? 'bg-google-red/10 text-google-red border border-google-red/20'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                              }`}
+                          >
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="py-4 text-xs text-slate-400">
+                          {new Date(u.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              title={`View @${u.username}'s Profile`}
+                              onClick={() => navigate(`/profile/${u.username || u._id}`)}
+                              className="px-2.5 py-1.5 rounded-lg bg-google-blue/10 hover:bg-google-blue text-google-blue hover:text-white transition-all text-xs font-semibold flex items-center gap-1.5"
+                            >
+                              <FaEye size={12} />
+                              <span className="hidden sm:inline">Profile</span>
+                            </button>
+                            <button
+                              title="Delete User"
+                              onClick={() => handleDeleteUser(u._id)}
+                              className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                            >
+                              <FaTrash size={12} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 2: PROJECT ADDITION REQUESTS */}
         {activeTab === 'requests' && (
           <div>
             {loading ? (
@@ -877,7 +1002,7 @@ const Admin = () => {
           </div>
         )}
 
-        {/* TAB 2: CONTACT INQUIRIES */}
+        {/* TAB 3: CONTACT INQUIRIES */}
         {activeTab === 'queries' && (
           <div>
             <div className="flex justify-between items-center mb-6">
@@ -1039,130 +1164,6 @@ const Admin = () => {
               <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-8">
                 <FaEnvelope className="text-4xl text-slate-300 mx-auto mb-3" />
                 <p className="text-slate-500 font-medium">No contact inquiries found.</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* TAB 3: REGISTERED USERS */}
-        {activeTab === 'users' && (
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">
-              Registered Accounts ({users.length})
-            </h3>
-
-            {loading ? (
-              <TableSkeleton rows={5} />
-            ) : view === 'grid' ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredUsers.map((u) => (
-                  <div
-                    key={u._id}
-                    className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center gap-3 mb-3">
-                        <UserAvatar user={u} size="md" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                            {u.name}
-                          </p>
-                          <p className="text-xs text-google-blue truncate">@{u.username || 'user'}</p>
-                        </div>
-                      </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate mb-3">{u.email}</p>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${u.role === 'admin'
-                          ? 'bg-google-red/10 text-google-red border border-google-red/20'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                          }`}
-                      >
-                        {u.role}
-                      </span>
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          title={`View @${u.username}'s Profile`}
-                          onClick={() => navigate(`/profile/${u.username || u._id}`)}
-                          className="px-2.5 py-1 rounded-lg bg-google-blue/10 hover:bg-google-blue text-google-blue hover:text-white transition-all text-xs font-semibold flex items-center gap-1"
-                        >
-                          <FaEye size={11} /> Profile
-                        </button>
-                        <button
-                          title="Delete User"
-                          onClick={() => handleDeleteUser(u._id)}
-                          className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                        >
-                          <FaTrash size={11} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="overflow-x-auto hide-scrollbar no-scrollbar">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-100 dark:border-slate-800 text-xs text-slate-400 uppercase tracking-wider">
-                      <th className="pb-3 font-semibold">User</th>
-                      <th className="pb-3 font-semibold">Username</th>
-                      <th className="pb-3 font-semibold">Email</th>
-                      <th className="pb-3 font-semibold">Role</th>
-                      <th className="pb-3 font-semibold">Joined Date</th>
-                      <th className="pb-3 font-semibold text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {filteredUsers.map((u) => (
-                      <tr key={u._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                        <td className="py-4">
-                          <div className="flex items-center gap-3">
-                            <UserAvatar user={u} size="sm" />
-                            <span className="font-bold text-slate-900 dark:text-white">{u.name}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 text-slate-500">@{u.username || 'user'}</td>
-                        <td className="py-4 text-slate-600 dark:text-slate-300">{u.email}</td>
-                        <td className="py-4">
-                          <span
-                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${u.role === 'admin'
-                              ? 'bg-google-red/10 text-google-red border border-google-red/20'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                              }`}
-                          >
-                            {u.role}
-                          </span>
-                        </td>
-                        <td className="py-4 text-xs text-slate-400">
-                          {new Date(u.createdAt).toLocaleDateString()}
-                        </td>
-                        <td className="py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              title={`View @${u.username}'s Profile`}
-                              onClick={() => navigate(`/profile/${u.username || u._id}`)}
-                              className="px-2.5 py-1.5 rounded-lg bg-google-blue/10 hover:bg-google-blue text-google-blue hover:text-white transition-all text-xs font-semibold flex items-center gap-1.5"
-                            >
-                              <FaEye size={12} />
-                              <span className="hidden sm:inline">Profile</span>
-                            </button>
-                            <button
-                              title="Delete User"
-                              onClick={() => handleDeleteUser(u._id)}
-                              className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                            >
-                              <FaTrash size={12} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
             )}
           </div>
