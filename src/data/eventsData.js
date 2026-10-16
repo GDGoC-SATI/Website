@@ -209,9 +209,24 @@ export const eventsData = [
  */
 export const getEventById = (id) => {
   if (!id) return null;
-  const direct = eventsData.find((e) => e.id === id);
+  const direct = eventsData.find((e) => e.id === id || e.slug === id || e._id === id);
   if (direct) return direct;
-  const parent = eventsData.find((e) => e.timeline?.some((t) => t.id === id));
+  const parent = eventsData.find((e) => e.timeline?.some((t) => t.id === id || t.slug === id || t._id === id));
   if (parent) return parent;
   return null;
 };
+
+/**
+ * In-memory fallback helper to save or update an event
+ */
+export const saveOrUpdateEvent = (updated) => {
+  if (!updated) return;
+  const matchId = updated.id || updated.slug || updated._id;
+  const idx = eventsData.findIndex((e) => e.id === matchId || e.slug === matchId || e._id === matchId);
+  if (idx !== -1) {
+    eventsData[idx] = { ...eventsData[idx], ...updated };
+  } else {
+    eventsData.unshift({ ...updated, id: matchId });
+  }
+};
+

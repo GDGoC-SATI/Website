@@ -21,7 +21,8 @@ import ViewToggle from '../components/common/ViewToggle';
 import Pagination from '../components/common/Pagination';
 import { useDebounce } from '../hooks/useDebounce';
 import { usePageSEO } from '../hooks/usePageSEO';
-import { EVENT_TYPES, FormattedDateTimeInput, LocationSelect } from '../utils/formHelpers';
+import { api } from '../services/api';
+import { EVENT_TYPES, FormattedDateTimeInput, LocationSelect, StatusSelect } from '../utils/formHelpers';
 
 // --- Exact FluxWave Curve Generators ---
 const generateHorizontalWave = (totalUnits = 3000) => {
@@ -588,21 +589,29 @@ const EventModal = ({ event, onClose, onSave, isNew = false }) => {
   const [formData, setFormData] = useState({
     title: event?.title || '',
     type: event?.type || 'Workshop',
+    status: event?.status || 'Planning',
     date: event?.date || '',
-    location: event?.location || 'SATI Campus',
+    location: event?.location || 'Smart Classroom, SATI Vidisha',
     description: event?.description || '',
     imageUrl: event?.imageUrl || '',
     originalUrl: event?.originalUrl || '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave({
-      ...event,
-      id: event?.id || `event-${Date.now()}`,
-      ...formData,
-    });
-    onClose();
+    setIsSubmitting(true);
+    try {
+      await onSave({
+        ...event,
+        ...formData,
+      });
+      onClose();
+    } catch (err) {
+      console.error('Error submitting event:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -635,7 +644,7 @@ const EventModal = ({ event, onClose, onSave, isNew = false }) => {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Event Type
@@ -652,6 +661,11 @@ const EventModal = ({ event, onClose, onSave, isNew = false }) => {
                 ))}
               </select>
             </div>
+            <StatusSelect
+              value={formData.status || 'Planning'}
+              onChange={(val) => setFormData({ ...formData, status: val })}
+              label="Status"
+            />
             <LocationSelect
               value={formData.location || ''}
               onChange={(val) => setFormData({ ...formData, location: val })}
@@ -713,9 +727,10 @@ const EventModal = ({ event, onClose, onSave, isNew = false }) => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-google-blue hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-2"
+              disabled={isSubmitting}
+              className="px-5 py-2 rounded-xl bg-google-blue hover:bg-blue-600 disabled:opacity-60 text-white text-xs font-bold flex items-center gap-2"
             >
-              <FaSave /> Save Event
+              <FaSave /> {isSubmitting ? 'Saving to Database...' : 'Save Event'}
             </button>
           </div>
         </form>
@@ -739,12 +754,36 @@ const Events = () => {
   const initialView = searchParams.get('view') || 'grid';
 
   const [events, setEvents] = useState(initialEvents);
+  const [loading, setLoading] = useState(false);
   const [filterYear, setFilterYearState] = useState(initialYear);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [view, setViewState] = useState(initialView);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 6;
+
+  // Fetch events from MongoDB API on component mount
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const res = await api.events.getAll(true);
+      if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+        const mapped = res.data.map((item) => ({
+          ...item,
+          id: item.slug || item.id || item._id,
+        }));
+        setEvents(mapped);
+      }
+    } catch (err) {
+      console.warn('API event fetch notice, using cached events:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   // Debounced search query prevents excessive recalculation and router thrashing
   const debouncedSearch = useDebounce(searchQuery, 250);
@@ -804,20 +843,57 @@ const Events = () => {
     setEvents(updated);
   };
 
-  const handleDeleteEvent = (index) => {
-    if (window.confirm(`Delete event "${events[index].title}"?`)) {
-      setEvents(events.filter((_, i) => i !== index));
+  const handleDeleteEvent = async (index) => {
+    const targetEvent = events[index];
+    if (!targetEvent) return;
+    if (window.confirm(`Delete event "${targetEvent.title}"?`)) {
+      try {
+        const targetId = targetEvent._id || targetEvent.id || targetEvent.slug;
+        await api.events.delete(targetId);
+        await fetchEvents();
+      } catch (err) {
+        console.error('Failed to delete event from database:', err);
+        // Local state fallback
+        setEvents(events.filter((_, i) => i !== index));
+      }
     }
   };
 
-  const handleSaveEvent = (saved) => {
+  const handleSaveEvent = async (saved) => {
     if (!modalState) return;
-    if (modalState.isNew) {
-      setEvents([saved, ...events]);
-    } else {
-      const updated = [...events];
-      updated[modalState.index] = saved;
-      setEvents(updated);
+    try {
+      const yearFromDate = saved.date?.match(/\b(20\d\d)\b/)?.[1] || new Date().getFullYear().toString();
+      const payload = {
+        title: saved.title,
+        type: saved.type || 'Workshop',
+        status: saved.status || 'Planning',
+        date: saved.date,
+        location: saved.location || 'Online',
+        description: saved.description || '',
+        imageUrl: saved.imageUrl || '',
+        originalUrl: saved.originalUrl || '',
+        timeline: saved.timeline || [],
+        year: saved.year || yearFromDate,
+      };
+
+      if (modalState.isNew) {
+        await api.events.create(payload);
+      } else {
+        const targetId = saved._id || saved.id || saved.slug;
+        await api.events.update(targetId, payload);
+      }
+      await fetchEvents();
+    } catch (err) {
+      console.error('Failed to persist event to MongoDB:', err);
+      // Fallback local update
+      if (modalState.isNew) {
+        setEvents([{ ...saved, id: saved.id || `event-${Date.now()}` }, ...events]);
+      } else {
+        const updated = [...events];
+        updated[modalState.index] = saved;
+        setEvents(updated);
+      }
+      alert(`Notice: ${err.message || 'Could not persist to MongoDB'}`);
     }
   };
 
@@ -872,11 +948,12 @@ const Events = () => {
                     event: {
                       title: '',
                       type: 'Workshop',
-                      date: 'Upcoming, 2025',
-                      location: 'SATI Campus',
+                      status: 'Planning',
+                      date: 'Upcoming, 2026',
+                      location: 'Smart Classroom, SATI Vidisha',
                       description: '',
-                      imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80',
-                      originalUrl: '#',
+                      imageUrl: 'https://res.cloudinary.com/startup-grind/image/upload/c_scale,w_2560/c_crop,h_640,w_2560,y_0.0_mul_h_sub_0.0_mul_640/c_crop,h_640,w_2560/c_fill,dpr_2.0,f_auto,g_center,q_auto:good/v1/gcs/platform-data-goog/event_banners/GDG_Bevy_DefaultEventBanner_9M7vWqs.png',
+                      originalUrl: '',
                     },
                     index: -1,
                     isNew: true,
