@@ -338,7 +338,7 @@ const SocialMedia = () => {
                             className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white font-bold hover:shadow-xl hover:scale-105 transition-all shadow-lg group"
                         >
                             <FaInstagram className="text-2xl group-hover:rotate-12 transition-transform" />
-                            <span>Follow @gdgoc.sati</span>
+                            <span>Follow @gdgsatividisha</span>
                         </a>
 
                         <div className="mt-12 flex items-center justify-center lg:justify-start gap-8">
