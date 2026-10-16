@@ -12,10 +12,12 @@ import {
   FaTrash,
   FaArrowUp,
   FaArrowDown,
+  FaArrowLeft,
+  FaArrowRight,
   FaCamera,
   FaCalendarAlt,
   FaChevronDown,
-  FaArrowRight,
+  FaStar,
 } from 'react-icons/fa';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +27,7 @@ import ViewToggle from '../components/common/ViewToggle';
 import Pagination from '../components/common/Pagination';
 import { useDebounce } from '../hooks/useDebounce';
 import { usePageSEO } from '../hooks/usePageSEO';
+import { useRealtimeSubscription } from '../context/RealtimeContext';
 
 const GalleryListItem = memo(({
   album,
@@ -239,19 +242,34 @@ const GalleryCard = memo(({
 });
 
 // Fullscreen Album Viewer & Image Manager
-const AlbumModal = ({ album, onClose, isAdmin, onAddImage, onRemoveImage }) => {
+const AlbumModal = ({
+  album,
+  onClose,
+  isAdmin,
+  onAddImage,
+  onRemoveImage,
+  onReorderImages,
+  onSetCoverImage,
+}) => {
   const [currentIdx, setCurrentIdx] = useState(0);
   const images = album?.images || [];
+
+  // Keep index valid when image count changes
+  useEffect(() => {
+    if (currentIdx >= images.length && images.length > 0) {
+      setCurrentIdx(images.length - 1);
+    }
+  }, [images.length, currentIdx]);
 
   if (!album) return null;
 
   const handlePrev = (e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     setCurrentIdx((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
   const handleNext = (e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     setCurrentIdx((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
@@ -262,10 +280,31 @@ const AlbumModal = ({ album, onClose, isAdmin, onAddImage, onRemoveImage }) => {
     }
   };
 
+  const handleMoveImageOrder = (index, direction) => {
+    const target = index + direction;
+    if (target < 0 || target >= images.length) return;
+
+    const updated = [...images];
+    const temp = updated[index];
+    updated[index] = updated[target];
+    updated[target] = temp;
+
+    if (currentIdx === index) {
+      setCurrentIdx(target);
+    } else if (currentIdx === target) {
+      setCurrentIdx(index);
+    }
+
+    if (typeof onReorderImages === 'function') {
+      onReorderImages(album._id, updated);
+    }
+  };
+
   return (
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-[260] bg-black/90 backdrop-blur-md flex flex-col justify-between p-4 md:p-8"
+        data-lenis-prevent
+        className="fixed inset-0 z-[260] bg-black/95 backdrop-blur-md flex flex-col justify-between p-4 md:p-8 select-none"
         onClick={onClose}
       >
         {/* Top Bar */}
@@ -274,24 +313,27 @@ const AlbumModal = ({ album, onClose, isAdmin, onAddImage, onRemoveImage }) => {
           onClick={(e) => e.stopPropagation()}
         >
           <div>
-            <h3 className="text-xl font-bold">{album.title}</h3>
+            <h3 className="text-lg sm:text-xl font-bold truncate max-w-[240px] sm:max-w-lg">{album.title}</h3>
             <p className="text-xs text-white/60">
               Photo {images.length > 0 ? currentIdx + 1 : 0} of {images.length}
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {isAdmin && (
               <button
+                type="button"
                 onClick={handleAddImageClick}
-                className="px-3.5 py-1.5 bg-google-blue hover:bg-blue-600 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg"
+                className="px-3.5 py-1.5 bg-google-blue hover:bg-blue-600 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg cursor-pointer"
               >
-                <FaPlus size={11} /> Add Photo
+                <FaPlus size={11} /> <span className="hidden xs:inline">Add Photo</span>
               </button>
             )}
             <button
+              type="button"
               onClick={onClose}
-              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+              title="Close modal"
             >
               <FaTimes size={18} />
             </button>
@@ -300,7 +342,7 @@ const AlbumModal = ({ album, onClose, isAdmin, onAddImage, onRemoveImage }) => {
 
         {/* Main Photo View */}
         <div
-          className="relative flex-1 flex items-center justify-center my-4 overflow-hidden"
+          className="relative flex-1 flex items-center justify-center my-3 sm:my-4 overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {images.length > 0 ? (
@@ -308,22 +350,65 @@ const AlbumModal = ({ album, onClose, isAdmin, onAddImage, onRemoveImage }) => {
               <img
                 src={images[currentIdx]}
                 alt={`Photo ${currentIdx + 1}`}
-                className="max-h-[75vh] max-w-[90vw] object-contain rounded-2xl shadow-2xl"
+                className="max-h-[68vh] sm:max-h-[74vh] max-w-[90vw] object-contain rounded-2xl shadow-2xl"
               />
 
-              {/* Delete Current Photo (Admin) */}
+              {/* Admin Floating Order & Action Bar on Active Photo */}
               {isAdmin && (
-                <button
-                  onClick={() => {
-                    if (window.confirm('Delete this photo from the album?')) {
-                      onRemoveImage(album._id, images[currentIdx]);
-                    }
-                  }}
-                  className="absolute top-4 right-4 p-2.5 rounded-full bg-red-600/80 hover:bg-red-600 text-white shadow-lg backdrop-blur-md transition-all opacity-0 group-hover:opacity-100"
-                  title="Delete this photo"
+                <div
+                  className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-1 bg-slate-950/90 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-white/15 shadow-2xl z-30"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <FaTrash size={14} />
-                </button>
+                  <span className="text-[10px] sm:text-xs font-bold text-white/60 uppercase tracking-wider hidden sm:inline">
+                    Order:
+                  </span>
+
+                  {/* Backward Icon Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleMoveImageOrder(currentIdx, -1)}
+                    disabled={currentIdx === 0}
+                    className="p-1.5 sm:px-2.5 sm:py-1 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-25 disabled:hover:bg-white/10 text-white text-xs font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer disabled:cursor-not-allowed"
+                    title="Move backward (shift earlier in album order)"
+                  >
+                    <FaArrowLeft size={11} />
+                    <span className="hidden sm:inline">Backward</span>
+                  </button>
+
+                  {/* Order Indicator */}
+                  <span className="px-2 py-0.5 rounded-lg bg-google-blue/20 text-google-blue border border-google-blue/30 text-[8px] sm:text-[11.3px] font-black min-w-[51px] text-center">
+                    {currentIdx + 1} / {images.length}
+                  </span>
+
+                  {/* Forward Icon Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleMoveImageOrder(currentIdx, 1)}
+                    disabled={currentIdx === images.length - 1}
+                    className="p-1.5 sm:px-2.5 sm:py-1 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-25 disabled:hover:bg-white/10 text-white text-xs font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer disabled:cursor-not-allowed"
+                    title="Move forward (shift later in album order)"
+                  >
+                    <span className="hidden sm:inline">Forward</span>
+                    <FaArrowRight size={11} />
+                  </button>
+
+                  {/* Delete Photo Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm('Delete this photo from the album?')) {
+                        onRemoveImage(album._id, images[currentIdx]);
+                        if (currentIdx >= images.length - 1) {
+                          setCurrentIdx(Math.max(0, images.length - 2));
+                        }
+                      }
+                    }}
+                    className="p-1.5 sm:p-2 rounded-xl bg-red-600/80 hover:bg-red-600 text-white transition-colors cursor-pointer"
+                    title="Delete this photo"
+                  >
+                    <FaTrash size={12} />
+                  </button>
+                </div>
               )}
             </div>
           ) : (
@@ -333,18 +418,22 @@ const AlbumModal = ({ album, onClose, isAdmin, onAddImage, onRemoveImage }) => {
             </div>
           )}
 
-          {/* Nav Buttons */}
+          {/* Nav Next / Prev Buttons */}
           {images.length > 1 && (
             <>
               <button
+                type="button"
                 onClick={handlePrev}
-                className="absolute left-2 md:left-6 p-3 rounded-full bg-white/10 hover:bg-white/25 text-white backdrop-blur-md transition-all"
+                className="absolute left-2 md:left-6 p-3 rounded-full bg-white/10 hover:bg-white/25 text-white backdrop-blur-md transition-all cursor-pointer"
+                title="Previous photo"
               >
                 <FaChevronLeft size={18} />
               </button>
               <button
+                type="button"
                 onClick={handleNext}
-                className="absolute right-2 md:right-6 p-3 rounded-full bg-white/10 hover:bg-white/25 text-white backdrop-blur-md transition-all"
+                className="absolute right-2 md:right-6 p-3 rounded-full bg-white/10 hover:bg-white/25 text-white backdrop-blur-md transition-all cursor-pointer"
+                title="Next photo"
               >
                 <FaChevronRight size={18} />
               </button>
@@ -352,21 +441,63 @@ const AlbumModal = ({ album, onClose, isAdmin, onAddImage, onRemoveImage }) => {
           )}
         </div>
 
-        {/* Thumbnail Filmstrip */}
+        {/* Thumbnail Filmstrip with Reorder Badges */}
         {images.length > 1 && (
           <div
-            className="flex justify-center gap-2 overflow-x-auto py-2 z-20"
+            data-lenis-prevent
+            className="flex justify-center gap-2 overflow-x-auto py-2 z-20 px-2 max-w-full no-scrollbar"
             onClick={(e) => e.stopPropagation()}
           >
             {images.map((img, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentIdx(idx)}
-                className={`w-14 h-14 rounded-xl overflow-hidden shrink-0 border-2 transition-all ${currentIdx === idx ? 'border-google-blue scale-105 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'
+              <div key={idx} className="relative group/thumb shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setCurrentIdx(idx)}
+                  className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden block border-2 transition-all cursor-pointer ${
+                    currentIdx === idx
+                      ? 'border-google-blue scale-105 shadow-lg'
+                      : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
-              >
-                <img src={img} alt="" className="w-full h-full object-cover" />
-              </button>
+                >
+                  <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                </button>
+
+                {/* Admin Backward/Forward Overlay Icons on Thumbnail */}
+                {isAdmin && (
+                  <div
+                    className="absolute inset-x-0 bottom-0 bg-black/85 backdrop-blur-xs flex items-center justify-between px-1 py-0.5 rounded-b-xl opacity-0 group-hover/thumb:opacity-100 transition-opacity z-10"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      disabled={idx === 0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMoveImageOrder(idx, -1);
+                      }}
+                      className="p-1 text-white hover:text-google-blue disabled:opacity-20 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                      title="Move backward (shift left)"
+                    >
+                      <FaChevronLeft size={9} />
+                    </button>
+                    <span className="text-[9px] font-bold text-white/90">
+                      {idx + 1}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={idx === images.length - 1}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMoveImageOrder(idx, 1);
+                      }}
+                      className="p-1 text-white hover:text-google-blue disabled:opacity-20 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                      title="Move forward (shift right)"
+                    >
+                      <FaChevronRight size={9} />
+                    </button>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}
@@ -467,28 +598,35 @@ const Gallery = () => {
     return filteredAlbums.slice(startIndex, startIndex + PAGE_SIZE);
   }, [filteredAlbums, currentPage, PAGE_SIZE]);
 
-  const fetchAlbums = async () => {
+  const fetchAlbums = async (showSkeleton = true) => {
     try {
-      setLoading(true);
-      const res = await api.gallery.getAll();
+      if (showSkeleton) setLoading(true);
+      const res = await api.gallery.getAll(true);
       if (res.success && res.data.length > 0) {
         setAlbums(res.data);
+        setSelectedAlbum((current) => {
+          if (!current?._id) return current;
+          const updatedCurrent = res.data.find((a) => a._id === current._id);
+          return updatedCurrent || current;
+        });
       } else {
-        // Fallback demo album
-        setAlbums([
-
-        ]);
+        setAlbums([]);
       }
     } catch (err) {
       console.warn('Fallback gallery data:', err);
     } finally {
-      setLoading(false);
+      if (showSkeleton) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchAlbums();
   }, []);
+
+  // Real-time zero-refresh instant updates whenever albums or photos change
+  useRealtimeSubscription('gallery', () => {
+    fetchAlbums(false);
+  });
 
   const handleOpenAdd = () => {
     setAlbumToEdit(null);
@@ -560,10 +698,53 @@ const Gallery = () => {
     }
   };
 
+  const handleReorderImages = async (albumId, newImages) => {
+    if (!albumId || !Array.isArray(newImages)) return;
+
+    // Optimistic UI state update
+    setSelectedAlbum((prev) => (prev ? { ...prev, images: newImages } : prev));
+    setAlbums((prev) =>
+      prev.map((a) => (a._id === albumId ? { ...a, images: newImages } : a))
+    );
+
+    if (albumId !== 'sample_1') {
+      try {
+        const res = await api.gallery.update(albumId, { images: newImages });
+        if (res.success && res.data) {
+          setSelectedAlbum(res.data);
+          setAlbums((prev) => prev.map((a) => (a._id === albumId ? res.data : a)));
+        }
+      } catch (err) {
+        console.error('Failed to update album images order:', err);
+      }
+    }
+  };
+
+  const handleSetCoverImage = async (albumId, imageUrl) => {
+    if (!albumId || !imageUrl) return;
+
+    setSelectedAlbum((prev) => (prev ? { ...prev, coverImage: imageUrl } : prev));
+    setAlbums((prev) =>
+      prev.map((a) => (a._id === albumId ? { ...a, coverImage: imageUrl } : a))
+    );
+
+    if (albumId !== 'sample_1') {
+      try {
+        const res = await api.gallery.update(albumId, { coverImage: imageUrl });
+        if (res.success && res.data) {
+          setSelectedAlbum(res.data);
+          setAlbums((prev) => prev.map((a) => (a._id === albumId ? res.data : a)));
+        }
+      } catch (err) {
+        console.error('Failed to update cover image:', err);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen pb-24">
       {/* Header Banner - Standardized across pages */}
-      <div className="relative bg-slate-50/70 dark:bg-slate-900/40 pt-15 pb-14 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden">
+      <div className="relative bg-slate-50/70 dark:bg-slate-900/40 pt-8 pb-10 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <motion.div
@@ -750,6 +931,8 @@ const Gallery = () => {
         isAdmin={isAdmin}
         onAddImage={handleAddImage}
         onRemoveImage={handleRemoveImage}
+        onReorderImages={handleReorderImages}
+        onSetCoverImage={handleSetCoverImage}
       />
 
       {/* Admin Modals */}

@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { FaEnvelope, FaMapMarkerAlt, FaDiscord, FaWhatsapp, FaChevronDown, FaChevronUp, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { FaEnvelope, FaMapMarkerAlt, FaDiscord, FaWhatsapp, FaChevronDown, FaChevronUp, FaCheckCircle, FaExclamationCircle, FaUserCheck, FaSignInAlt, FaLock } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../services/api';
 import usePageSEO from '../hooks/usePageSEO';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const FAQItem = ({ question, answer }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -44,6 +47,9 @@ const Contact = () => {
         path: '/contact',
     });
 
+    const { user, isAuthenticated } = useAuth();
+    const toast = useToast();
+
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
@@ -56,8 +62,35 @@ const Contact = () => {
     const [isSubjectOpen, setIsSubjectOpen] = useState(false);
     const subjects = ["General Inquiry", "Sponsorship", "Collaboration", "Report Issue"];
 
+    // Auto-fill form fields from registered user profile
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            const fullName = (user.name || '').trim();
+            const nameParts = fullName.split(/\s+/);
+            if (!firstName && nameParts[0]) {
+                setFirstName(user.firstName || nameParts[0]);
+            }
+            if (!lastName && nameParts.length > 1) {
+                setLastName(user.lastName || nameParts.slice(1).join(' '));
+            }
+            if (user.email) {
+                setEmail(user.email);
+            }
+        }
+    }, [isAuthenticated, user]);
+
     const handleFormSubmit = async (e) => {
         e.preventDefault();
+        
+        // If user is signed out, prompt them to sign in
+        if (!isAuthenticated || !user) {
+            toast.warning(
+                'Please sign in or create an account to send an inquiry to the GDG team.',
+                'Sign In Required'
+            );
+            return;
+        }
+
         setLoading(true);
         setSuccessMsg('');
         setErrorMsg('');
@@ -71,13 +104,12 @@ const Contact = () => {
             });
             if (res.success) {
                 setSuccessMsg('Thank you! Your message has been sent successfully to the GDG team.');
-                setFirstName('');
-                setLastName('');
-                setEmail('');
+                toast.success('Your message has been sent successfully to the GDG team.', 'Message Sent');
                 setMessage('');
             }
         } catch (err) {
             setErrorMsg(err.message || 'Failed to send message. Please try again.');
+            toast.error(err.message || 'Failed to send message. Please try again.', 'Submission Failed');
         } finally {
             setLoading(false);
         }
@@ -212,15 +244,32 @@ const Contact = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email Address *</label>
-                                <input 
-                                    type="email" 
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full px-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:border-google-blue focus:ring-1 focus:ring-google-blue transition-all" 
-                                    placeholder="john@example.com" 
-                                />
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
+                                    <span>Email Address *</span>
+                                </label>
+                                <div className="relative">
+                                    <input 
+                                        type="email" 
+                                        required
+                                        value={email}
+                                        onChange={(e) => !isAuthenticated && setEmail(e.target.value)}
+                                        readOnly={Boolean(isAuthenticated && user)}
+                                        className={`w-full px-4 py-3 rounded-lg border outline-none transition-all ${
+                                            isAuthenticated && user
+                                                ? 'bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed select-none pr-10'
+                                                : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:border-google-blue focus:ring-1 focus:ring-google-blue'
+                                        }`}
+                                        placeholder="john@example.com" 
+                                    />
+                                    {isAuthenticated && user && (
+                                        <div
+                                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                                            title="Email is linked to your registered profile and cannot be modified."
+                                        >
+                                            <FaLock size={13} />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="relative">

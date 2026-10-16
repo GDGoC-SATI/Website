@@ -22,6 +22,7 @@ import Pagination from '../components/common/Pagination';
 import { useDebounce } from '../hooks/useDebounce';
 import { usePageSEO } from '../hooks/usePageSEO';
 import { api } from '../services/api';
+import { useRealtimeSubscription } from '../context/RealtimeContext';
 import { EVENT_TYPES, FormattedDateTimeInput, LocationSelect, StatusSelect } from '../utils/formHelpers';
 import { autoFormatEventDescription } from '../components/common/StructuredDescription';
 import { CardSkeleton, ListItemSkeleton } from '../components/common/Skeleton';
@@ -478,9 +479,8 @@ const EventsTimelineJourney = ({
 
                     {/* Alternating Card + Connector Line */}
                     <div
-                      className={`absolute flex flex-col items-center ${
-                        isTop ? 'bottom-full mb-3' : 'top-full mt-3'
-                      }`}
+                      className={`absolute flex flex-col items-center ${isTop ? 'bottom-full mb-3' : 'top-full mt-3'
+                        }`}
                     >
                       <div
                         className="w-1 h-12"
@@ -782,9 +782,9 @@ const Events = () => {
   const PAGE_SIZE = 6;
 
   // Fetch events from MongoDB API on component mount
-  const fetchEvents = async () => {
+  const fetchEvents = async (showSkeleton = true) => {
     try {
-      setLoading(true);
+      if (showSkeleton) setLoading(true);
       const res = await api.events.getAll(true);
       if (res.success && Array.isArray(res.data) && res.data.length > 0) {
         const mapped = res.data.map((item) => ({
@@ -796,13 +796,18 @@ const Events = () => {
     } catch (err) {
       console.warn('API event fetch notice, using cached events:', err.message);
     } finally {
-      setLoading(false);
+      if (showSkeleton) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchEvents();
   }, []);
+
+  // Real-time zero-refresh instant updates whenever events change in DB
+  useRealtimeSubscription('events', () => {
+    fetchEvents(false);
+  });
 
   // Debounced search query prevents excessive recalculation and router thrashing
   const debouncedSearch = useDebounce(searchQuery, 250);
@@ -949,7 +954,7 @@ const Events = () => {
       />
 
       {/* Header Banner - Standardized across pages */}
-      <div className="relative bg-slate-50/70 dark:bg-slate-900/40 pt-15 pb-14 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden">
+      <div className="relative bg-slate-50/70 dark:bg-slate-900/40 pt-8 pb-10 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-google-blue/10 text-google-blue border border-google-blue/20 text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-4">
@@ -1018,9 +1023,8 @@ const Events = () => {
                   <span>{filterYear === 'All' ? 'All Years' : filterYear}</span>
                 </div>
                 <FaChevronDown
-                  className={`text-slate-400 transition-transform duration-200 ${
-                    isDropdownOpen ? 'rotate-180' : ''
-                  }`}
+                  className={`text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''
+                    }`}
                 />
               </button>
 
@@ -1038,11 +1042,10 @@ const Events = () => {
                           setFilterYear(year);
                           setIsDropdownOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${
-                          filterYear === year
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${filterYear === year
                             ? 'text-google-blue font-bold'
                             : 'text-slate-600 dark:text-slate-300'
-                        }`}
+                          }`}
                       >
                         {year === 'All' ? 'All Years' : year}
                       </button>

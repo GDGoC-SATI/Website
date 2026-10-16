@@ -45,7 +45,7 @@ const WhatWeDoCards = () => {
             icon: <FaBookReader />,
             title: "Study Jams",
             description: "Collaborative learning sessions where participants work through Google's training programs together.",
-            color: "bg-red-500"
+            color: "bg-orange-500"
         },
         {
             icon: <FaHeart />,

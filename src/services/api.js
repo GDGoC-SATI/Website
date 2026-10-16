@@ -177,6 +177,7 @@ export const api = {
     submit: (body) => request('/contact', { method: 'POST', body: JSON.stringify(body) }),
     getAll: () => request('/contact', { skipCache: true }),
     updateStatus: (id, status) => request(`/contact/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+    reply: (id, body) => request(`/contact/${id}/reply`, { method: 'POST', body: JSON.stringify(body) }),
     delete: (id) => request(`/contact/${id}`, { method: 'DELETE' }),
   },
 
@@ -190,8 +191,8 @@ export const api = {
 
   // Section configs
   sections: {
-    get: (key) => request(`/sections/${key}`, {}, 10 * 60 * 1000),
-    getAll: () => request('/sections', {}, 10 * 60 * 1000),
+    get: (key, skipCache = false) => request(`/sections/${key}`, { skipCache }, skipCache ? 0 : 10 * 60 * 1000),
+    getAll: (skipCache = false) => request('/sections', { skipCache }, skipCache ? 0 : 10 * 60 * 1000),
     update: (key, data) => request(`/sections/${key}`, { method: 'PUT', body: JSON.stringify(data) }),
   },
 

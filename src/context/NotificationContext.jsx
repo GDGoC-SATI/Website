@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { api } from '../services/api';
+import { useRealtimeSubscription } from './RealtimeContext';
 
 const NotificationContext = createContext();
 
@@ -82,10 +83,10 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [deletedIds, userId]);
 
-  // Fetch broadcasts from MongoDB via api.sections
+  // Fetch broadcasts from MongoDB via api.sections (with fresh cache bypass)
   const loadBroadcastsFromDB = useCallback(async () => {
     try {
-      const res = await api.sections.get('broadcast_notifications');
+      const res = await api.sections.get('broadcast_notifications', true);
       if (res?.success && res?.data?.data?.broadcasts) {
         const dbBroadcasts = res.data.data.broadcasts;
         setBroadcasts(dbBroadcasts);
@@ -97,9 +98,22 @@ export const NotificationProvider = ({ children }) => {
     }
   }, []);
 
+  // Sync on mount, when user changes, and periodically every 20 seconds / on window focus
   useEffect(() => {
     loadBroadcastsFromDB();
-  }, [loadBroadcastsFromDB]);
+    const interval = setInterval(loadBroadcastsFromDB, 20000);
+    const onFocus = () => loadBroadcastsFromDB();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [loadBroadcastsFromDB, userId]);
+
+  // Real-time zero-refresh instant updates whenever broadcasts or inquiry replies change in DB
+  useRealtimeSubscription(['sections', 'contact'], () => {
+    loadBroadcastsFromDB();
+  });
 
   // Welcome notification (only one single default for new users)
   const welcomeNotif = {
@@ -108,11 +122,33 @@ export const NotificationProvider = ({ children }) => {
   };
 
   // Compile full notifications for current user
+  // Private inquiry replies must ONLY appear for that particular user who sent the query and received the reply
   const allRawNotifications = [
-    ...broadcasts.map((b) => ({
-      ...b,
-      type: b.type || 'broadcast',
-    })),
+    ...broadcasts
+      .filter((b) => {
+        // Detect if this notification is an inquiry reply or targeted personal message
+        const isReply =
+          b.type === 'inquiry_reply' ||
+          Boolean(b.userEmail) ||
+          b.category?.toLowerCase().includes('inquiry') ||
+          b.category?.toLowerCase().includes('response');
+
+        if (isReply) {
+          // Strictly private: Only show if user is authenticated and their email matches the target recipient email
+          if (!isAuthenticated || !user?.email) return false;
+          if (!b.userEmail) return false; // If target email is missing or empty, do not leak to anyone
+          const normalizedUserEmail = user.email.trim().toLowerCase();
+          const normalizedTargetEmail = b.userEmail.trim().toLowerCase();
+          return normalizedUserEmail === normalizedTargetEmail;
+        }
+
+        // Public chapter-wide broadcast (no userEmail and not an inquiry reply)
+        return true;
+      })
+      .map((b) => ({
+        ...b,
+        type: b.type || (b.userEmail ? 'inquiry_reply' : 'broadcast'),
+      })),
     welcomeNotif,
   ];
 
