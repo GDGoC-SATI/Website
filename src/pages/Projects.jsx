@@ -16,7 +16,7 @@ import {
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { ItemEditorModal, DeleteConfirmModal } from '../components/admin/AdminModals';
-import { CardSkeleton } from '../components/common/Skeleton';
+import { CardSkeleton, ListItemSkeleton } from '../components/common/Skeleton';
 import ViewToggle from '../components/common/ViewToggle';
 import Pagination from '../components/common/Pagination';
 import { useDebounce } from '../hooks/useDebounce';
@@ -464,11 +464,19 @@ const Projects = () => {
         {/* Projects Showcase (List or Grid) */}
         <div className="mt-4">
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[1, 2, 3].map((n) => (
-                <CardSkeleton key={n} />
-              ))}
-            </div>
+            view === 'list' ? (
+              <div className="space-y-3">
+                {[1, 2, 3, 4].map((n) => (
+                  <ListItemSkeleton key={n} />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <CardSkeleton key={n} />
+                ))}
+              </div>
+            )
           ) : filteredProjects.length > 0 ? (
             view === 'list' ? (
               <div className="space-y-3">

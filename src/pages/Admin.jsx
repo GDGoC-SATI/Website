@@ -26,11 +26,9 @@ import {
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { useNotifications } from '../context/NotificationContext';
 import { useToast } from '../context/ToastContext';
-import { TableSkeleton, AdminSkeleton } from '../components/common/Skeleton';
+import { TableSkeleton, AdminSkeleton, ListItemSkeleton } from '../components/common/Skeleton';
 import { UserAvatar } from '../utils/avatarHelper';
-import ViewToggle from '../components/common/ViewToggle';
 import usePageSEO from '../hooks/usePageSEO';
 
 const Admin = () => {
@@ -805,7 +803,11 @@ const Admin = () => {
         {activeTab === 'requests' && (
           <div>
             {loading ? (
-              <TableSkeleton rows={4} />
+              <div className="space-y-3">
+                {[1, 2, 3, 4].map((n) => (
+                  <ListItemSkeleton key={n} />
+                ))}
+              </div>
             ) : filteredRequests.length > 0 ? (
               view === 'list' ? (
                 <div className="space-y-3">
@@ -1023,7 +1025,11 @@ const Admin = () => {
             </div>
 
             {loading ? (
-              <TableSkeleton rows={4} />
+              <div className="space-y-3">
+                {[1, 2, 3, 4].map((n) => (
+                  <ListItemSkeleton key={n} />
+                ))}
+              </div>
             ) : filteredQueries.length > 0 ? (
               view === 'list' ? (
                 <div className="space-y-3">
