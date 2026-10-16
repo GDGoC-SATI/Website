@@ -25,6 +25,8 @@ import {
   LocationSelect,
   StatusSelect,
 } from '../utils/formHelpers';
+import { StructuredDescription, autoFormatEventDescription } from '../components/common/StructuredDescription';
+import { EventDetailsSkeleton } from '../components/common/Skeleton';
 
 // Google Brand Colors for timeline nodes
 const GOOGLE_COLORS = [
@@ -125,11 +127,7 @@ const EventDetails = () => {
   });
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-4 border-google-blue border-t-transparent animate-spin" />
-      </div>
-    );
+    return <EventDetailsSkeleton />;
   }
 
   if (!event) {
@@ -246,8 +244,8 @@ const EventDetails = () => {
                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   About this event
                 </h2>
-                <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line text-xs sm:text-sm md:text-base break-words">
-                  {event.description}
+                <div className="max-w-none text-slate-600 dark:text-slate-300 leading-relaxed text-xs sm:text-sm md:text-base break-words">
+                  <StructuredDescription content={event.description} />
                 </div>
               </div>
 
@@ -333,9 +331,7 @@ const EventDetails = () => {
                           </div>
 
                           {/* Activity Description */}
-                          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line break-words">
-                            {activity.description}
-                          </p>
+                          <StructuredDescription content={activity.description} />
 
                           {/* Card Link / Action */}
                           {activity.originalUrl && (
@@ -367,8 +363,8 @@ const EventDetails = () => {
                   <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     About this event
                   </h2>
-                  <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line text-xs sm:text-sm md:text-base break-words">
-                    {event.description}
+                  <div className="max-w-none text-slate-600 dark:text-slate-300 leading-relaxed text-xs sm:text-sm md:text-base break-words">
+                    <StructuredDescription content={event.description} />
                   </div>
                 </div>
 
@@ -521,13 +517,29 @@ const EventDetails = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Description
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Description
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        description: autoFormatEventDescription(formData.description),
+                      })
+                    }
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-semibold text-google-blue hover:text-white bg-blue-50 hover:bg-google-blue dark:bg-blue-950/40 dark:hover:bg-google-blue border border-blue-200 dark:border-blue-800 rounded-lg transition-all shadow-xs"
+                    title="Automatically organize pasted text into clean sections, bullet points, and key details"
+                  >
+                    <span>✨ Auto-Structure Text</span>
+                  </button>
+                </div>
                 <textarea
                   rows={4}
                   value={formData.description || ''}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Paste event overview, tracks, highlights, or schedule..."
                   className="w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white outline-none focus:border-google-blue"
                 />
               </div>
@@ -648,9 +660,24 @@ const EventDetails = () => {
                         </div>
 
                         <div>
-                          <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
-                            Activity Description
-                          </label>
+                          <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                            <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                              Activity Description
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleUpdateTimelineItem(
+                                  index,
+                                  'description',
+                                  autoFormatEventDescription(item.description)
+                                )
+                              }
+                              className="text-[10px] font-semibold text-google-blue hover:underline"
+                            >
+                              ✨ Auto-Structure
+                            </button>
+                          </div>
                           <textarea
                             rows={2}
                             value={item.description || ''}

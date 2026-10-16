@@ -23,6 +23,8 @@ import { useDebounce } from '../hooks/useDebounce';
 import { usePageSEO } from '../hooks/usePageSEO';
 import { api } from '../services/api';
 import { EVENT_TYPES, FormattedDateTimeInput, LocationSelect, StatusSelect } from '../utils/formHelpers';
+import { autoFormatEventDescription } from '../components/common/StructuredDescription';
+import { CardSkeleton, ListItemSkeleton } from '../components/common/Skeleton';
 
 // --- Exact FluxWave Curve Generators ---
 const generateHorizontalWave = (totalUnits = 3000) => {
@@ -706,13 +708,29 @@ const EventModal = ({ event, onClose, onSave, isNew = false }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Full Description
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Full Description
+              </label>
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    description: autoFormatEventDescription(formData.description),
+                  })
+                }
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-semibold text-google-blue hover:text-white bg-blue-50 hover:bg-google-blue dark:bg-blue-950/40 dark:hover:bg-google-blue border border-blue-200 dark:border-blue-800 rounded-lg transition-all shadow-xs"
+                title="Automatically organize pasted text into clean sections, bullet points, and key details"
+              >
+                <span>✨ Auto-Structure Text</span>
+              </button>
+            </div>
             <textarea
               rows={4}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Paste event overview, tracks, highlights, or schedule..."
               className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white outline-none focus:border-google-blue"
             />
           </div>
@@ -1036,7 +1054,23 @@ const Events = () => {
       </div>
 
       {/* Content: List View vs Grid View (Timeline) */}
-      {filteredEvents.length === 0 ? (
+      {loading && events.length === 0 ? (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {view === 'list' ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((n) => (
+                <ListItemSkeleton key={n} />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[1, 2, 3, 4, 5, 6].map((n) => (
+                <CardSkeleton key={n} />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : filteredEvents.length === 0 ? (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
             <p className="text-base text-slate-500 dark:text-slate-400">
