@@ -26,9 +26,11 @@ import {
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import { useToast } from '../context/ToastContext';
 import { TableSkeleton, AdminSkeleton, ListItemSkeleton } from '../components/common/Skeleton';
 import { UserAvatar } from '../utils/avatarHelper';
+import ViewToggle from '../components/common/ViewToggle';
 import usePageSEO from '../hooks/usePageSEO';
 
 const Admin = () => {
