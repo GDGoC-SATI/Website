@@ -14,7 +14,8 @@ import {
   FaPlus,
   FaTrash,
 } from 'react-icons/fa';
-import { getEventById } from '../data/eventsData';
+import { getEventById, saveOrUpdateEvent } from '../data/eventsData';
+import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import usePageSEO from '../hooks/usePageSEO';
 import {
@@ -40,6 +41,7 @@ const EventDetails = () => {
   // Find event directly or via sub-activity match
   const initialEvent = getEventById(id);
   const [event, setEvent] = useState(initialEvent);
+  const [loading, setLoading] = useState(!initialEvent);
   const [isEditing, setIsEditing] = useState(false);
 
   // Form State for editing full content (including timeline sub-events)
@@ -48,6 +50,7 @@ const EventDetails = () => {
       ? {
         title: initialEvent.title || '',
         type: initialEvent.type || 'Workshop',
+        status: initialEvent.status || 'Planning',
         date: initialEvent.date || '',
         location: initialEvent.location || '',
         description: initialEvent.description || '',
@@ -59,20 +62,60 @@ const EventDetails = () => {
   );
 
   useEffect(() => {
-    const found = getEventById(id);
-    setEvent(found);
-    if (found) {
-      setFormData({
-        title: found.title || '',
-        type: found.type || 'Workshop',
-        date: found.date || '',
-        location: found.location || '',
-        description: found.description || '',
-        imageUrl: found.imageUrl || '',
-        originalUrl: found.originalUrl || '',
-        timeline: found.timeline ? JSON.parse(JSON.stringify(found.timeline)) : [],
-      });
-    }
+    let isMounted = true;
+
+    const loadEvent = async () => {
+      // 1. Initial local lookup
+      const local = getEventById(id);
+      if (local && isMounted) {
+        setEvent(local);
+        setFormData({
+          title: local.title || '',
+          type: local.type || 'Workshop',
+          status: local.status || 'Planning',
+          date: local.date || '',
+          location: local.location || '',
+          description: local.description || '',
+          imageUrl: local.imageUrl || '',
+          originalUrl: local.originalUrl || '',
+          timeline: local.timeline ? JSON.parse(JSON.stringify(local.timeline)) : [],
+        });
+        setLoading(false);
+      }
+
+      // 2. Fresh fetch from backend MongoDB API
+      try {
+        const res = await api.events.getBySlug(id);
+        if (res?.success && res?.data && isMounted) {
+          const apiEvt = {
+            ...res.data,
+            id: res.data.slug || res.data.id || res.data._id,
+          };
+          setEvent(apiEvt);
+          saveOrUpdateEvent(apiEvt);
+          setFormData({
+            title: apiEvt.title || '',
+            type: apiEvt.type || 'Workshop',
+            status: apiEvt.status || 'Planning',
+            date: apiEvt.date || '',
+            location: apiEvt.location || '',
+            description: apiEvt.description || '',
+            imageUrl: apiEvt.imageUrl || '',
+            originalUrl: apiEvt.originalUrl || '',
+            timeline: apiEvt.timeline ? JSON.parse(JSON.stringify(apiEvt.timeline)) : [],
+          });
+        }
+      } catch (err) {
+        console.warn('API event fetch notice:', err.message);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadEvent();
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   usePageSEO({
@@ -81,18 +124,37 @@ const EventDetails = () => {
     path: `/events/${id}`,
   });
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-4 border-google-blue border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
   if (!event) {
     return <Navigate to="/events" replace />;
   }
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    setEvent({
+    const updated = {
       ...event,
       ...formData,
       timeline: formData.timeline || [],
-    });
+    };
+    setEvent(updated);
+    saveOrUpdateEvent(updated);
     setIsEditing(false);
+
+    try {
+      const targetId = event._id || event.id || event.slug;
+      if (targetId) {
+        await api.events.update(targetId, updated);
+      }
+    } catch (err) {
+      console.error('Failed to sync event update to MongoDB:', err);
+    }
   };
 
   // Timeline sub-event management handlers for admin edit modal
