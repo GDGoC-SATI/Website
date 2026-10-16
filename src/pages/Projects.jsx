@@ -21,6 +21,7 @@ import ViewToggle from '../components/common/ViewToggle';
 import Pagination from '../components/common/Pagination';
 import { useDebounce } from '../hooks/useDebounce';
 import { usePageSEO } from '../hooks/usePageSEO';
+import { useRealtimeSubscription } from '../context/RealtimeContext';
 
 const ProjectListItem = memo(({ project, isAdmin, onEdit, onDelete }) => {
   const { title, description, techStack, links, image } = project;
@@ -296,23 +297,28 @@ const Projects = () => {
     return filteredProjects.slice(startIndex, startIndex + PAGE_SIZE);
   }, [filteredProjects, currentPage]);
 
-  const fetchProjects = async () => {
+  const fetchProjects = async (showSkeleton = true) => {
     try {
-      setLoading(true);
-      const res = await api.projects.getAll();
+      if (showSkeleton) setLoading(true);
+      const res = await api.projects.getAll(true);
       if (res.success) {
         setProjects(res.data);
       }
     } catch (err) {
       console.error('Failed to load projects:', err);
     } finally {
-      setLoading(false);
+      if (showSkeleton) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchProjects();
   }, []);
+
+  // Real-time zero-refresh instant updates whenever projects change in DB
+  useRealtimeSubscription('projects', () => {
+    fetchProjects(false);
+  });
 
   const scrollToRequestForm = () => {
     requestSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -388,7 +394,7 @@ const Projects = () => {
   return (
     <div className="min-h-screen pb-24">
       {/* Header Banner - Standardized across pages */}
-      <div className="relative bg-slate-50/70 dark:bg-slate-900/40 pt-15 pb-14 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden">
+      <div className="relative bg-slate-50/70 dark:bg-slate-900/40 pt-8 pb-10 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <motion.div

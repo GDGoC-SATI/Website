@@ -84,10 +84,10 @@ export const ToastProvider = ({ children }) => {
     <ToastContext.Provider value={toast}>
       {children}
 
-      {/* Professional Toast Notifications Container - Bottom Right */}
+      {/* Professional Toast Notifications Container - Top Right */}
       <div
         aria-live="polite"
-        className="fixed bottom-6 right-6 z-[9999] flex flex-col-reverse gap-3 pointer-events-none max-w-sm sm:max-w-md w-full px-4 sm:px-0"
+        className="fixed top-20 right-4 sm:right-6 z-[9999] flex flex-col gap-3 pointer-events-none max-w-sm sm:max-w-md w-full px-4 sm:px-0"
       >
         <AnimatePresence mode="popLayout">
           {toasts.map((t) => {
@@ -96,7 +96,7 @@ export const ToastProvider = ({ children }) => {
               <motion.div
                 key={t.id}
                 layout
-                initial={{ opacity: 0, y: 30, scale: 0.9, x: 20 }}
+                initial={{ opacity: 0, y: -20, scale: 0.95, x: 20 }}
                 animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
                 exit={{ opacity: 0, x: 60, scale: 0.9, transition: { duration: 0.2 } }}
                 transition={{ type: 'spring', stiffness: 350, damping: 25 }}

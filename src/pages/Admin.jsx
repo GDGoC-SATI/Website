@@ -22,16 +22,20 @@ import {
   FaSearch,
   FaBullhorn,
   FaPaperPlane,
+  FaReply,
+  FaTimes,
 } from 'react-icons/fa';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useToast } from '../context/ToastContext';
+import { useRealtimeSubscription } from '../context/RealtimeContext';
 import { TableSkeleton, AdminSkeleton, ListItemSkeleton } from '../components/common/Skeleton';
 import { UserAvatar } from '../utils/avatarHelper';
 import ViewToggle from '../components/common/ViewToggle';
 import usePageSEO from '../hooks/usePageSEO';
+import StructuredBroadcast from '../components/common/StructuredBroadcast';
 
 const Admin = () => {
   usePageSEO({
@@ -46,6 +50,7 @@ const Admin = () => {
     broadcasts = [],
     sendBroadcastNotification,
     deleteBroadcastNotification,
+    refreshNotifications,
   } = useNotifications();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -100,8 +105,12 @@ const Admin = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [notification, setNotification] = useState('');
 
-  // Contact Query Filter
+  // Contact Query Filter & Reply State
   const [queryFilter, setQueryFilter] = useState('all');
+  const [replyModalQuery, setReplyModalQuery] = useState(null);
+  const [replySubject, setReplySubject] = useState('');
+  const [replyText, setReplyText] = useState('');
+  const [replySending, setReplySending] = useState(false);
 
   // Search & Broadcast Notifications State
   const qFromUrl = searchParams.get('q') || '';
@@ -181,12 +190,12 @@ const Admin = () => {
   };
 
   // Load Dashboard Data when Admin is authenticated
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (showSkeleton = true) => {
     if (!isAdmin) return;
     try {
-      setLoading(true);
+      if (showSkeleton) setLoading(true);
       const [statsRes, requestsRes, queriesRes, usersRes] = await Promise.all([
-        api.stats.getDashboardStats().catch(() => ({ success: false })),
+        api.stats.getDashboardStats(true).catch(() => ({ success: false })),
         api.projects.getRequests().catch(() => ({ success: false })),
         api.contact.getAll().catch(() => ({ success: false })),
         api.stats.getUsers().catch(() => ({ success: false })),
@@ -199,7 +208,7 @@ const Admin = () => {
     } catch (err) {
       console.error('Error fetching admin data:', err);
     } finally {
-      setLoading(false);
+      if (showSkeleton) setLoading(false);
     }
   };
 
@@ -211,6 +220,11 @@ const Admin = () => {
       setLoading(false);
     }
   }, [isAdmin, authLoading]);
+
+  // Real-time zero-refresh instant updates whenever inquiries, project requests, or sections update
+  useRealtimeSubscription(['contact', 'projectRequests', 'projects', 'sections', 'events'], () => {
+    fetchDashboardData(false);
+  });
 
   const showToast = (msg, type = 'success') => {
     setNotification(msg);
@@ -318,6 +332,74 @@ const Admin = () => {
       await fetchDashboardData();
     } catch (err) {
       showToast(err.message || 'Failed to delete inquiry');
+    }
+  };
+
+  // Inquiry Reply Handlers (Avyukt-style)
+  const handleOpenReplyModal = (q) => {
+    setReplyModalQuery(q);
+    const rawSubject = (q.subject || 'General Inquiry').trim();
+    const autoSub = rawSubject.toLowerCase().startsWith('re:')
+      ? rawSubject
+      : `Re: ${rawSubject} - GDG on Campus SATI Vidisha`;
+    setReplySubject(autoSub);
+    setReplyText(q.adminReply || '');
+  };
+
+  const handleSendInquiryReply = async (e) => {
+    if (e) e.preventDefault();
+    if (!replyModalQuery) return;
+    const trimmed = replyText.trim();
+    if (!trimmed) {
+      showToast('Please enter a response message for the member.');
+      return;
+    }
+
+    setReplySending(true);
+    try {
+      const res = await api.contact.reply(replyModalQuery._id, {
+        replyMessage: trimmed,
+        subject: replySubject.trim(),
+        adminName: user?.name || 'GDG on Campus SATI Core Team',
+      });
+
+      // Update queries list locally
+      setQueries((prev) =>
+        prev.map((item) =>
+          item._id === replyModalQuery._id
+            ? {
+                ...item,
+                status: 'replied',
+                adminReply: trimmed,
+                repliedAt: new Date().toISOString(),
+                adminName: user?.name || 'GDG on Campus SATI Core Team',
+              }
+            : item
+        )
+      );
+
+      if (typeof refreshNotifications === 'function') {
+        await refreshNotifications();
+      }
+
+      if (res?.emailStatus?.sent) {
+        showToast(
+          `Reply sent to ${replyModalQuery.firstName}! Email delivered & in-app notification posted.`,
+          'success'
+        );
+      } else {
+        showToast(
+          `Reply posted to notifications! ${res?.emailStatus?.error ? `(Email error: ${res.emailStatus.error})` : ''}`,
+          'info'
+        );
+      }
+      setReplyModalQuery(null);
+      setReplyText('');
+      await fetchDashboardData();
+    } catch (err) {
+      showToast('Failed to send reply: ' + (err.message || 'Error occurred'));
+    } finally {
+      setReplySending(false);
     }
   };
 
@@ -1069,32 +1151,43 @@ const Admin = () => {
                         <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
                           {q.message}
                         </p>
+                        {q.adminReply && (
+                          <div className="mt-2 p-2.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-900/40 text-[11px]">
+                            <div className="flex items-center justify-between text-google-blue font-bold text-[10px] mb-1">
+                              <span className="flex items-center gap-1">
+                                <FaCheckCircle size={10} className="text-emerald-500" /> Replied by {q.adminName || 'Admin'}:
+                              </span>
+                              <span className="text-slate-400 font-normal">
+                                {q.repliedAt ? new Date(q.repliedAt).toLocaleDateString() : 'Replied'}
+                              </span>
+                            </div>
+                            <StructuredBroadcast message={q.adminReply} compact={true} />
+                          </div>
+                        )}
                       </div>
 
                       {/* Action buttons (Mark read / Reply) */}
-                      {(q.status === 'unread' || q.status !== 'replied') && (
-                        <div className="flex items-center gap-2 shrink-0 sm:mr-10 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800 w-full sm:w-auto">
-                          {q.status === 'unread' && (
-                            <button
-                              onClick={() => handleUpdateQueryStatus(q._id, 'read')}
-                              className="px-2.5 py-1 text-xs font-semibold bg-google-blue/10 text-google-blue hover:bg-google-blue hover:text-white rounded-lg transition-colors"
-                            >
-                              Mark Read
-                            </button>
-                          )}
-                          {q.status !== 'replied' && (
-                            <a
-                              href={`mailto:${q.email}?subject=Re: ${encodeURIComponent(
-                                q.subject
-                              )} - GDG SATI`}
-                              onClick={() => handleUpdateQueryStatus(q._id, 'replied')}
-                              className="px-2.5 py-1 text-xs font-semibold bg-green-500/10 text-green-600 hover:bg-green-600 hover:text-white rounded-lg transition-colors flex items-center gap-1"
-                            >
-                              <FaEnvelope size={10} /> Reply
-                            </a>
-                          )}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2 shrink-0 sm:mr-10 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800 w-full sm:w-auto">
+                        {q.status === 'unread' && (
+                          <button
+                            onClick={() => handleUpdateQueryStatus(q._id, 'read')}
+                            className="px-2.5 py-1 text-xs font-semibold bg-google-blue/10 text-google-blue hover:bg-google-blue hover:text-white rounded-lg transition-colors cursor-pointer"
+                          >
+                            Mark Read
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenReplyModal(q)}
+                          className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
+                            q.status === 'replied'
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white'
+                              : 'bg-google-blue/10 text-google-blue hover:bg-google-blue hover:text-white'
+                          }`}
+                        >
+                          <FaReply size={10} /> {q.status === 'replied' ? 'View / Follow-up' : 'Reply'}
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1111,7 +1204,7 @@ const Admin = () => {
                       {/* Delete Icon at Top Right End Inside Card */}
                       <button
                         onClick={() => handleDeleteQuery(q._id)}
-                        className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors z-10"
+                        className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors z-10 cursor-pointer"
                         title="Delete Query"
                       >
                         <FaTrash size={12} />
@@ -1126,14 +1219,16 @@ const Admin = () => {
                             <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                               {q.subject}
                             </span>
+                            {q.status === 'replied' && (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                <FaCheckCircle size={10} /> Replied
+                              </span>
+                            )}
                           </div>
                           <p className="text-xs text-slate-400 mt-0.5">
-                            <a
-                              href={`mailto:${q.email}`}
-                              className="text-google-blue hover:underline"
-                            >
+                            <span className="text-google-blue font-medium">
                               {q.email}
-                            </a>{' '}
+                            </span>{' '}
                             • {new Date(q.createdAt).toLocaleString()}
                           </p>
                         </div>
@@ -1142,28 +1237,43 @@ const Admin = () => {
                           {q.status === 'unread' && (
                             <button
                               onClick={() => handleUpdateQueryStatus(q._id, 'read')}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-google-blue/10 text-google-blue hover:bg-google-blue hover:text-white transition-colors"
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-google-blue/10 text-google-blue hover:bg-google-blue hover:text-white transition-colors cursor-pointer"
                             >
                               Mark Read
                             </button>
                           )}
-                          {q.status !== 'replied' && (
-                            <a
-                              href={`mailto:${q.email}?subject=Re: ${encodeURIComponent(
-                                q.subject
-                              )} - GDG SATI`}
-                              onClick={() => handleUpdateQueryStatus(q._id, 'replied')}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-500/10 text-green-600 hover:bg-green-600 hover:text-white transition-colors flex items-center gap-1"
-                            >
-                              <FaEnvelope size={10} /> Reply via Email
-                            </a>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenReplyModal(q)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer ${
+                              q.status === 'replied'
+                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white'
+                                : 'bg-google-blue/10 text-google-blue hover:bg-google-blue hover:text-white'
+                            }`}
+                          >
+                            <FaReply size={11} /> {q.status === 'replied' ? 'View / Follow-up' : 'Reply via Email & In-App'}
+                          </button>
                         </div>
                       </div>
 
                       <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl whitespace-pre-wrap">
                         {q.message}
                       </p>
+
+                      {q.adminReply && (
+                        <div className="mt-3 p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-900/40 text-xs">
+                          <div className="flex items-center justify-between text-google-blue font-bold text-xs mb-2 pb-1.5 border-b border-blue-200/40 dark:border-blue-900/40">
+                            <span className="flex items-center gap-1.5">
+                              <FaCheckCircle size={12} className="text-emerald-500" />
+                              Official Response Dispatched ({q.adminName || 'GDG SATI Team'})
+                            </span>
+                            <span className="text-[11px] text-slate-400 font-normal">
+                              {q.repliedAt ? new Date(q.repliedAt).toLocaleString() : 'Replied'}
+                            </span>
+                          </div>
+                          <StructuredBroadcast message={q.adminReply} />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1279,6 +1389,17 @@ const Admin = () => {
                     onChange={(e) => setBroadcastMessage(e.target.value)}
                     className="w-full p-4 rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-google-blue leading-relaxed"
                   />
+                  {broadcastMessage.trim() && (
+                    <div className="mt-3 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-slate-700">
+                      <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-200/60 dark:border-slate-700/60">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-google-blue flex items-center gap-1.5">
+                          <FaBullhorn size={11} /> Live Formatted Preview
+                        </span>
+                    
+                      </div>
+                      <StructuredBroadcast message={broadcastMessage} />
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex justify-end pt-2">
@@ -1307,7 +1428,7 @@ const Admin = () => {
                   {filteredBroadcasts.map((b) => (
                     <div
                       key={b.id}
-                      className="relative p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 overflow-hidden"
+                      className="relative p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex flex-col items-start justify-between gap-3 overflow-hidden"
                     >
                       {/* Delete Icon at Top Right End Inside Card */}
                       <button
@@ -1318,9 +1439,9 @@ const Admin = () => {
                         <FaTrash size={12} />
                       </button>
 
-                      <div className="min-w-0 flex-1 pr-10 sm:pr-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-xs font-bold text-slate-900 dark:text-white">
+                      <div className="min-w-0 w-full pr-10">
+                        <div className="flex items-center gap-2 flex-wrap mb-2">
+                          <span className="text-sm font-bold text-slate-900 dark:text-white">
                             {b.title}
                           </span>
                           <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-google-blue/10 text-google-blue">
@@ -1330,9 +1451,9 @@ const Admin = () => {
                             {b.date || 'Today'} • {b.timestamp}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
-                          {b.message}
-                        </p>
+                        <div className="text-xs text-slate-600 dark:text-slate-300">
+                          <StructuredBroadcast message={b.message} />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1342,6 +1463,197 @@ const Admin = () => {
           </div>
         )}
       </div>
+
+      {/* Inquiry Reply Modal (Avyukt-style) */}
+      <AnimatePresence>
+        {replyModalQuery && (
+          <div data-lenis-prevent className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 max-w-2xl w-full shadow-2xl overflow-hidden relative my-8 max-h-[90vh] flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3 mb-5 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-google-blue/10 text-google-blue flex items-center justify-center shrink-0">
+                    <FaReply size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">
+                      Reply to Member Inquiry
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Dispatches in-app notification & delivers official Gmail response
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!replySending) setReplyModalQuery(null);
+                  }}
+                  className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                  title="Close"
+                >
+                  <FaTimes size={16} />
+                </button>
+              </div>
+
+              {/* Scrollable Form Body */}
+              <div className="overflow-y-auto space-y-4 pr-1 flex-1">
+                {/* Recipient Overview */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl text-xs space-y-1.5 border border-slate-100 dark:border-slate-800">
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-300">
+                    <span>Recipient Member:</span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      {replyModalQuery.firstName} {replyModalQuery.lastName}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-300">
+                    <span>Email Address:</span>
+                    <span className="font-semibold text-google-blue">
+                      {replyModalQuery.email}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-300">
+                    <span>Category / Topic:</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                      {replyModalQuery.subject || 'General Inquiry'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Original Inquiry Quote Card */}
+                <div className="border border-slate-200/80 dark:border-slate-800 p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/30">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-google-blue mb-1">
+                    Original Inquiry:
+                  </p>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 italic leading-relaxed">
+                    &ldquo;{replyModalQuery.message}&rdquo;
+                  </p>
+                </div>
+
+                {/* Auto-Analyzed Subject Field */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Email &amp; In-App Notification Subject <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={replySubject}
+                    onChange={(e) => setReplySubject(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-google-blue transition-all"
+                    placeholder="Enter email subject..."
+                  />
+                </div>
+
+                {/* Quick Response Templates */}
+                <div>
+                  <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+                    Quick Response Templates:
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplyText(
+                          `Dear ${replyModalQuery.firstName},\n\nThank you for reaching out to GDG on Campus SATI Vidisha. Our core organizing team has reviewed your query and we are happy to assist you.\n\nPlease feel free to connect with our team on our WhatsApp community or reply to this message if you have any follow-up questions.\n\nWarm regards,\nGDG on Campus SATI Core Team`
+                        );
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-blue-500/10 text-google-blue hover:bg-blue-500/20 transition-colors cursor-pointer"
+                    >
+                      General Assistance
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplyText(
+                          `Dear ${replyModalQuery.firstName},\n\nThank you for inquiring about our upcoming events and workshops! All schedule announcements and RSVPs are hosted on our official Events portal: https://gdgocsati.vercel.app/events\n\nBe sure to RSVP early to secure your certificate and workshop seat.\n\nBest regards,\nGDG SATI Organizing Team`
+                        );
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                    >
+                      Events &amp; Workshops
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplyText(
+                          `Dear ${replyModalQuery.firstName},\n\nThank you for your interest in collaborating with GDG on Campus SATI Vidisha! We are always eager to partner with passionate developers, speakers, and student communities.\n\nPlease share your proposed topic or collaboration outline with us so we can coordinate the next steps.\n\nBest regards,\nGDG SATI Lead`
+                        );
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors cursor-pointer"
+                    >
+                      Collaboration &amp; Speaker
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplyText(
+                          `Dear ${replyModalQuery.firstName},\n\nThank you for expressing interest in supporting GDG on Campus SATI Vidisha. We welcome organizations and sponsors dedicated to empowering campus engineers with tools and mentorship.\n\nWe will get back to you with our sponsorship brochure and partnership details shortly.\n\nWarm regards,\nGDG SATI Organizing Committee`
+                        );
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                    >
+                      Sponsorship &amp; Partners
+                    </button>
+                  </div>
+                </div>
+
+                {/* Reply Textarea */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Your Response Message <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    rows={5}
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder={`Write a structured response to ${replyModalQuery.firstName}... (links, phone numbers and formatting will be auto-interactive)`}
+                    className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-google-blue transition-all resize-none leading-relaxed"
+                  />
+                </div>
+
+             
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="flex items-center justify-end gap-3 mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
+                <button
+                  type="button"
+                  disabled={replySending}
+                  onClick={() => setReplyModalQuery(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={replySending || !replyText.trim()}
+                  onClick={handleSendInquiryReply}
+                  className="px-5 py-2.5 bg-google-blue text-white rounded-xl text-xs font-bold hover:bg-blue-600 transition-all flex items-center gap-2 shadow-md shadow-google-blue/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {replySending ? (
+                    <>
+                      <FaSync size={11} className="animate-spin" />
+                      <span>Dispatching Reply...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaPaperPlane size={11} />
+                      <span>Send Reply</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

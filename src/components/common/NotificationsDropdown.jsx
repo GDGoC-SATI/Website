@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FaCheckDouble, FaBell, FaCircle } from 'react-icons/fa';
 import { useNotifications } from '../../context/NotificationContext';
+import StructuredBroadcast from './StructuredBroadcast';
 
 const NotificationsDropdown = ({ isOpen, onClose }) => {
   const dropdownRef = useRef(null);
@@ -27,6 +28,7 @@ const NotificationsDropdown = ({ isOpen, onClose }) => {
     <AnimatePresence>
       <motion.div
         ref={dropdownRef}
+        data-lenis-prevent
         initial={{ opacity: 0, y: 10, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 10, scale: 0.96 }}
@@ -84,9 +86,14 @@ const NotificationsDropdown = ({ isOpen, onClose }) => {
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-snug line-clamp-2">
+                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 line-clamp-1 mb-0.5">
                     {notif.title}
-                  </p>
+                  </h4>
+                  {notif.message && notif.message !== notif.title && (
+                    <div className="line-clamp-2">
+                      <StructuredBroadcast message={notif.message} compact={true} />
+                    </div>
+                  )}
                 </div>
               </div>
             ))

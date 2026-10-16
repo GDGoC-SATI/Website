@@ -12,10 +12,12 @@ import {
   FaProjectDiagram,
   FaInfoCircle,
   FaCheckCircle,
+  FaEnvelope,
 } from 'react-icons/fa';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useNotifications } from '../context/NotificationContext';
 import usePageSEO from '../hooks/usePageSEO';
+import StructuredBroadcast from '../components/common/StructuredBroadcast';
 
 const Notifications = () => {
   usePageSEO({
@@ -81,6 +83,13 @@ const Notifications = () => {
   const categories = [
     { id: 'all', label: 'All Notifications', count: notifications.length },
     {
+      id: 'replies',
+      label: 'Inquiry Replies',
+      count: notifications.filter(
+        (n) => n.type === 'inquiry_reply' || n.category?.toLowerCase().includes('inquiry') || n.category?.toLowerCase().includes('response')
+      ).length,
+    },
+    {
       id: 'broadcast',
       label: 'Broadcasts & Announcements',
       count: notifications.filter(
@@ -103,6 +112,10 @@ const Notifications = () => {
   const filteredNotifications = notifications.filter((item) => {
     // Category filter
     if (activeCategory === 'unread' && !item.unread) return false;
+    if (activeCategory === 'replies') {
+      const isR = item.type === 'inquiry_reply' || item.category?.toLowerCase().includes('inquiry') || item.category?.toLowerCase().includes('response');
+      if (!isR) return false;
+    }
     if (activeCategory === 'broadcast') {
       const isB = item.type === 'broadcast' || item.category?.toLowerCase().includes('announcement') || item.category?.toLowerCase().includes('broadcast');
       if (!isB) return false;
@@ -130,6 +143,13 @@ const Notifications = () => {
 
   const getCategoryTheme = (category = '', type = '') => {
     const c = category.toLowerCase();
+    if (type === 'inquiry_reply' || c.includes('inquiry') || c.includes('reply') || c.includes('response')) {
+      return {
+        icon: <FaEnvelope className="text-emerald-500" />,
+        badgeBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+        badgeText: 'INQUIRY REPLY',
+      };
+    }
     if (type === 'broadcast' || c.includes('broadcast') || c.includes('announcement')) {
       return {
         icon: <FaBullhorn className="text-google-blue" />,
@@ -347,12 +367,10 @@ const Notifications = () => {
 
                     {/* Notification Inset Message Box (Avyukt UI style) */}
                     <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800/60 ml-5 sm:ml-6">
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">
                         {notif.title}
                       </h4>
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                        {notif.message || notif.title}
-                      </p>
+                      <StructuredBroadcast message={notif.message || notif.title} />
 
                       {notif.author && (
                         <p className="text-[11px] text-slate-400 mt-2 font-medium">

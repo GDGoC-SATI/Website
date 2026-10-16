@@ -546,11 +546,10 @@ const ToggleButton = ({
 
     <div
       className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-white shadow-md transition-all duration-300 
-                ${
-                  isActive
-                    ? 'scale-110 ring-4 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 shadow-lg'
-                    : 'hover:scale-105 opacity-80 hover:opacity-100 hover:shadow-lg'
-                }`}
+                ${isActive
+          ? 'scale-110 ring-4 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 shadow-lg'
+          : 'hover:scale-105 opacity-80 hover:opacity-100 hover:shadow-lg'
+        }`}
       style={{
         backgroundColor: color,
         boxShadow: isActive ? `0 10px 25px -5px ${color}60` : undefined,
@@ -559,11 +558,10 @@ const ToggleButton = ({
       <Icon className="text-xl md:text-2xl" />
     </div>
     <span
-      className={`absolute -bottom-8 text-xs font-bold transition-all duration-300 ${
-        isActive
+      className={`absolute -bottom-8 text-xs font-bold transition-all duration-300 ${isActive
           ? 'opacity-100 translate-y-0 text-slate-900 dark:text-white'
           : 'opacity-0 -translate-y-2 text-slate-500'
-      }`}
+        }`}
     >
       {label}
     </span>
@@ -628,14 +626,14 @@ const Team = () => {
     setLeadsList(updated);
     try {
       localStorage.setItem('gdg_team_leads', JSON.stringify(updated));
-    } catch {}
+    } catch { }
   };
 
   const saveTeamsToStorage = (updated) => {
     setTeamsData(updated);
     try {
       localStorage.setItem('gdg_teams_data', JSON.stringify(updated));
-    } catch {}
+    } catch { }
   };
 
   // Edit Modal State
@@ -742,7 +740,7 @@ const Team = () => {
   return (
     <div className="min-h-screen pb-10 bg-white dark:bg-slate-950 transition-colors duration-500">
       {/* Header Banner - Standardized across pages */}
-      <div className="relative bg-slate-50/70 dark:bg-slate-900/40 pt-15 pb-14 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden">
+      <div className="relative bg-slate-50/70 dark:bg-slate-900/40 pt-8 pb-10 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-google-blue/10 text-google-blue border border-google-blue/20 text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-4">

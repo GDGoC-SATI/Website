@@ -49,7 +49,7 @@ export const ItemEditorModal = ({ isOpen, onClose, onSave, item, type, title }) 
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+      <div data-lenis-prevent className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -632,7 +632,7 @@ export const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, title, message 
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[320] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+      <div data-lenis-prevent className="fixed inset-0 z-[320] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
