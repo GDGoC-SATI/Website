@@ -411,7 +411,7 @@ const EventDetails = () => {
                           rel="noopener noreferrer"
                           className="block w-full py-3 sm:py-3.5 px-4 sm:px-6 text-center text-white bg-google-blue hover:bg-blue-600 rounded-xl text-xs sm:text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-1 flex items-center justify-center gap-2"
                         >
-                          <span>View Original Page</span> <FaExternalLinkAlt size={12} />
+                          <span>Extended View</span> <FaExternalLinkAlt size={12} />
                         </a>
                       </>
                     )}
@@ -532,7 +532,7 @@ const EventDetails = () => {
                     className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-semibold text-google-blue hover:text-white bg-blue-50 hover:bg-google-blue dark:bg-blue-950/40 dark:hover:bg-google-blue border border-blue-200 dark:border-blue-800 rounded-lg transition-all shadow-xs"
                     title="Automatically organize pasted text into clean sections, bullet points, and key details"
                   >
-                    <span>✨ Auto-Structure Text</span>
+                    <span>Auto-Structure Text</span>
                   </button>
                 </div>
                 <textarea
@@ -675,7 +675,7 @@ const EventDetails = () => {
                               }
                               className="text-[10px] font-semibold text-google-blue hover:underline"
                             >
-                              ✨ Auto-Structure
+                              Auto-Structure
                             </button>
                           </div>
                           <textarea
