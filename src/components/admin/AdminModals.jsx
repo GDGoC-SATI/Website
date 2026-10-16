@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaTrash, FaSave, FaExclamationTriangle } from 'react-icons/fa';
+import { EVENT_TYPES, LocationSelect, FormattedDateTimeInput, StatusSelect } from '../../utils/formHelpers';
 
 // Universal item edit/create modal
 export const ItemEditorModal = ({ isOpen, onClose, onSave, item, type, title }) => {
@@ -99,43 +100,32 @@ export const ItemEditorModal = ({ isOpen, onClose, onSave, item, type, title }) 
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                       Event Type / Category
                     </label>
-                    <input
-                      type="text"
-                      placeholder="Workshop, Hackathon, Session..."
-                      value={formData.type || ''}
+                    <select
+                      value={formData.type || 'Workshop'}
                       onChange={(e) => handleChange('type', e.target.value)}
-                      className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
-                    />
+                      className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-medium"
+                    >
+                      {EVENT_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Date & Time String
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Jan 31, 2026, 11:00 AM – 4:00 PM (GMT+5:30)"
-                      value={formData.date || ''}
-                      onChange={(e) => handleChange('date', e.target.value)}
-                      className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Location
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Online or Smart Classroom, SATI..."
-                      value={formData.location || ''}
-                      onChange={(e) => handleChange('location', e.target.value)}
-                      className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
-                    />
-                  </div>
-                </div>
+                <FormattedDateTimeInput
+                  value={formData.date || ''}
+                  onChange={(val) => handleChange('date', val)}
+                  label="Date & Time String"
+                  required
+                />
+
+                <LocationSelect
+                  value={formData.location || ''}
+                  onChange={(val) => handleChange('location', val)}
+                  label="Location"
+                />
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -401,16 +391,23 @@ export const ItemEditorModal = ({ isOpen, onClose, onSave, item, type, title }) 
             {/* PROJECT FIELDS */}
             {type === 'project' && (
               <>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Project Title
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title || ''}
-                    onChange={(e) => handleChange('title', e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Project Title
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.title || ''}
+                      onChange={(e) => handleChange('title', e.target.value)}
+                      className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
+                    />
+                  </div>
+                  <StatusSelect
+                    value={formData.status || 'Ongoing'}
+                    onChange={(val) => handleChange('status', val)}
+                    label="Project Status"
                   />
                 </div>
 
@@ -509,13 +506,17 @@ export const ItemEditorModal = ({ isOpen, onClose, onSave, item, type, title }) 
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                       Category / Type
                     </label>
-                    <input
-                      type="text"
-                      placeholder="Hackathon, Workshop, Meetup..."
-                      value={formData.type || ''}
+                    <select
+                      value={formData.type || 'Hackathon'}
                       onChange={(e) => handleChange('type', e.target.value)}
-                      className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
-                    />
+                      className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-medium"
+                    >
+                      {EVENT_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 

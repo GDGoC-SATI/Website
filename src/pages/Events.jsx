@@ -21,6 +21,7 @@ import ViewToggle from '../components/common/ViewToggle';
 import Pagination from '../components/common/Pagination';
 import { useDebounce } from '../hooks/useDebounce';
 import { usePageSEO } from '../hooks/usePageSEO';
+import { EVENT_TYPES, FormattedDateTimeInput, LocationSelect } from '../utils/formHelpers';
 
 // --- Exact FluxWave Curve Generators ---
 const generateHorizontalWave = (totalUnits = 3000) => {
@@ -634,58 +635,48 @@ const EventModal = ({ event, onClose, onSave, isNew = false }) => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Event Type
               </label>
-              <input
-                type="text"
-                required
-                value={formData.type}
+              <select
+                value={formData.type || 'Workshop'}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                placeholder="Workshop, Hackathon, etc."
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white outline-none focus:border-google-blue"
-              />
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white outline-none focus:border-google-blue font-medium"
+              >
+                {EVENT_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Date & Time String *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                placeholder="e.g. Nov 15, 2024, 10:00 AM"
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white outline-none focus:border-google-blue"
-              />
-            </div>
+            <LocationSelect
+              value={formData.location || ''}
+              onChange={(val) => setFormData({ ...formData, location: val })}
+              label="Location"
+            />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Location
-              </label>
-              <input
-                type="text"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white outline-none focus:border-google-blue"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Registration / Link URL
-              </label>
-              <input
-                type="text"
-                value={formData.originalUrl}
-                onChange={(e) => setFormData({ ...formData, originalUrl: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white outline-none focus:border-google-blue"
-              />
-            </div>
+          <FormattedDateTimeInput
+            value={formData.date || ''}
+            onChange={(val) => setFormData({ ...formData, date: val })}
+            label="Date & Time"
+            required
+          />
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Registration / Link URL
+            </label>
+            <input
+              type="text"
+              value={formData.originalUrl}
+              onChange={(e) => setFormData({ ...formData, originalUrl: e.target.value })}
+              placeholder="https://gdg.community.dev/..."
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white outline-none focus:border-google-blue"
+            />
           </div>
 
           <div>
@@ -940,7 +931,7 @@ const Events = () => {
                     onClick={() => setIsDropdownOpen(false)}
                   />
                   <div className="absolute right-0 mt-2 w-full md:w-44 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700/60 py-2 z-[100]">
-                    {['All', '2024', '2025'].map((year) => (
+                    {['All', '2026', '2025', '2024'].map((year) => (
                       <button
                         key={year}
                         onClick={() => {
