@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/generate-sitemap.mjs",
     "build": "vite build",
+    "sitemap": "node scripts/generate-sitemap.mjs",
+    "index:all": "node scripts/index-now-and-google.mjs",
+    "index:url": "node scripts/index-now-and-google.mjs --url",
     "lint": "eslint .",
     "preview": "vite preview"
   },

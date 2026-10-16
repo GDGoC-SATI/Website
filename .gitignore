@@ -11,6 +11,9 @@ node_modules
 dist
 dist-ssr
 *.local
+gdgocsati-5d1c1a694067.json
+
+.env
 
 # Editor directories and files
 .vscode/*
@@ -22,5 +25,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-.env
