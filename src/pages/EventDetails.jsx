@@ -27,6 +27,7 @@ import {
 } from '../utils/formHelpers';
 import { StructuredDescription, autoFormatEventDescription } from '../components/common/StructuredDescription';
 import { EventDetailsSkeleton } from '../components/common/Skeleton';
+import { notifyIndexNow } from '../services/indexingService';
 
 // Google Brand Colors for timeline nodes
 const GOOGLE_COLORS = [
@@ -124,6 +125,7 @@ const EventDetails = () => {
     title: event ? `${event.title} - Event` : 'Event Details',
     description: event?.description ? event.description.slice(0, 160) : 'Event details and timeline for GDG on Campus SATI Vidisha.',
     path: `/events/${id}`,
+    image: event?.imageUrl || undefined,
   });
 
   if (loading) {
@@ -149,6 +151,7 @@ const EventDetails = () => {
       const targetId = event._id || event.id || event.slug;
       if (targetId) {
         await api.events.update(targetId, updated);
+        notifyIndexNow(`/events/${event.slug || event.id || id}`);
       }
     } catch (err) {
       console.error('Failed to sync event update to MongoDB:', err);
@@ -195,6 +198,39 @@ const EventDetails = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-16 sm:pb-20 pt-8 sm:pt-12 md:pt-16 transition-colors">
+      {/* Schema.org Event JSON-LD for Google Rich Results */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Event',
+            name: event.title,
+            description: event.description,
+            image: event.imageUrl ? [event.imageUrl] : undefined,
+            startDate: event.date,
+            eventStatus: 'https://schema.org/EventScheduled',
+            eventAttendanceMode: event.location?.toLowerCase().includes('online')
+              ? 'https://schema.org/OnlineEventAttendanceMode'
+              : 'https://schema.org/OfflineEventAttendanceMode',
+            location: {
+              '@type': 'Place',
+              name: event.location || 'SATI Vidisha',
+              address: {
+                '@type': 'PostalAddress',
+                addressLocality: 'Vidisha',
+                addressRegion: 'Madhya Pradesh',
+                addressCountry: 'IN',
+              },
+            },
+            organizer: {
+              '@type': 'Organization',
+              name: 'GDG on Campus SATI Vidisha',
+              url: 'https://gdgocsati.vercel.app',
+            },
+          }),
+        }}
+      />
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Top Header: Back Button and Admin Edit Button */}
         <div className="flex items-center justify-between gap-3 mb-4 sm:mb-8">

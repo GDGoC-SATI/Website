@@ -25,6 +25,7 @@ import { api } from '../services/api';
 import { EVENT_TYPES, FormattedDateTimeInput, LocationSelect, StatusSelect } from '../utils/formHelpers';
 import { autoFormatEventDescription } from '../components/common/StructuredDescription';
 import { CardSkeleton, ListItemSkeleton } from '../components/common/Skeleton';
+import { notifyIndexNow } from '../services/indexingService';
 
 // --- Exact FluxWave Curve Generators ---
 const generateHorizontalWave = (totalUnits = 3000) => {
@@ -895,10 +896,14 @@ const Events = () => {
       };
 
       if (modalState.isNew) {
-        await api.events.create(payload);
+        const created = await api.events.create(payload);
+        const targetSlug = created?.data?.slug || created?.data?.id || saved.slug || saved.id;
+        if (targetSlug) notifyIndexNow(`/events/${targetSlug}`);
       } else {
         const targetId = saved._id || saved.id || saved.slug;
         await api.events.update(targetId, payload);
+        const targetSlug = saved.slug || saved.id || targetId;
+        if (targetSlug) notifyIndexNow(`/events/${targetSlug}`);
       }
       await fetchEvents();
     } catch (err) {
