@@ -723,7 +723,7 @@ const EventModal = ({ event, onClose, onSave, isNew = false }) => {
                 className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-semibold text-google-blue hover:text-white bg-blue-50 hover:bg-google-blue dark:bg-blue-950/40 dark:hover:bg-google-blue border border-blue-200 dark:border-blue-800 rounded-lg transition-all shadow-xs"
                 title="Automatically organize pasted text into clean sections, bullet points, and key details"
               >
-                <span>✨ Auto-Structure Text</span>
+                <span>Auto-Structure Text</span>
               </button>
             </div>
             <textarea
