@@ -114,7 +114,7 @@ const Hero = () => {
                         className="flex flex-col sm:flex-row gap-4 justify-center items-center"
                     >
                         <a
-                            href="https://gdg.community.dev/gdg-on-campus-samrat-ashok-technological-institute-vidisha-india/"
+                            href="https://forms.gle/j69g8RWnpS9KY8E59"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="px-8 py-4 rounded-full bg-google-blue text-white font-semibold text-lg hover:bg-blue-600 transition-all shadow-lg hover:shadow-google-blue/30 transform hover:-translate-y-1"
