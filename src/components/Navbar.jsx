@@ -395,10 +395,10 @@ const Navbar = () => {
               </div>
             ) : (
               <Link
-                to="/login"
+                to="/signup"
                 className="px-3 py-1 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold shadow"
               >
-                Sign In
+                Sign Up
               </Link>
             )}
 
@@ -444,24 +444,6 @@ const Navbar = () => {
                 </Link>
               ))}
 
-              {!isAuthenticated && (
-                <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2">
-                  <Link
-                    to="/login"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="w-full text-center py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                  >
-                    Log In
-                  </Link>
-                  <Link
-                    to="/signup"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="w-full text-center py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-semibold shadow-md"
-                  >
-                    Get Started
-                  </Link>
-                </div>
-              )}
             </div>
           </motion.div>
         )}
