@@ -25,6 +25,16 @@ const Notifications = lazy(() => import('./pages/Notifications'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+
+// Preload 404 Dino game chunk during browser idle time so it's guaranteed 100% available offline
+if (typeof window !== 'undefined') {
+  const preloadNotFound = () => import('./pages/NotFound');
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(preloadNotFound);
+  } else {
+    setTimeout(preloadNotFound, 2000);
+  }
+}
 import { getTitleForPath } from './hooks/usePageSEO';
 import { PageSkeleton } from './components/common/Skeleton';
 import SmoothScroll from './components/common/SmoothScroll';
