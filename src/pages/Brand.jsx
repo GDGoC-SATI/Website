@@ -15,6 +15,9 @@ import {
   FaFont,
   FaChevronDown,
   FaLayerGroup,
+  FaUndo,
+  FaTshirt,
+  FaSyncAlt,
 } from 'react-icons/fa';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -49,8 +52,8 @@ const INITIAL_ICONS = [
     name: 'GDGoC SATI Icon',
     category: 'Icons',
     description: 'The iconic Google Developer Groups code brackets symbol in signature Google quad-colors.',
-    pngUrl: '/assets/brand_kit/icon/gdgoc_sati_icon.png',
-    svgUrl: '/assets/brand_kit/icon/gdgoc_sati_icon.svg',
+    pngUrl: '/assets/brand_kit/icons/gdgoc_sati_icon.png',
+    svgUrl: '/assets/brand_kit/icons/gdgoc_sati_icon.svg',
   },
 ];
 
@@ -550,6 +553,43 @@ const BRAND_SECTIONS = [
   // Merchandise Stage State
   const [merchColor, setMerchColor] = useState('black');
   const [merchView, setMerchView] = useState('front');
+  const [tShirtImages, setTShirtImages] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gdg_brand_tshirts');
+      return saved ? JSON.parse(saved) : T_SHIRT_IMAGES;
+    } catch {
+      return T_SHIRT_IMAGES;
+    }
+  });
+  const [tShirtInfo, setTShirtInfo] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gdg_brand_tshirt_info');
+      return saved
+        ? JSON.parse(saved)
+        : {
+            title: 'T-Shirt & Apparel Designs',
+            description:
+              'Official GDGoC SATI chapter drop-shoulder t-shirt with chest badge and statement back artwork.',
+          };
+    } catch {
+      return {
+        title: 'T-Shirt & Apparel Designs',
+        description:
+          'Official GDGoC SATI chapter drop-shoulder t-shirt with chest badge and statement back artwork.',
+      };
+    }
+  });
+
+  // Merchandise Edit Modal State
+  const [isMerchModalOpen, setIsMerchModalOpen] = useState(false);
+  const [merchForm, setMerchForm] = useState({
+    title: '',
+    description: '',
+    blackFront: '',
+    blackBack: '',
+    whiteFront: '',
+    whiteBack: '',
+  });
 
   // Avatar Studio State
   const [selectedFrame, setSelectedFrame] = useState(avatarFrames[0] || INITIAL_AVATAR_FRAMES[0]);
@@ -613,10 +653,25 @@ const BRAND_SECTIONS = [
           if (Array.isArray(kitData.fonts) && kitData.fonts.length > 0) {
             setBrandFonts(kitData.fonts);
             localStorage.setItem('gdg_brand_fonts', JSON.stringify(kitData.fonts));
+
           }
           if (kitData.guidelines) {
             setGuidelines(kitData.guidelines);
             localStorage.setItem('gdg_brand_guidelines', JSON.stringify(kitData.guidelines));
+          }
+          if (kitData.tShirtImages) {
+            setTShirtImages(kitData.tShirtImages);
+            localStorage.setItem('gdg_brand_tshirts', JSON.stringify(kitData.tShirtImages));
+          }
+          if (kitData.tShirtInfo) {
+            setTShirtInfo(kitData.tShirtInfo);
+            localStorage.setItem('gdg_brand_tshirt_info', JSON.stringify(kitData.tShirtInfo));
+
+          }
+          if (kitData.guidelines) {
+            setGuidelines(kitData.guidelines);
+            localStorage.setItem('gdg_brand_guidelines', JSON.stringify(kitData.guidelines));
+
           }
         }
       } catch {
@@ -632,7 +687,9 @@ const BRAND_SECTIONS = [
     newColors = colorPalettes,
     newFrames = avatarFrames,
     newGuidelines = guidelines,
-    newFonts = brandFonts
+    newFonts = brandFonts,
+    newTShirtImages = tShirtImages,
+    newTShirtInfo = tShirtInfo
   ) => {
     const payload = {
       logos: newLogos,
@@ -641,6 +698,8 @@ const BRAND_SECTIONS = [
       avatarFrames: newFrames,
       guidelines: newGuidelines,
       fonts: newFonts,
+      tShirtImages: newTShirtImages,
+      tShirtInfo: newTShirtInfo,
     };
     try {
       localStorage.setItem('gdg_brand_logos', JSON.stringify(payload.logos));
@@ -649,6 +708,8 @@ const BRAND_SECTIONS = [
       localStorage.setItem('gdg_brand_frames', JSON.stringify(payload.avatarFrames));
       localStorage.setItem('gdg_brand_guidelines', JSON.stringify(payload.guidelines));
       localStorage.setItem('gdg_brand_fonts', JSON.stringify(payload.fonts));
+      localStorage.setItem('gdg_brand_tshirts', JSON.stringify(payload.tShirtImages));
+      localStorage.setItem('gdg_brand_tshirt_info', JSON.stringify(payload.tShirtInfo));
       await api.sections.update('brand_kit', payload);
     } catch {
       // Offline fallback
@@ -1034,6 +1095,95 @@ const BRAND_SECTIONS = [
       await persistChanges(logos, icons, colorPalettes, avatarFrames, updated, brandFonts);
       toast.success('Rule added', 'Added');
     }
+  };
+
+  // Merchandise Management (Edit & Reset / Delete)
+  const handleOpenMerchEdit = () => {
+    setMerchForm({
+      title: tShirtInfo?.title || 'T-Shirt & Apparel Designs',
+      description:
+        tShirtInfo?.description ||
+        'Official GDGoC SATI chapter drop-shoulder t-shirt with chest badge and statement back artwork.',
+      blackFront: tShirtImages?.black?.front || T_SHIRT_IMAGES.black.front,
+      blackBack: tShirtImages?.black?.back || T_SHIRT_IMAGES.black.back,
+      whiteFront: tShirtImages?.white?.front || T_SHIRT_IMAGES.white.front,
+      whiteBack: tShirtImages?.white?.back || T_SHIRT_IMAGES.white.back,
+    });
+    setIsMerchModalOpen(true);
+  };
+
+
+  const handleSaveMerch = async (e) => {
+    e.preventDefault();
+    const updatedInfo = {
+      title: merchForm.title.trim() || 'T-Shirt & Apparel Designs',
+      description:
+        merchForm.description.trim() ||
+        'Official GDGoC SATI chapter drop-shoulder t-shirt with chest badge and statement back artwork.',
+    };
+    const updatedImages = {
+      black: {
+        front: merchForm.blackFront.trim() || T_SHIRT_IMAGES.black.front,
+        back: merchForm.blackBack.trim() || T_SHIRT_IMAGES.black.back,
+      },
+      white: {
+        front: merchForm.whiteFront.trim() || T_SHIRT_IMAGES.white.front,
+        back: merchForm.whiteBack.trim() || T_SHIRT_IMAGES.white.back,
+      },
+    };
+
+    setTShirtInfo(updatedInfo);
+    setTShirtImages(updatedImages);
+    setIsMerchModalOpen(false);
+
+    await persistChanges(
+      logos,
+      icons,
+      colorPalettes,
+      avatarFrames,
+      guidelines,
+      brandFonts,
+      updatedImages,
+      updatedInfo
+    );
+    toast.success('T-Shirt designs saved successfully!', 'Saved');
+  };
+
+  const handleResetMerch = async () => {
+    if (
+      !window.confirm(
+        'Are you sure you want to delete custom T-shirt designs and reset back to the official chapter defaults?'
+      )
+    ) {
+      return;
+    }
+    const defaultInfo = {
+      title: 'T-Shirt & Apparel Designs',
+      description:
+        'Official GDGoC SATI chapter drop-shoulder t-shirt with chest badge and statement back artwork.',
+    };
+    const defaultImages = {
+      black: { ...T_SHIRT_IMAGES.black },
+      white: { ...T_SHIRT_IMAGES.white },
+    };
+
+    setTShirtInfo(defaultInfo);
+    setTShirtImages(defaultImages);
+    if (isMerchModalOpen) {
+      setIsMerchModalOpen(false);
+    }
+
+    await persistChanges(
+      logos,
+      icons,
+      colorPalettes,
+      avatarFrames,
+      guidelines,
+      brandFonts,
+      defaultImages,
+      defaultInfo
+    );
+    toast.success('T-Shirt designs reset to official defaults', 'Reset Done');
   };
 
   // Filtering based on Search
@@ -1553,29 +1703,38 @@ const BRAND_SECTIONS = [
             <section id="merch" className="scroll-mt-36">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight">T-Shirt &amp; Apparel Designs</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+                    {tShirtInfo?.title || 'T-Shirt & Apparel Designs'}
+                  </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Official GDGoC SATI chapter drop-shoulder t-shirt with chest badge and statement back artwork.
+                    {tShirtInfo?.description ||
+                      'Official GDGoC SATI chapter drop-shoulder t-shirt with chest badge and statement back artwork.'}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleDownload(
-                        T_SHIRT_IMAGES[merchColor]?.[merchView],
-                        `gdgoc_sati_tshirt_${merchColor}_${merchView}_2025.png`
-                      )
-                    }
-                    className="px-3.5 py-1.5 rounded-lg bg-google-blue text-white text-xs font-semibold flex items-center gap-1.5 hover:bg-google-blue/90 transition-colors shadow-xs"
-                  >
-                    <FaDownload size={11} /> Download Mockup (.png)
-                  </button>
-                </div>
+                {isAdmin && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleOpenMerchEdit}
+                      className="px-3.5 py-1.5 rounded-lg bg-google-blue/10 hover:bg-google-blue/20 text-google-blue text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      title="Edit T-Shirt designs and info"
+                    >
+                      <FaEdit size={12} /> <span>Edit Design</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResetMerch}
+                      className="px-3 py-1.5 rounded-lg bg-google-red/10 hover:bg-google-red/20 text-google-red text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      title="Delete custom designs & reset to official chapter defaults"
+                    >
+                      <FaTrash size={11} /> <span>Delete / Reset</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-transparent p-6 sm:p-8 flex flex-col items-center justify-center relative overflow-hidden min-h-[460px]">
-                {/* Header Controls: Color picker on Left (Black & White), Front/Back switch on Right */}
+                {/* Header Controls: Color picker on Left (Black & White), Admin shortcuts & Front/Back switch on Right */}
                 <div className="w-full flex items-center justify-between mb-4 z-10">
                   <div className="flex items-center gap-2 bg-white dark:bg-slate-950 p-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-xs">
                     {[
@@ -1586,7 +1745,7 @@ const BRAND_SECTIONS = [
                         key={color.id}
                         type="button"
                         onClick={() => setMerchColor(color.id)}
-                        className={`w-6 h-6 rounded-full border-2 transition-all ${
+                        className={`w-6 h-6 rounded-full border-2 transition-all cursor-pointer ${
                           merchColor === color.id
                             ? ' border-blue-500 scale-110 shadow-sm ring-2 ring-blue-500/30'
                             : 'border-slate-300 dark:border-slate-700 hover:scale-105'
@@ -1597,52 +1756,159 @@ const BRAND_SECTIONS = [
                     ))}
                   </div>
 
-                  <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-xs">
-                    <button
-                      type="button"
-                      onClick={() => setMerchView('front')}
-                      className={`px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                        merchView === 'front'
-                          ? 'bg-google-blue text-white'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      Front
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMerchView('back')}
-                      className={`px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                        merchView === 'back'
-                          ? 'bg-google-blue text-white'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      Back
-                    </button>
+                  <div className="flex items-center gap-2">
+                    {isAdmin && (
+                      <div className="hidden sm:flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={handleOpenMerchEdit}
+                          className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-google-blue text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                          title="Edit T-Shirt designs"
+                        >
+                          <FaEdit size={11} /> <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleResetMerch}
+                          className="p-1.5 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:bg-red-50 dark:hover:bg-red-950/30 text-slate-600 dark:text-slate-400 hover:text-google-red transition-colors cursor-pointer shadow-xs"
+                          title="Reset to official defaults"
+                        >
+                          <FaTrash size={11} />
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-xs">
+                      <button
+                        type="button"
+                        onClick={() => setMerchView('front')}
+                        className={`px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                          merchView === 'front'
+                            ? 'bg-google-blue text-white'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        Front
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMerchView('back')}
+                        className={`px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                          merchView === 'back'
+                            ? 'bg-google-blue text-white'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        Back
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                {/* Drop-Shoulder Realistic T-Shirt Mockup with Smooth Crossfade */}
-                <div className="relative w-full max-w-[320px] sm:max-w-[360px] aspect-[1080/1350] flex items-center justify-center select-none my-2 drop-shadow-2xl">
-                  {/* Black Mockup */}
-                  <img
-                    src={T_SHIRT_IMAGES.black[merchView]}
-                    alt={`GDGoC SATI T-Shirt Black ${merchView}`}
-                    draggable={false}
-                    className={`absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-opacity duration-500 ease-in-out ${
-                      merchColor === 'black' ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                    }`}
+                {/* Drop-Shoulder Realistic T-Shirt Mockup with Smooth 3D Circular Turntable Flip Animation */}
+                <div
+                  className="relative w-full max-w-[320px] sm:max-w-[360px] aspect-[1080/1350] flex items-center justify-center select-none my-2"
+                  style={{ perspective: 1400 }}
+                >
+                  {/* Ambient Floor Shadow under the spinning t-shirt */}
+                  <Motion.div
+                    animate={{
+                      scaleX: merchView === 'front' ? 1 : 0.88,
+                      scaleY: merchView === 'front' ? 1 : 1.15,
+                      opacity: merchView === 'front' ? 0.35 : 0.28,
+                    }}
+                    transition={{ duration: 0.85, ease: [0.34, 1.25, 0.64, 1] }}
+                    className="absolute -bottom-3 sm:-bottom-4 w-52 sm:w-64 h-6 rounded-full bg-slate-900/40 dark:bg-black/70 blur-lg pointer-events-none z-0"
                   />
-                  {/* White Mockup */}
-                  <img
-                    src={T_SHIRT_IMAGES.white[merchView]}
-                    alt={`GDGoC SATI T-Shirt White ${merchView}`}
-                    draggable={false}
-                    className={`absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-opacity duration-500 ease-in-out ${
-                      merchColor === 'white' ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                    }`}
-                  />
+
+                  {/* 3D Rotational Container */}
+                  <Motion.div
+                    className="relative w-full h-full cursor-pointer will-change-transform"
+                    style={{
+                      transformStyle: 'preserve-3d',
+                      WebkitTransformStyle: 'preserve-3d',
+                    }}
+                    animate={{
+                      rotateY: merchView === 'front' ? 0 : 180,
+                    }}
+                    transition={{
+                      duration: 0.85,
+                      ease: [0.34, 1.25, 0.64, 1],
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    onClick={() => setMerchView((prev) => (prev === 'front' ? 'back' : 'front'))}
+                    title="Click to turn T-shirt"
+                  >
+                    {/* FRONT FACE (rotateY: 0deg) */}
+                    <div
+                      className="absolute inset-0 w-full h-full flex items-center justify-center drop-shadow-2xl"
+                      style={{
+                        backfaceVisibility: 'hidden',
+                        WebkitBackfaceVisibility: 'hidden',
+                        transform: 'rotateY(0deg)',
+                      }}
+                    >
+                      {/* Black Front Mockup */}
+                      <img
+                        src={tShirtImages?.black?.front || T_SHIRT_IMAGES.black.front}
+                        alt="GDGoC SATI T-Shirt Black Front"
+                        draggable={false}
+                        className={`absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-opacity duration-500 ease-in-out ${
+                          merchColor === 'black' ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                        }`}
+                      />
+                      {/* White Front Mockup */}
+                      <img
+                        src={tShirtImages?.white?.front || T_SHIRT_IMAGES.white.front}
+                        alt="GDGoC SATI T-Shirt White Front"
+                        draggable={false}
+                        className={`absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-opacity duration-500 ease-in-out ${
+                          merchColor === 'white' ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                        }`}
+                      />
+                    </div>
+
+                    {/* BACK FACE (rotateY: 180deg) */}
+                    <div
+                      className="absolute inset-0 w-full h-full flex items-center justify-center drop-shadow-2xl"
+                      style={{
+                        backfaceVisibility: 'hidden',
+                        WebkitBackfaceVisibility: 'hidden',
+                        transform: 'rotateY(180deg)',
+                      }}
+                    >
+                      {/* Black Back Mockup */}
+                      <img
+                        src={tShirtImages?.black?.back || T_SHIRT_IMAGES.black.back}
+                        alt="GDGoC SATI T-Shirt Black Back"
+                        draggable={false}
+                        className={`absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-opacity duration-500 ease-in-out ${
+                          merchColor === 'black' ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                        }`}
+                      />
+                      {/* White Back Mockup */}
+                      <img
+                        src={tShirtImages?.white?.back || T_SHIRT_IMAGES.white.back}
+                        alt="GDGoC SATI T-Shirt White Back"
+                        draggable={false}
+                        className={`absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-opacity duration-500 ease-in-out ${
+                          merchColor === 'white' ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                        }`}
+                      />
+                    </div>
+
+                    {/* Dynamic specular light sheen during circular turn */}
+                    <Motion.div
+                      key={`sheen-${merchView}`}
+                      initial={{ opacity: 0, x: merchView === 'front' ? '120%' : '-120%' }}
+                      animate={{
+                        opacity: [0, 0.22, 0],
+                        x: merchView === 'front' ? ['-100%', '0%', '120%'] : ['120%', '0%', '-100%'],
+                      }}
+                      transition={{ duration: 0.85, ease: 'easeInOut' }}
+                      className="absolute inset-0 w-full h-full pointer-events-none bg-gradient-to-r from-transparent via-white/25 to-transparent mix-blend-overlay z-30"
+                    />
+                  </Motion.div>
                 </div>
               </div>
             </section>
@@ -2131,6 +2397,259 @@ const BRAND_SECTIONS = [
                   </div>
                 </form>
               </div>
+            </Motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 3. Merchandise / T-Shirt Design Edit Modal */}
+      <AnimatePresence>
+        {isMerchModalOpen && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md">
+            <Motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
+            >
+              {/* Modal Header */}
+              <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-google-blue/10 text-google-blue flex items-center justify-center">
+                    <FaTshirt size={16} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white leading-tight">
+                      Edit T-Shirt &amp; Apparel Designs
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Configure apparel title, description, and front/back artwork for all colorways.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMerchModalOpen(false)}
+                  className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  <FaTimes size={14} />
+                </button>
+              </div>
+
+              {/* Modal Body Form */}
+              <form onSubmit={handleSaveMerch} className="p-4 sm:p-5 space-y-4 overflow-y-auto">
+                {/* General Info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Section Title *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={merchForm.title}
+                      onChange={(e) => setMerchForm({ ...merchForm, title: e.target.value })}
+                      placeholder="e.g. T-Shirt & Apparel Designs"
+                      className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium focus:outline-google-blue"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Description / Subtitle
+                    </label>
+                    <textarea
+                      rows="2"
+                      value={merchForm.description}
+                      onChange={(e) => setMerchForm({ ...merchForm, description: e.target.value })}
+                      placeholder="e.g. Official GDGoC SATI chapter drop-shoulder t-shirt..."
+                      className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium focus:outline-google-blue"
+                    />
+                  </div>
+                </div>
+
+                {/* 4 Artwork Variants */}
+                <div>
+                  <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                    <span>T-Shirt Visual Mockup Assets</span>
+                   
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    {/* 1. Black Front */}
+                    <div className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex flex-col gap-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-700" />
+                          Black T-Shirt (Front)
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-400">front view</span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="w-14 h-16 rounded-lg bg-slate-900 border border-slate-800 overflow-hidden flex items-center justify-center shrink-0">
+                          {merchForm.blackFront ? (
+                            <img
+                              src={merchForm.blackFront}
+                              alt="Black Front Preview"
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <FaTshirt className="text-slate-600" size={20} />
+                          )}
+                        </div>
+
+                        <div className="flex-1 space-y-1.5">
+                          
+                          <input
+                            type="text"
+                            value={merchForm.blackFront}
+                            onChange={(e) => setMerchForm({ ...merchForm, blackFront: e.target.value })}
+                            placeholder="/assets/... or https://..."
+                            className="w-full p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[11px] font-mono focus:outline-google-blue"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. Black Back */}
+                    <div className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex flex-col gap-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-700" />
+                          Black T-Shirt (Back)
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-400">back view</span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="w-14 h-16 rounded-lg bg-slate-900 border border-slate-800 overflow-hidden flex items-center justify-center shrink-0">
+                          {merchForm.blackBack ? (
+                            <img
+                              src={merchForm.blackBack}
+                              alt="Black Back Preview"
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <FaTshirt className="text-slate-600" size={20} />
+                          )}
+                        </div>
+
+                        <div className="flex-1 space-y-1.5">
+                          
+                          <input
+                            type="text"
+                            value={merchForm.blackBack}
+                            onChange={(e) => setMerchForm({ ...merchForm, blackBack: e.target.value })}
+                            placeholder="/assets/... or https://..."
+                            className="w-full p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[11px] font-mono focus:outline-google-blue"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. White Front */}
+                    <div className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex flex-col gap-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-slate-100 border border-slate-400" />
+                          White T-Shirt (Front)
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-400">front view</span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="w-14 h-16 rounded-lg bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
+                          {merchForm.whiteFront ? (
+                            <img
+                              src={merchForm.whiteFront}
+                              alt="White Front Preview"
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <FaTshirt className="text-slate-400" size={20} />
+                          )}
+                        </div>
+
+                        <div className="flex-1 space-y-1.5">
+                        
+                          <input
+                            type="text"
+                            value={merchForm.whiteFront}
+                            onChange={(e) => setMerchForm({ ...merchForm, whiteFront: e.target.value })}
+                            placeholder="/assets/... or https://..."
+                            className="w-full p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[11px] font-mono focus:outline-google-blue"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 4. White Back */}
+                    <div className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex flex-col gap-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-slate-100 border border-slate-400" />
+                          White T-Shirt (Back)
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-400">back view</span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="w-14 h-16 rounded-lg bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
+                          {merchForm.whiteBack ? (
+                            <img
+                              src={merchForm.whiteBack}
+                              alt="White Back Preview"
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <FaTshirt className="text-slate-400" size={20} />
+                          )}
+                        </div>
+
+                        <div className="flex-1 space-y-1.5">
+                          
+                          <input
+                            type="text"
+                            value={merchForm.whiteBack}
+                            onChange={(e) => setMerchForm({ ...merchForm, whiteBack: e.target.value })}
+                            placeholder="/assets/... or https://..."
+                            className="w-full p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[11px] font-mono focus:outline-google-blue"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Modal Footer Controls */}
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleResetMerch}
+                    className="w-full sm:w-auto px-3.5 py-2 rounded-xl text-xs font-semibold text-google-red hover:bg-google-red/10 border border-transparent hover:border-google-red/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    title="Delete custom designs and restore official chapter artwork"
+                  >
+                    <FaUndo size={11} /> <span>Reset to Defaults</span>
+                  </button>
+
+                  <div className="w-full sm:w-auto flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsMerchModalOpen(false)}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 rounded-xl bg-google-blue hover:bg-google-blue/90 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+                    >
+                      Save Designs
+                    </button>
+                  </div>
+                </div>
+              </form>
             </Motion.div>
           </div>
         )}
