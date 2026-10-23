@@ -446,21 +446,21 @@ const Projects = () => {
       </div>
 
       {/* Main Container with Sticky Controls Bar and Showcase */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        <div className="sticky top-[88px] md:top-[96px] z-30 flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-md mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-3">
+        <div className="sticky top-[80px] md:top-[80px] z-30 flex flex-col sm:flex-row items-center justify-between gap-2 py-1 px-3 sm:py-1.5 sm:px-4 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-md mb-6">
           <div className="relative w-full sm:w-96">
-            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
             <input
               type="text"
               placeholder="Search projects by title, description, or stack..."
               value={searchQuery}
               onChange={handleSearchChange}
-              className="w-full pl-11 pr-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 focus:outline-none focus:border-google-green text-sm text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
+              className="w-full pl-9 pr-4 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 focus:outline-none focus:border-google-green text-xs text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
             />
           </div>
 
-          <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400">
               {filteredProjects.length} {filteredProjects.length === 1 ? 'Project' : 'Projects'}
             </span>
             <ViewToggle view={view} onViewChange={setView} />

@@ -54,12 +54,12 @@ const Footer = () => {
                         <Link to="/" className="inline-block mb-4">
                             <div className="h-15 right-7 scale-150 relative">
                                 <img
-                                    src="/assets/GDG_title_black_footer.png"
+                                    src="/assets/gdgoc_sati_logo_black_footer.png"
                                     alt="GDG on Campus"
                                     className="h-full w-auto object-contain scale-54 dark:hidden"
                                 />
                                 <img
-                                    src="/assets/GDG_title_white_footer.png"
+                                    src="/assets/gdgoc_sati_logo_white_footer.png"
                                     alt="GDG on Campus"
                                     className="h-full w-auto object-contain hidden dark:block"
                                 />

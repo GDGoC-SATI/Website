@@ -121,7 +121,7 @@ const Navbar = () => {
           >
             {/* Title Image (Full) - Visible when NOT scrolled */}
             <img
-              src={theme === 'dark' ? '/assets/GDG_title_white.png' : '/assets/GDG_title_black.png'}
+              src={theme === 'dark' ? '/assets/gdgoc_sati_logo_white.png' : '/assets/gdgoc_sati_logo_black.png'}
               alt="GDG on Campus"
               className={`absolute right-10 h-full w-auto object-contain transition-all duration-500 ease-out origin-left ${
                 isScrolled ? 'opacity-0 scale-90' : 'opacity-100 scale-200 md:scale-200'
@@ -130,7 +130,7 @@ const Navbar = () => {
 
             {/* Icon Image (Symbol) - Visible when scrolled */}
             <img
-              src="/assets/GDG_icon.png"
+              src="/assets/gdgoc_sati_icon.png"
               alt="GDG Icon"
               className={`absolute left-0 h-full w-auto object-contain transition-all duration-500 ease-out origin-left ${
                 isScrolled

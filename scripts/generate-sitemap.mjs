@@ -21,39 +21,70 @@ export const STATIC_ROUTES = [
   { path: 'about', priority: '0.8', changefreq: 'monthly' },
   { path: 'alumni', priority: '0.8', changefreq: 'monthly' },
   { path: 'contact', priority: '0.7', changefreq: 'monthly' },
+  { path: 'brand', priority: '0.8', changefreq: 'monthly' },
   { path: 'privacy', priority: '0.3', changefreq: 'yearly' },
   { path: 'terms', priority: '0.3', changefreq: 'yearly' },
 ];
 
+const BACKEND_URLS = [
+  process.env.VITE_API_URL,
+  'https://gdgocsatibackend.vercel.app/api',
+  'http://localhost:5000/api',
+].filter(Boolean);
+
 /**
- * Fetch all unique event slugs from both local static data and live backend API
+ * Fetch all unique event entries from both local static data and live backend API
  */
-export async function getAllEventSlugs() {
-  const slugSet = new Set();
+export async function getAllEventEntries() {
+  const eventMap = new Map();
 
   // 1. Static seed events
   eventsData.forEach((ev) => {
     const slug = ev.slug || ev.id;
-    if (slug) slugSet.add(slug);
+    if (slug) {
+      eventMap.set(slug, {
+        slug,
+        lastmod: ev.updatedAt ? new Date(ev.updatedAt).toISOString().split('T')[0] : null,
+      });
+    }
   });
 
-  // 2. Live MongoDB API events (if backend is running)
-  try {
-    const res = await fetch('http://localhost:5000/api/events');
-    if (res.ok) {
-      const json = await res.json();
-      if (Array.isArray(json.data)) {
-        json.data.forEach((ev) => {
-          const slug = ev.slug || ev.id || ev._id;
-          if (slug) slugSet.add(slug);
-        });
+  // 2. Live MongoDB API events (try production backend first, then local)
+  for (const backend of BACKEND_URLS) {
+    try {
+      const endpoint = `${backend.replace(/\/$/, '')}/events`;
+      const res = await fetch(endpoint, {
+        headers: { Accept: 'application/json' },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json.data) && json.data.length > 0) {
+          json.data.forEach((ev) => {
+            const slug = ev.slug || ev.id || ev._id;
+            if (slug) {
+              eventMap.set(slug, {
+                slug,
+                lastmod: ev.updatedAt ? new Date(ev.updatedAt).toISOString().split('T')[0] : null,
+              });
+            }
+          });
+          break; // Successfully loaded from live DB
+        }
       }
+    } catch {
+      // Continue to next candidate
     }
-  } catch {
-    // Backend offline during build; using static seed events
   }
 
-  return Array.from(slugSet);
+  return Array.from(eventMap.values());
+}
+
+/**
+ * Fetch all unique event slugs (backward compatibility)
+ */
+export async function getAllEventSlugs() {
+  const entries = await getAllEventEntries();
+  return entries.map((e) => e.slug);
 }
 
 /**
@@ -75,11 +106,11 @@ export async function getAllUrls() {
   });
 
   // Dynamic Event Pages
-  const eventSlugs = await getAllEventSlugs();
-  eventSlugs.forEach((slug) => {
+  const eventEntries = await getAllEventEntries();
+  eventEntries.forEach((ev) => {
     urls.push({
-      loc: `${BASE_URL}/events/${slug}`,
-      lastmod: today,
+      loc: `${BASE_URL}/events/${ev.slug}`,
+      lastmod: ev.lastmod || today,
       changefreq: 'weekly',
       priority: '0.85',
     });

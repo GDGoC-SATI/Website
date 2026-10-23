@@ -787,34 +787,34 @@ const Gallery = () => {
       </div>
 
       {/* Main Container with Sticky Controls Bar and Albums Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        <div className="sticky top-[88px] md:top-[96px] z-30 flex flex-col md:flex-row items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-md mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-3">
+        <div className="sticky top-[80px] md:top-[80px] z-30 flex flex-col md:flex-row items-center justify-between gap-2 py-1 px-3 sm:py-1.5 sm:px-4 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-md mb-6">
           {/* Search Input */}
           <div className="relative w-full md:w-80">
-            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
             <input
               type="text"
               placeholder="Search albums by title or tag..."
               value={searchQuery}
               onChange={handleSearchChange}
-              className="w-full pl-11 pr-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 focus:outline-none focus:border-google-red text-sm text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
+              className="w-full pl-9 pr-4 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 focus:outline-none focus:border-google-red text-xs text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
             />
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+          <div className="flex items-center gap-2.5 w-full md:w-auto justify-between md:justify-end">
             {/* Year Dropdown */}
             <div className="relative flex-1 md:flex-initial">
               <button
                 type="button"
                 onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}
-                className="w-full md:w-40 flex items-center justify-between px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-google-red transition-colors"
+                className="w-full md:w-40 flex items-center justify-between px-3 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:border-google-red transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <FaCalendarAlt className="text-google-red" />
+                  <FaCalendarAlt className="text-google-red text-xs" />
                   <span>{selectedYear === 'All' ? 'All Years' : selectedYear}</span>
                 </div>
                 <FaChevronDown
-                  className={`text-slate-400 transition-transform duration-200 ${isYearDropdownOpen ? 'rotate-180' : ''
+                  className={`text-slate-400 transition-transform duration-200 text-xs ${isYearDropdownOpen ? 'rotate-180' : ''
                     }`}
                 />
               </button>
@@ -825,7 +825,7 @@ const Gallery = () => {
                     className="fixed inset-0 z-[90]"
                     onClick={() => setIsYearDropdownOpen(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-full md:w-40 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700/60 py-2 z-[100]">
+                  <div className="absolute right-0 mt-2 w-full md:w-40 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700/60 py-1.5 z-[100]">
                     {availableYears.map((year) => (
                       <button
                         key={year}
@@ -834,7 +834,7 @@ const Gallery = () => {
                           setSelectedYear(year);
                           setIsYearDropdownOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${selectedYear === year
+                        className={`w-full text-left px-4 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${selectedYear === year
                             ? 'text-google-red font-bold'
                             : 'text-slate-600 dark:text-slate-300'
                           }`}
