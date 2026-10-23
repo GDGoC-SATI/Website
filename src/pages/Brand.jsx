@@ -653,6 +653,7 @@ const BRAND_SECTIONS = [
           if (Array.isArray(kitData.fonts) && kitData.fonts.length > 0) {
             setBrandFonts(kitData.fonts);
             localStorage.setItem('gdg_brand_fonts', JSON.stringify(kitData.fonts));
+
           }
           if (kitData.guidelines) {
             setGuidelines(kitData.guidelines);
@@ -665,6 +666,12 @@ const BRAND_SECTIONS = [
           if (kitData.tShirtInfo) {
             setTShirtInfo(kitData.tShirtInfo);
             localStorage.setItem('gdg_brand_tshirt_info', JSON.stringify(kitData.tShirtInfo));
+
+          }
+          if (kitData.guidelines) {
+            setGuidelines(kitData.guidelines);
+            localStorage.setItem('gdg_brand_guidelines', JSON.stringify(kitData.guidelines));
+
           }
         }
       } catch {
