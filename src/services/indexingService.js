@@ -7,7 +7,20 @@ export const INDEXNOW_KEY = 'b2fd1b8f90b04d08b51ec21945b9658f';
 export const BASE_URL = 'https://gdgocsati.vercel.app';
 
 /**
- * Notify search engines of a created/updated page URL
+ * Revalidate and refresh the live dynamic sitemap cache immediately
+ */
+export const revalidateSitemap = async () => {
+  try {
+    const sitemapEndpoint = `${BASE_URL}/sitemap.xml?refresh=true`;
+    await fetch(sitemapEndpoint, { cache: 'no-store' });
+    console.log('[Auto-Index] Dynamic sitemap cache revalidated successfully.');
+  } catch {
+    // Non-blocking background revalidation
+  }
+};
+
+/**
+ * Notify search engines of a created/updated page URL and revalidate sitemap
  * @param {string} pathOrUrl - e.g. '/events/google-cloud-study-learn-2026' or full URL
  */
 export const notifyIndexNow = (pathOrUrl) => {
@@ -22,6 +35,9 @@ export const notifyIndexNow = (pathOrUrl) => {
     // Browser-safe fire-and-forget notification
     fetch(endpoint, { mode: 'no-cors' }).catch(() => {});
     console.log(`[Auto-Index] Notified search engines for ${fullUrl}`);
+
+    // Trigger instant sitemap edge cache revalidation
+    revalidateSitemap();
   } catch (err) {
     console.warn('[Auto-Index] Notice:', err.message);
   }
@@ -29,6 +45,8 @@ export const notifyIndexNow = (pathOrUrl) => {
 
 export default {
   notifyIndexNow,
+  revalidateSitemap,
   INDEXNOW_KEY,
   BASE_URL,
 };
+

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -15,12 +15,16 @@ import {
   FaArrowDown,
   FaPlus,
   FaTimes,
-  FaSave
+  FaSave,
+  FaSpinner,
+  FaGraduationCap,
+  FaLayerGroup,
 } from 'react-icons/fa';
 import { alumniData as initialAlumni } from '../data/alumniData';
 import { useAuth } from '../context/AuthContext';
 import ViewToggle from '../components/common/ViewToggle';
 import usePageSEO from '../hooks/usePageSEO';
+import { api } from '../services/api';
 
 // --- Alumni List Item (for List View) ---
 const AlumniListItem = ({
@@ -36,9 +40,10 @@ const AlumniListItem = ({
 }) => {
   return (
     <motion.div
+      layout
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.04 }}
+      transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.25) }}
       className="relative bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group overflow-hidden"
     >
       <div className={`flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1 ${isAdmin ? 'pr-20 sm:pr-0' : ''}`}>
@@ -91,8 +96,9 @@ const AlumniListItem = ({
         <div className="absolute top-3.5 right-3.5 sm:static flex items-center gap-1 z-10 sm:border-l sm:border-slate-200 dark:sm:border-slate-800 sm:pl-2">
           {canMoveUp && (
             <button
+              type="button"
               onClick={onMoveUp}
-              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="Move Up"
             >
               <FaArrowUp size={11} />
@@ -100,23 +106,26 @@ const AlumniListItem = ({
           )}
           {canMoveDown && (
             <button
+              type="button"
               onClick={onMoveDown}
-              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="Move Down"
             >
               <FaArrowDown size={11} />
             </button>
           )}
           <button
+            type="button"
             onClick={onEdit}
-            className="p-1.5 text-slate-400 hover:text-google-blue rounded-lg hover:bg-google-blue/10 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-google-blue rounded-lg hover:bg-google-blue/10 transition-colors cursor-pointer"
             title="Edit Alumni"
           >
             <FaEdit size={11} />
           </button>
           <button
+            type="button"
             onClick={onDelete}
-            className="p-1.5 text-slate-400 hover:text-google-red rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-google-red rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
             title="Delete Alumni"
           >
             <FaTrash size={11} />
@@ -179,16 +188,17 @@ const LegacyProfileCard = ({
   canMoveDown
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.6, delay: 0.1 }}
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.25) }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="relative w-full group overflow-hidden rounded-[3rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xl dark:shadow-google-blue/5 transition-all duration-500 mb-12 last:mb-0"
+      className="relative w-full group overflow-hidden rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xl dark:shadow-google-blue/5 hover:shadow-2xl transition-shadow duration-300"
     >
       {/* Background Decorative Glow */}
       <div
@@ -204,33 +214,37 @@ const LegacyProfileCard = ({
         >
           {canMoveUp && (
             <button
+              type="button"
               title="Move Up"
               onClick={onMoveUp}
-              className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+              className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
             >
               <FaArrowUp size={12} />
             </button>
           )}
           {canMoveDown && (
             <button
+              type="button"
               title="Move Down"
               onClick={onMoveDown}
-              className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+              className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
             >
               <FaArrowDown size={12} />
             </button>
           )}
           <button
+            type="button"
             title="Edit Alumni"
             onClick={onEdit}
-            className="p-1.5 text-google-blue hover:bg-google-blue/20 rounded-lg transition-colors"
+            className="p-1.5 text-google-blue hover:bg-google-blue/20 rounded-lg transition-colors cursor-pointer"
           >
             <FaEdit size={12} />
           </button>
           <button
+            type="button"
             title="Delete Alumni"
             onClick={onDelete}
-            className="p-1.5 text-google-red hover:bg-google-red/20 rounded-lg transition-colors"
+            className="p-1.5 text-google-red hover:bg-google-red/20 rounded-lg transition-colors cursor-pointer"
           >
             <FaTrash size={12} />
           </button>
@@ -241,24 +255,25 @@ const LegacyProfileCard = ({
         {/* Left Section: Visual & Photo */}
         <div className="lg:w-2/5 relative overflow-hidden bg-slate-50 dark:bg-slate-800/50 p-8 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800">
           <div className="relative mb-8">
-            <motion.div
-              animate={{ rotate: isHovered ? 360 : 0 }}
-              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-              className="absolute -inset-4 rounded-full border-2 border-dashed border-slate-200 dark:border-slate-700 opacity-50"
+            <div
+              className={`absolute -inset-4 rounded-full border-2 border-dashed border-slate-200 dark:border-slate-700 opacity-50 transition-transform duration-700 ease-out ${
+                isHovered ? 'rotate-45 scale-105' : 'rotate-0 scale-100'
+              }`}
               style={{ borderColor: isHovered ? alumni.color : undefined }}
             />
-            <div className="relative w-40 h-40 md:w-48 md:h-48 rounded-full overflow-hidden border-4 border-white dark:border-slate-800 shadow-2xl">
-              <img
-                src={alumni.image}
-                alt={alumni.name}
-                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.parentNode.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-6xl font-black text-slate-300">${alumni.name.charAt(
-                    0
-                  )}</div>`;
-                }}
-              />
+            <div className="relative w-40 h-40 md:w-48 md:h-48 rounded-full overflow-hidden border-4 border-white dark:border-slate-800 shadow-2xl bg-slate-100 dark:bg-slate-800">
+              {imgError || !alumni.image ? (
+                <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-6xl font-black text-slate-400 select-none">
+                  {(alumni.name || 'A').charAt(0)}
+                </div>
+              ) : (
+                <img
+                  src={alumni.image}
+                  alt={alumni.name}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none select-none"
+                  onError={() => setImgError(true)}
+                />
+              )}
             </div>
           </div>
 
@@ -322,7 +337,7 @@ const LegacyProfileCard = ({
           </p>
 
           <div className="flex flex-wrap gap-2 pt-4">
-            {alumni.skills.map((skill, i) => (
+            {(Array.isArray(alumni.skills) ? alumni.skills : []).map((skill, i) => (
               <span
                 key={i}
                 className="px-4 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 text-xs font-bold text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-700"
@@ -374,8 +389,9 @@ const AlumniModal = ({ alumni, onClose, onSave, isNew = false }) => {
             {isNew ? 'Add Alumni Profile' : `Edit: ${alumni.name}`}
           </h3>
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 cursor-pointer"
           >
             <FaTimes />
           </button>
@@ -552,7 +568,52 @@ const Alumni = () => {
   const initialQuery = searchParams.get('q') || '';
   const initialView = searchParams.get('view') || (typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'grid');
 
-  const [alumniList, setAlumniList] = useState(initialAlumni);
+  const [alumniList, setAlumniList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gdg_alumni_list');
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : initialAlumni;
+    } catch {
+      return initialAlumni;
+    }
+  });
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch alumni directly from MongoDB backend
+  const fetchAlumniFromDb = useCallback(async (skipCache = false) => {
+    try {
+      const res = await api.alumni.getAll(skipCache);
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      if (list.length > 0) {
+        const normalized = list.map((a) => ({
+          ...a,
+          id: a._id || a.id,
+          _id: a._id || a.id,
+          skills: Array.isArray(a.skills) ? a.skills : [],
+        }));
+        setAlumniList(normalized);
+        try {
+          localStorage.setItem('gdg_alumni_list', JSON.stringify(normalized));
+        } catch {}
+      }
+    } catch (err) {
+      console.warn('Could not fetch alumni from DB, using cache/fallback:', err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAlumniFromDb();
+  }, [fetchAlumniFromDb]);
+
+  const saveAlumniToStorage = (updated) => {
+    setAlumniList(updated);
+    try {
+      localStorage.setItem('gdg_alumni_list', JSON.stringify(updated));
+    } catch {}
+  };
   const [searchQuery, setSearchQueryState] = useState(initialQuery);
   const [selectedBatch, setSelectedBatchState] = useState(initialBatch);
   const [selectedOrg, setSelectedOrgState] = useState(initialOrg);
@@ -560,8 +621,27 @@ const Alumni = () => {
   const [isOrgOpen, setIsOrgOpen] = useState(false);
   const [view, setViewState] = useState(initialView);
 
+  // Prevent auto-scrolling to bottom when list changes
+  const scrollAnchorToControls = useCallback(() => {
+    const controlsEl = document.getElementById('alumni-controls');
+    if (controlsEl) {
+      const rect = controlsEl.getBoundingClientRect();
+      if (rect.top < 0) {
+        if (window.lenis) {
+          window.lenis.scrollTo(controlsEl, { offset: -90, duration: 0.4 });
+        } else {
+          window.scrollTo({
+            top: window.scrollY + rect.top - 90,
+            behavior: 'smooth',
+          });
+        }
+      }
+    }
+  }, []);
+
   const setSearchQuery = (q) => {
     setSearchQueryState(q);
+    scrollAnchorToControls();
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       if (!q.trim()) next.delete('q');
@@ -572,6 +652,7 @@ const Alumni = () => {
 
   const setSelectedBatch = (batch) => {
     setSelectedBatchState(batch);
+    scrollAnchorToControls();
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       if (batch === 'All') next.delete('batch');
@@ -582,6 +663,7 @@ const Alumni = () => {
 
   const setSelectedOrg = (org) => {
     setSelectedOrgState(org);
+    scrollAnchorToControls();
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       if (org === 'All') next.delete('org');
@@ -592,6 +674,7 @@ const Alumni = () => {
 
   const setView = (v) => {
     setViewState(v);
+    scrollAnchorToControls();
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       next.set('view', v);
@@ -602,43 +685,107 @@ const Alumni = () => {
   // Admin Modal state
   const [modalState, setModalState] = useState(null); // { alumni, index, isNew }
 
-  const batches = ['All', ...new Set(alumniList.map((a) => a.batch))].sort();
+  const batches = ['All', ...new Set(alumniList.map((a) => a.batch).filter(Boolean))].sort();
   const orgs = ['All', 'GDG', 'GDSC', 'GDGoC'];
 
-  const handleMoveAlumni = (index, direction) => {
+  const handleMoveAlumni = async (index, direction) => {
     const target = index + direction;
     if (target < 0 || target >= alumniList.length) return;
     const updated = [...alumniList];
     const temp = updated[index];
     updated[index] = updated[target];
     updated[target] = temp;
-    setAlumniList(updated);
-  };
+    saveAlumniToStorage(updated);
 
-  const handleDeleteAlumni = (index) => {
-    if (window.confirm(`Delete alumni entry for "${alumniList[index].name}"?`)) {
-      setAlumniList(alumniList.filter((_, i) => i !== index));
+    if (isAdmin) {
+      const orderedIds = updated.map((a) => a._id).filter(Boolean);
+      if (orderedIds.length > 0) {
+        try {
+          await api.alumni.reorder(orderedIds);
+        } catch (err) {
+          console.error('Failed to sync alumni reorder with DB:', err);
+        }
+      }
     }
   };
 
-  const handleSaveAlumni = (saved) => {
+  const handleDeleteAlumni = async (index) => {
+    const member = alumniList[index];
+    if (!member) return;
+    if (window.confirm(`Delete alumni entry for "${member.name}"?`)) {
+      const updated = alumniList.filter((_, i) => i !== index);
+      saveAlumniToStorage(updated);
+      if (member._id) {
+        try {
+          await api.alumni.delete(member._id);
+        } catch (err) {
+          console.error('Failed to delete alumni from DB:', err);
+        }
+      }
+    }
+  };
+
+  const handleSaveAlumni = async (saved) => {
     if (!modalState) return;
+
+    const payload = {
+      name: saved.name,
+      role: saved.role,
+      era: saved.era || 'The Pioneers',
+      batch: saved.batch || '2024',
+      org: saved.org || 'GDSC',
+      color: saved.color || '#4285F4',
+      bio: saved.bio || '',
+      image: saved.image || '',
+      skills: Array.isArray(saved.skills) ? saved.skills : [],
+      linkedin: saved.linkedin || '',
+      github: saved.github || '',
+      instagram: saved.instagram || '',
+    };
+
     if (modalState.isNew) {
-      setAlumniList([saved, ...alumniList]);
+      try {
+        const res = await api.alumni.create(payload);
+        if (res?.data?._id) {
+          saved._id = res.data._id;
+          saved.id = res.data._id;
+        }
+      } catch (err) {
+        console.error('Failed to create alumni in DB:', err);
+      }
+      saveAlumniToStorage([saved, ...alumniList]);
     } else {
+      const targetId = saved._id || saved.id;
+      if (targetId) {
+        try {
+          await api.alumni.update(targetId, payload);
+        } catch (err) {
+          console.error('Failed to update alumni in DB:', err);
+        }
+      }
       const updated = [...alumniList];
       updated[modalState.index] = saved;
-      setAlumniList(updated);
+      saveAlumniToStorage(updated);
     }
+    fetchAlumniFromDb(true);
   };
 
   const filteredAlumni = alumniList.filter((alumni) => {
+    const name = alumni.name || '';
+    const role = alumni.role || '';
+    const skills = Array.isArray(alumni.skills) ? alumni.skills : [];
+    const q = searchQuery.toLowerCase().trim();
+
     const matchesSearch =
-      alumni.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      alumni.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      alumni.skills.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()));
+      !q ||
+      name.toLowerCase().includes(q) ||
+      role.toLowerCase().includes(q) ||
+      skills.some((s) => typeof s === 'string' && s.toLowerCase().includes(q));
+
     const matchesBatch = selectedBatch === 'All' || alumni.batch === selectedBatch;
-    const matchesOrg = selectedOrg === 'All' || alumni.org.includes(selectedOrg);
+    const matchesOrg =
+      selectedOrg === 'All' ||
+      (alumni.org && alumni.org.toLowerCase().includes(selectedOrg.toLowerCase()));
 
     return matchesSearch && matchesBatch && matchesOrg;
   });
@@ -652,7 +799,7 @@ const Alumni = () => {
       </div>
 
       {/* Header Banner - Standardized across pages */}
-      <div className="relative bg-slate-50/70 dark:bg-slate-900/40 pt-8 pb-10 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden mb-12">
+      <div className="relative bg-slate-50/70 dark:bg-slate-900/40 pt-8 pb-10 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden mb-1">
         <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <motion.div
@@ -684,6 +831,7 @@ const Alumni = () => {
           {isAdmin && (
             <div className="mt-6 flex justify-center">
               <button
+                type="button"
                 onClick={() =>
                   setModalState({
                     alumni: {
@@ -711,121 +859,130 @@ const Alumni = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-3">
 
         {/* Sticky Filter Controls Bar with View Switcher */}
-        <div className="sticky top-[88px] md:top-[96px] z-30 mb-12 p-3 sm:p-4 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-md flex flex-col md:flex-row items-center gap-3">
+        <div
+          id="alumni-controls"
+          className="sticky top-[80px] md:top-[80px] z-30 mb-8 py-1 px-3 sm:py-1.5 sm:px-4 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-md flex flex-col md:flex-row items-center gap-2 sm:gap-2.5"
+        >
           <div className="relative w-full md:flex-1 group">
             <input
               type="text"
               placeholder="Search by name, role or skill..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 focus:outline-none focus:border-google-blue text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
+              className="w-full pl-9 pr-4 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 focus:outline-none focus:border-google-blue text-xs text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
             />
-            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-google-blue transition-colors">
-              <FaExternalLinkAlt className="rotate-45" size={13} />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-google-blue transition-colors">
+              <FaExternalLinkAlt className="rotate-45" size={11} />
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 w-full md:w-auto justify-between md:justify-end flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end flex-wrap sm:flex-nowrap">
             {/* Batch Dropdown */}
             <div className="relative flex-1 sm:flex-initial">
               <button
+                type="button"
                 onClick={() => {
                   setIsBatchOpen(!isBatchOpen);
                   setIsOrgOpen(false);
                 }}
-                className="w-full sm:w-36 flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-google-blue transition-colors"
+                className="w-full sm:w-36 flex items-center justify-between px-3 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:border-google-blue transition-colors cursor-pointer"
               >
-                <span className="truncate">
-                  {selectedBatch === 'All' ? 'Batch (All)' : selectedBatch}
-                </span>
+                <div className="flex items-center gap-2 truncate">
+                  <FaGraduationCap className="text-google-blue text-xs shrink-0" />
+                  <span className="truncate">
+                    {selectedBatch === 'All' ? 'All Batches' : `Batch ${selectedBatch}`}
+                  </span>
+                </div>
                 <FaChevronDown
-                  className={`text-slate-400 transition-transform duration-200 ${isBatchOpen ? 'rotate-180' : ''}`}
-                  size={10}
+                  className={`text-slate-400 transition-transform duration-200 text-xs shrink-0 ${isBatchOpen ? 'rotate-180' : ''}`}
                 />
               </button>
 
-              <AnimatePresence mode="wait">
-                {isBatchOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute z-[100] top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden py-1.5"
-                  >
+              {isBatchOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[90]"
+                    onClick={() => setIsBatchOpen(false)}
+                  />
+                  <div className="absolute left-0 sm:left-auto sm:right-0 mt-1.5 w-full sm:w-40 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700/60 py-1.5 z-[100] max-h-60 overflow-y-auto">
                     {batches.map((year) => (
                       <button
                         key={year}
+                        type="button"
                         onClick={() => {
                           setSelectedBatch(year);
                           setIsBatchOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${
+                        className={`w-full text-left px-3.5 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center justify-between cursor-pointer ${
                           selectedBatch === year
                             ? 'text-google-blue font-bold bg-google-blue/5'
                             : 'text-slate-600 dark:text-slate-300'
                         }`}
                       >
-                        {year === 'All' ? 'All Batches' : year}
+                        <span>{year === 'All' ? 'All Batches' : `Batch ${year}`}</span>
+                        {selectedBatch === year && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-google-blue shrink-0" />
+                        )}
                       </button>
                     ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              {isBatchOpen && (
-                <div className="fixed inset-0 z-[40]" onClick={() => setIsBatchOpen(false)} />
+                  </div>
+                </>
               )}
             </div>
 
             {/* Org Dropdown */}
             <div className="relative flex-1 sm:flex-initial">
               <button
+                type="button"
                 onClick={() => {
                   setIsOrgOpen(!isOrgOpen);
                   setIsBatchOpen(false);
                 }}
-                className="w-full sm:w-36 flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-google-blue transition-colors"
+                className="w-full sm:w-36 flex items-center justify-between px-3 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:border-google-blue transition-colors cursor-pointer"
               >
-                <span className="truncate">
-                  {selectedOrg === 'All' ? 'Realm (All)' : selectedOrg}
-                </span>
+                <div className="flex items-center gap-2 truncate">
+                  <FaLayerGroup className="text-google-green text-xs shrink-0" />
+                  <span className="truncate">
+                    {selectedOrg === 'All' ? 'All Realms' : selectedOrg}
+                  </span>
+                </div>
                 <FaChevronDown
-                  className={`text-slate-400 transition-transform duration-200 ${isOrgOpen ? 'rotate-180' : ''}`}
-                  size={10}
+                  className={`text-slate-400 transition-transform duration-200 text-xs shrink-0 ${isOrgOpen ? 'rotate-180' : ''}`}
                 />
               </button>
 
-              <AnimatePresence mode="wait">
-                {isOrgOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute z-[100] top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden py-1.5"
-                  >
+              {isOrgOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[90]"
+                    onClick={() => setIsOrgOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-1.5 w-full sm:w-40 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700/60 py-1.5 z-[100] max-h-60 overflow-y-auto">
                     {orgs.map((org) => (
                       <button
                         key={org}
+                        type="button"
                         onClick={() => {
                           setSelectedOrg(org);
                           setIsOrgOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${
+                        className={`w-full text-left px-3.5 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center justify-between cursor-pointer ${
                           selectedOrg === org
-                            ? 'text-google-blue font-bold bg-google-blue/5'
+                            ? 'text-google-green font-bold bg-green-500/5'
                             : 'text-slate-600 dark:text-slate-300'
                         }`}
                       >
-                        {org === 'All' ? 'All Realms' : org}
+                        <span>{org === 'All' ? 'All Realms' : org}</span>
+                        {selectedOrg === org && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-google-green shrink-0" />
+                        )}
                       </button>
                     ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              {isOrgOpen && (
-                <div className="fixed inset-0 z-[40]" onClick={() => setIsOrgOpen(false)} />
+                  </div>
+                </>
               )}
             </div>
 
@@ -835,8 +992,13 @@ const Alumni = () => {
         </div>
 
         {/* Content: List View vs Grid View (Cards Stream) */}
-        {filteredAlumni.length === 0 ? (
-          <div className="py-24 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
+        {isLoading && alumniList.length === 0 ? (
+          <div className="py-24 text-center flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
+            <FaSpinner className="animate-spin text-google-blue text-4xl mb-4" />
+            <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">Loading alumni network...</p>
+          </div>
+        ) : filteredAlumni.length === 0 ? (
+          <div className="py-24 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 min-h-[400px] flex flex-col items-center justify-center">
             <div className="text-6xl mb-4">🔍</div>
             <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">
               No Legacy Found
@@ -844,10 +1006,10 @@ const Alumni = () => {
             <p className="text-xs text-slate-400">Try adjusting your filters or search keywords.</p>
           </div>
         ) : view === 'list' ? (
-          <div className="space-y-3 ">
+          <div className="space-y-3 min-h-[450px]">
             {filteredAlumni.map((alumni, i) => (
               <AlumniListItem
-                key={alumni.id}
+                key={alumni.id || alumni._id || i}
                 alumni={alumni}
                 index={i}
                 isAdmin={isAdmin}
@@ -867,10 +1029,10 @@ const Alumni = () => {
             ))}
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-8 min-h-[500px]">
             {filteredAlumni.map((alumni, i) => (
               <LegacyProfileCard
-                key={alumni.id}
+                key={alumni.id || alumni._id || i}
                 alumni={alumni}
                 index={i}
                 isAdmin={isAdmin}

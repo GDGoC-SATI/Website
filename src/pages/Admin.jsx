@@ -556,7 +556,7 @@ const Admin = () => {
   });
 
   return (
-    <div className="min-h-screen pt-15 pb-20 bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen pt-10 pb-20 bg-slate-50 dark:bg-slate-950">
       {/* Toast Notification */}
       <AnimatePresence>
         {notification && (
@@ -574,7 +574,7 @@ const Admin = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Executive Header with Sync DB button */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-google-blue to-indigo-600 flex items-center justify-center text-white text-xl font-black shadow-md">
               <FaShieldAlt />
@@ -603,7 +603,7 @@ const Admin = () => {
         </div>
 
         {/* Metrics Overview Cards (Horizontal scroll on mobile as requested in Screenshot 2026-09-23 014029) */}
-        <div className="flex sm:grid sm:grid-cols-3 gap-4 sm:gap-6 mb-8 overflow-x-auto sm:overflow-visible pb-3 sm:pb-0 hide-scrollbar no-scrollbar snap-x snap-mandatory">
+        <div className="flex sm:grid sm:grid-cols-3 gap-3 sm:gap-3 mb-4 overflow-x-auto sm:overflow-visible pb-3 sm:pb-0 hide-scrollbar no-scrollbar snap-x snap-mandatory">
           {/* Registered Users */}
           <div
             onClick={() => setActiveTab('users')}
@@ -676,12 +676,12 @@ const Admin = () => {
         </div>
 
         {/* Sticky Control Center Header: Navigation Tabs + Search & View Switcher */}
-        <div className="sticky top-[88px] md:top-[96px] z-30 mb-8 p-3 sm:p-4 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-md space-y-3">
+        <div className="sticky top-[80px] md:top-[80px] z-30 mb-6 py-1 px-3 sm:py-1.5 sm:px-4 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-md space-y-1.5">
           {/* Row 1: Section Navigation Tabs */}
-          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto hide-scrollbar no-scrollbar py-0.5">
+          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto hide-scrollbar no-scrollbar py-0.5">
             <button
               onClick={() => setActiveTab('users')}
-              className={`py-2 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all relative whitespace-nowrap ${activeTab === 'users'
+              className={`py-1 px-2.5 sm:px-3 rounded-lg text-xs font-bold transition-all relative whitespace-nowrap ${activeTab === 'users'
                 ? 'bg-google-blue text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
@@ -690,14 +690,14 @@ const Admin = () => {
             </button>
             <button
               onClick={() => setActiveTab('requests')}
-              className={`py-2 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all relative whitespace-nowrap ${activeTab === 'requests'
+              className={`py-1 px-2.5 sm:px-3 rounded-lg text-xs font-bold transition-all relative whitespace-nowrap ${activeTab === 'requests'
                 ? 'bg-google-blue text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
             >
               <span>Project Addition Requests</span>
               {pendingRequestsCount > 0 && (
-                <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-bold">
+                <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500 text-white font-bold">
                   {pendingRequestsCount}
                 </span>
               )}
@@ -705,14 +705,14 @@ const Admin = () => {
 
             <button
               onClick={() => setActiveTab('queries')}
-              className={`py-2 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all relative whitespace-nowrap ${activeTab === 'queries'
+              className={`py-1 px-2.5 sm:px-3 rounded-lg text-xs font-bold transition-all relative whitespace-nowrap ${activeTab === 'queries'
                 ? 'bg-google-blue text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
             >
               <span>Contact Inquiries</span>
               {unreadQueriesCount > 0 && (
-                <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] bg-red-500 text-white font-bold">
+                <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] bg-red-500 text-white font-bold">
                   {unreadQueriesCount}
                 </span>
               )}
@@ -722,20 +722,20 @@ const Admin = () => {
 
             <button
               onClick={() => setActiveTab('broadcast')}
-              className={`py-2 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all relative whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'broadcast'
+              className={`py-1 px-2.5 sm:px-3 rounded-lg text-xs font-bold transition-all relative whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'broadcast'
                 ? 'bg-google-blue text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
             >
-              <FaBullhorn size={12} />
+              <FaBullhorn size={11} />
               <span>Broadcast Update</span>
             </button>
           </div>
 
           {/* Row 2: Search Bar & View Switcher */}
-          <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between gap-2.5 pt-1.5 border-t border-slate-100 dark:border-slate-800">
             <div className="relative flex-1">
-              <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
               <input
                 type="text"
                 placeholder={
@@ -749,7 +749,7 @@ const Admin = () => {
                 }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/60 focus:outline-none focus:border-google-blue text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
+                className="w-full pl-8 pr-4 py-1 rounded-lg text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/60 focus:outline-none focus:border-google-blue text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
               />
             </div>
 

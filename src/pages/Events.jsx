@@ -996,70 +996,77 @@ const Events = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        {/* Sticky Controls: Search, Filter & View Switcher */}
-        <div className="sticky top-[88px] md:top-[96px] z-30 flex flex-col md:flex-row items-center justify-between gap-3 mb-12 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-3 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-md">
-          {/* Search Input */}
-          <div className="relative w-full md:w-80">
-            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search events, topics, or venues..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="w-full pl-11 pr-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 focus:outline-none focus:border-google-blue text-sm text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
-            />
-          </div>
-
-          <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-            {/* Year Filter Dropdown */}
-            <div className="relative flex-1 md:flex-initial">
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-full md:w-44 flex items-center justify-between px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-google-blue transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <FaCalendarAlt className="text-google-blue" />
-                  <span>{filterYear === 'All' ? 'All Years' : filterYear}</span>
-                </div>
-                <FaChevronDown
-                  className={`text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''
-                    }`}
-                />
-              </button>
-
-              {isDropdownOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-[90]"
-                    onClick={() => setIsDropdownOpen(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-full md:w-44 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700/60 py-2 z-[100]">
-                    {['All', '2026', '2025', '2024'].map((year) => (
-                      <button
-                        key={year}
-                        onClick={() => {
-                          setFilterYear(year);
-                          setIsDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${filterYear === year
-                            ? 'text-google-blue font-bold'
-                            : 'text-slate-600 dark:text-slate-300'
-                          }`}
-                      >
-                        {year === 'All' ? 'All Years' : year}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
+      <div className="w-full relative mt-3">
+        {/* Controls: Search, Filter & View Switcher (Normal/static in grid view on desktop, sticky in list view and on mobile) */}
+        <div
+          className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 ${
+            view === 'grid'
+              ? 'sticky top-[80px] md:top-[80px] lg:static lg:top-auto z-30'
+              : 'sticky top-[80px] md:top-[80px] z-30'
+          }`}
+        >
+          <div className="flex flex-col md:flex-row items-center justify-between gap-2 py-1 px-3 sm:py-1.5 sm:px-4 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shadow-md">
+            {/* Search Input */}
+            <div className="relative w-full md:w-80">
+              <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
+              <input
+                type="text"
+                placeholder="Search events, topics, or venues..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full pl-9 pr-4 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 focus:outline-none focus:border-google-blue text-xs text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
+              />
             </div>
 
-            {/* List / Grid View Switcher */}
-            <ViewToggle view={view} onViewChange={setView} />
+            <div className="flex items-center gap-2.5 w-full md:w-auto justify-between md:justify-end">
+              {/* Year Filter Dropdown */}
+              <div className="relative flex-1 md:flex-initial">
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="w-full md:w-40 flex items-center justify-between px-3 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:border-google-blue transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <FaCalendarAlt className="text-google-blue text-xs" />
+                    <span>{filterYear === 'All' ? 'All Years' : filterYear}</span>
+                  </div>
+                  <FaChevronDown
+                    className={`text-slate-400 transition-transform duration-200 text-xs ${isDropdownOpen ? 'rotate-180' : ''
+                      }`}
+                  />
+                </button>
+
+                {isDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-[90]"
+                      onClick={() => setIsDropdownOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-full md:w-40 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700/60 py-1.5 z-[100]">
+                      {['All', '2026', '2025', '2024'].map((year) => (
+                        <button
+                          key={year}
+                          onClick={() => {
+                            setFilterYear(year);
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${filterYear === year
+                              ? 'text-google-blue font-bold'
+                              : 'text-slate-600 dark:text-slate-300'
+                            }`}
+                        >
+                          {year === 'All' ? 'All Years' : year}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* List / Grid View Switcher */}
+              <ViewToggle view={view} onViewChange={setView} />
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Content: List View vs Grid View (Timeline) */}
       {loading && events.length === 0 ? (
@@ -1133,6 +1140,7 @@ const Events = () => {
           />
         </div>
       )}
+      </div>
 
       {/* Admin Event Edit/Add Modal */}
       {modalState && (

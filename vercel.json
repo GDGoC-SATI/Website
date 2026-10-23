@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
@@ -29,7 +37,20 @@
       ]
     },
     {
-      "source": "/(robots.txt|sitemap.xml|site.webmanifest|llms.txt|llms-full.txt)",
+      "source": "/sitemap.xml",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/xml; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, s-maxage=300, stale-while-revalidate=600"
+        }
+      ]
+    },
+    {
+      "source": "/(robots.txt|site.webmanifest|llms.txt|llms-full.txt)",
       "headers": [
         {
           "key": "Cache-Control",

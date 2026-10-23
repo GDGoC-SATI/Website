@@ -24,6 +24,7 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
+const Brand = lazy(() => import('./pages/Brand'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Preload 404 Dino game chunk during browser idle time so it's guaranteed 100% available offline
@@ -62,6 +63,28 @@ function App() {
     }
   }, [location.pathname, location.hash]);
 
+  // Global protection: Prevent drag-and-drop of any images/SVGs/media across all pages
+  useEffect(() => {
+    const handleGlobalDragStart = (e) => {
+      const target = e.target;
+      if (
+        target &&
+        (target.tagName === 'IMG' ||
+          target.tagName === 'image' ||
+          target.tagName === 'svg' ||
+          target.tagName === 'CANVAS' ||
+          target.tagName === 'VIDEO' ||
+          target.closest?.('img') ||
+          target.closest?.('svg'))
+      ) {
+        e.preventDefault();
+        return false;
+      }
+    };
+    window.addEventListener('dragstart', handleGlobalDragStart, { capture: true });
+    return () => window.removeEventListener('dragstart', handleGlobalDragStart, { capture: true });
+  }, []);
+
   return (
     <AuthProvider>
       <RealtimeProvider>
@@ -89,6 +112,7 @@ function App() {
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/privacy" element={<Privacy />} />
                   <Route path="/terms" element={<Terms />} />
+                  <Route path="/brand" element={<Brand />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>

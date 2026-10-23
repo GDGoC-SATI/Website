@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaLinkedin,
@@ -17,11 +17,56 @@ import {
   FaArrowLeft,
   FaArrowRight,
   FaPlus,
-  FaSave
+  FaSave,
+  FaSpinner
 } from 'react-icons/fa';
 import { leads as initialLeads, teams as initialTeams } from '../data/teamData';
 import { useAuth } from '../context/AuthContext';
 import usePageSEO from '../hooks/usePageSEO';
+import ProfileAvatar from '../components/team/ProfileAvatar';
+import { api } from '../services/api';
+
+// --- Helper to group database team members into leads & teams ---
+const groupMembersByDomain = (membersList) => {
+  const leads = [];
+  const teams = {
+    technical: { title: 'Technical Team', color: '#EA4335', members: [] },
+    media: { title: 'Media Team', color: '#4285F4', members: [] },
+    events: { title: 'Events Team', color: '#34A853', members: [] },
+    management: { title: 'Management Team', color: '#FBBC04', members: [] },
+  };
+
+  if (!Array.isArray(membersList)) return { leads, teams };
+
+  membersList.forEach((m) => {
+    const formatted = {
+      ...m,
+      id: m._id || m.id,
+      _id: m._id || m.id,
+      class: m.subRole || m.class || '',
+      subRole: m.subRole || m.class || '',
+      tags: Array.isArray(m.skills) && m.skills.length > 0 ? m.skills : Array.isArray(m.tags) ? m.tags : [],
+      skills: Array.isArray(m.skills) && m.skills.length > 0 ? m.skills : Array.isArray(m.tags) ? m.tags : [],
+      socials: m.socials || {},
+    };
+
+    const cat = String(m.category || '').toLowerCase();
+
+    if (cat === 'lead') {
+      leads.push({ ...formatted, team: 'Lead', domain: 'lead' });
+    } else if (cat === 'social' || cat === 'media') {
+      teams.media.members.push({ ...formatted, team: 'Media Team', domain: 'media' });
+    } else if (cat === 'events') {
+      teams.events.members.push({ ...formatted, team: 'Events Team', domain: 'events' });
+    } else if (cat === 'management') {
+      teams.management.members.push({ ...formatted, team: 'Management Team', domain: 'management' });
+    } else {
+      teams.technical.members.push({ ...formatted, team: 'Technical Team', domain: 'technical' });
+    }
+  });
+
+  return { leads, teams };
+};
 
 // --- Profile Details Modal (Exact Original) ---
 const ProfileModal = ({ member, onClose }) => {
@@ -64,20 +109,16 @@ const ProfileModal = ({ member, onClose }) => {
         {/* Profile Section */}
         <div className="px-8 pb-8 -mt-20">
           <div className="flex justify-between items-end mb-6">
-            {/* Profile Image */}
+            {/* Profile Image with Domain Avatar Frame */}
             <div className="relative">
-              <div className="w-32 h-32 md:w-36 md:h-36 rounded-full border-4 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden shadow-lg">
-                {member.image ? (
-                  <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-5xl md:text-6xl font-bold text-slate-400">
-                    {member.name.charAt(0)}
-                  </span>
-                )}
-              </div>
-              <div className="absolute bottom-2 right-2 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 text-google-blue">
-                <FaCode size={14} style={{ color: themeColor }} />
-              </div>
+              <ProfileAvatar
+                member={member}
+                domain={member.domain}
+                team={member.team}
+                color={themeColor}
+                size="modal"
+                className="shadow-xl rounded-full bg-white dark:bg-slate-900 p-0.5"
+              />
             </div>
 
             {/* Quick Actions (Socials) */}
@@ -379,6 +420,7 @@ const MemberEditModal = ({ member, onClose, onSave, isNew = false, currentDomain
 // --- Profile Card (Exact Original with Admin Controls) ---
 const ProfileCard = ({
   member,
+  domain,
   onClick,
   color = '#4285F4',
   isAdmin,
@@ -441,18 +483,14 @@ const ProfileCard = ({
       )}
 
       <div className="p-6 md:p-8 flex flex-col items-center text-center">
-        <div className="w-28 h-28 mb-6 relative">
-          <div className="absolute inset-0 bg-gradient-to-tr from-slate-200 to-slate-50 dark:from-slate-800 dark:to-slate-700 rounded-full flex items-center justify-center overflow-hidden border-4 border-white dark:border-slate-900 shadow-md group-hover:scale-105 transition-transform duration-300">
-            {member.image ? (
-              <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-4xl font-bold text-slate-400">{member.name.charAt(0)}</span>
-            )}
-          </div>
-          {/* Badge/Icon overlay */}
-          <div className="absolute bottom-0 right-0 bg-white dark:bg-slate-800 p-2 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 text-google-blue">
-            <FaCode size={14} />
-          </div>
+        <div className="mb-6 relative group-hover:scale-105 transition-transform duration-300">
+          <ProfileAvatar
+            member={member}
+            domain={domain || member?.domain}
+            team={member?.team}
+            color={color}
+            size="card"
+          />
         </div>
 
         <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1 group-hover:text-google-blue transition-colors">
@@ -603,11 +641,12 @@ const Team = () => {
     };
   }, [activeTeam]);
 
-  // Leads & Teams data stored in local state for live in-place admin operations
+  // Leads & Teams data initialized from localStorage or initial fallback
   const [leadsList, setLeadsList] = useState(() => {
     try {
       const saved = localStorage.getItem('gdg_team_leads');
-      return saved ? JSON.parse(saved) : initialLeads;
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : initialLeads;
     } catch {
       return initialLeads;
     }
@@ -616,11 +655,41 @@ const Team = () => {
   const [teamsData, setTeamsData] = useState(() => {
     try {
       const saved = localStorage.getItem('gdg_teams_data');
-      return saved ? JSON.parse(saved) : initialTeams;
+      const parsed = saved ? JSON.parse(saved) : null;
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) && Object.keys(parsed).length > 0
+        ? parsed
+        : initialTeams;
     } catch {
       return initialTeams;
     }
   });
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch team members directly from MongoDB backend
+  const fetchTeamFromDb = useCallback(async (skipCache = false) => {
+    try {
+      const res = await api.team.getAll(skipCache);
+      const members = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      if (members.length > 0) {
+        const { leads, teams } = groupMembersByDomain(members);
+        setLeadsList(leads);
+        setTeamsData(teams);
+        try {
+          localStorage.setItem('gdg_team_leads', JSON.stringify(leads));
+          localStorage.setItem('gdg_teams_data', JSON.stringify(teams));
+        } catch {}
+      }
+    } catch (err) {
+      console.warn('Could not fetch team from DB, using cache/fallback:', err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTeamFromDb();
+  }, [fetchTeamFromDb]);
 
   const saveLeadsToStorage = (updated) => {
     setLeadsList(updated);
@@ -640,7 +709,7 @@ const Team = () => {
   const [editingTarget, setEditingTarget] = useState(null); // { type: 'lead' | 'team', teamKey?: string, index: number, member: object, isNew?: boolean }
 
   // Lead Actions
-  const handleMoveLead = (index, direction) => {
+  const handleMoveLead = async (index, direction) => {
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= leadsList.length) return;
     const updated = [...leadsList];
@@ -648,16 +717,37 @@ const Team = () => {
     updated[index] = updated[targetIndex];
     updated[targetIndex] = temp;
     saveLeadsToStorage(updated);
+
+    if (isAdmin) {
+      const orderedIds = updated.map((m) => m._id).filter(Boolean);
+      if (orderedIds.length > 0) {
+        try {
+          await api.team.reorder(orderedIds);
+        } catch (err) {
+          console.error('Failed to sync lead reorder with DB:', err);
+        }
+      }
+    }
   };
 
-  const handleDeleteLead = (index) => {
-    if (window.confirm(`Delete chapter lead "${leadsList[index].name}"?`)) {
-      saveLeadsToStorage(leadsList.filter((_, i) => i !== index));
+  const handleDeleteLead = async (index) => {
+    const member = leadsList[index];
+    if (!member) return;
+    if (window.confirm(`Delete chapter lead "${member.name}"?`)) {
+      const updated = leadsList.filter((_, i) => i !== index);
+      saveLeadsToStorage(updated);
+      if (member._id) {
+        try {
+          await api.team.delete(member._id);
+        } catch (err) {
+          console.error('Failed to delete lead from DB:', err);
+        }
+      }
     }
   };
 
   // Team Member Actions
-  const handleMoveMember = (teamKey, index, direction) => {
+  const handleMoveMember = async (teamKey, index, direction) => {
     const members = [...teamsData[teamKey].members];
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= members.length) return;
@@ -668,37 +758,100 @@ const Team = () => {
       ...teamsData,
       [teamKey]: { ...teamsData[teamKey], members },
     });
+
+    if (isAdmin) {
+      const orderedIds = members.map((m) => m._id).filter(Boolean);
+      if (orderedIds.length > 0) {
+        try {
+          await api.team.reorder(orderedIds);
+        } catch (err) {
+          console.error('Failed to sync member reorder with DB:', err);
+        }
+      }
+    }
   };
 
-  const handleDeleteMember = (teamKey, index) => {
-    const memberName = teamsData[teamKey].members[index].name;
-    if (window.confirm(`Delete team member "${memberName}"?`)) {
+  const handleDeleteMember = async (teamKey, index) => {
+    const member = teamsData[teamKey]?.members?.[index];
+    if (!member) return;
+    if (window.confirm(`Delete team member "${member.name}"?`)) {
       const members = teamsData[teamKey].members.filter((_, i) => i !== index);
       saveTeamsToStorage({
         ...teamsData,
         [teamKey]: { ...teamsData[teamKey], members },
       });
+      if (member._id) {
+        try {
+          await api.team.delete(member._id);
+        } catch (err) {
+          console.error('Failed to delete member from DB:', err);
+        }
+      }
     }
   };
 
-  // Save changes from Edit Modal with Domain Shifting
-  const handleSaveMember = (savedMember, newDomain) => {
+  // Save changes from Edit Modal with Domain Shifting & DB sync
+  const handleSaveMember = async (savedMember, newDomain) => {
     if (!editingTarget) return;
     const { type, teamKey, index, isNew } = editingTarget;
     const originalDomain = type === 'lead' ? 'lead' : teamKey;
     const targetDomain = newDomain || originalDomain;
+
+    const targetCategory = targetDomain === 'lead' ? 'lead' : targetDomain === 'media' ? 'social' : targetDomain;
+    const domainColors = {
+      lead: '#4285F4',
+      technical: '#EA4335',
+      media: '#4285F4',
+      events: '#34A853',
+      management: '#FBBC04',
+    };
+
+    const payload = {
+      name: savedMember.name,
+      role: savedMember.role,
+      subRole: savedMember.class || savedMember.subRole || '',
+      category: targetCategory,
+      bio: savedMember.bio || '',
+      skills: Array.isArray(savedMember.tags) ? savedMember.tags : (savedMember.skills || []),
+      image: savedMember.image || '',
+      color: savedMember.color || domainColors[targetDomain] || '#4285F4',
+      socials: {
+        linkedin: savedMember.socials?.linkedin || '',
+        github: savedMember.socials?.github || '',
+        instagram: savedMember.socials?.instagram || '',
+        twitter: savedMember.socials?.twitter || '',
+      },
+    };
+
+    if (isNew) {
+      try {
+        const res = await api.team.create(payload);
+        if (res?.data?._id) {
+          savedMember._id = res.data._id;
+          savedMember.id = res.data._id;
+        }
+      } catch (err) {
+        console.error('Failed to create team member in DB:', err);
+      }
+    } else if (savedMember._id || savedMember.id) {
+      try {
+        await api.team.update(savedMember._id || savedMember.id, payload);
+      } catch (err) {
+        console.error('Failed to update team member in DB:', err);
+      }
+    }
 
     let updatedLeads = [...leadsList];
     let updatedTeams = { ...teamsData };
 
     if (isNew) {
       if (targetDomain === 'lead') {
-        updatedLeads.push({ ...savedMember, team: 'Lead' });
+        updatedLeads.push({ ...savedMember, team: 'Lead', domain: 'lead' });
       } else {
         const teamObj = updatedTeams[targetDomain] || updatedTeams.technical;
         updatedTeams[targetDomain] = {
           ...teamObj,
-          members: [...teamObj.members, { ...savedMember, team: teamObj.title }],
+          members: [...teamObj.members, { ...savedMember, team: teamObj.title, domain: targetDomain }],
         };
         setActiveTeam(targetDomain);
       }
@@ -721,12 +874,12 @@ const Team = () => {
         }
 
         if (targetDomain === 'lead') {
-          updatedLeads.push({ ...savedMember, team: 'Lead' });
+          updatedLeads.push({ ...savedMember, team: 'Lead', domain: 'lead' });
         } else {
           const targetTeamObj = updatedTeams[targetDomain] || updatedTeams.technical;
           updatedTeams[targetDomain] = {
             ...targetTeamObj,
-            members: [...targetTeamObj.members, { ...savedMember, team: targetTeamObj.title }],
+            members: [...targetTeamObj.members, { ...savedMember, team: targetTeamObj.title, domain: targetDomain }],
           };
           setActiveTeam(targetDomain);
         }
@@ -735,6 +888,7 @@ const Team = () => {
 
     saveLeadsToStorage(updatedLeads);
     saveTeamsToStorage(updatedTeams);
+    fetchTeamFromDb(true);
   };
 
   return (
@@ -783,12 +937,19 @@ const Team = () => {
             <div className="h-px flex-1 bg-gradient-to-l from-transparent to-slate-200 dark:to-slate-800"></div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full">
-            {leadsList.map((member, i) => (
+          {isLoading && leadsList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+              <FaSpinner className="animate-spin text-3xl text-google-blue mb-3" />
+              <p className="text-xs font-semibold">Loading team members...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full">
+              {leadsList.map((member, i) => (
               <ProfileCard
                 key={i}
                 member={member}
-                onClick={() => setSelectedMember({ ...member, themeColor: '#57caff' })}
+                domain="lead"
+                onClick={() => setSelectedMember({ ...member, domain: 'lead', themeColor: '#57caff' })}
                 color="#57caff"
                 isAdmin={isAdmin}
                 canMoveLeft={i > 0}
@@ -806,7 +967,8 @@ const Team = () => {
                 onDelete={() => handleDeleteLead(i)}
               />
             ))}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Team Toggles & Grid */}
@@ -848,9 +1010,9 @@ const Team = () => {
                 <div className="text-center mb-10 flex flex-col items-center">
                   <h2
                     className="text-3xl md:text-4xl font-bold mb-2"
-                    style={{ color: teamsData[activeTeam].color }}
+                    style={{ color: teamsData[activeTeam]?.color }}
                   >
-                    {teamsData[activeTeam].title}
+                    {teamsData[activeTeam]?.title}
                   </h2>
                   <p className="text-slate-500 dark:text-slate-400 mb-3">Powering the community forward</p>
                   {isAdmin && (
@@ -876,37 +1038,45 @@ const Team = () => {
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {teamsData[activeTeam].members.map((member, i) => (
-                    <ProfileCard
-                      key={i}
-                      member={{ ...member, team: teamsData[activeTeam].title }}
-                      onClick={() =>
-                        setSelectedMember({
-                          ...member,
-                          team: teamsData[activeTeam].title,
-                          themeColor: teamsData[activeTeam].color,
-                        })
-                      }
-                      color={teamsData[activeTeam].color}
-                      isAdmin={isAdmin}
-                      canMoveLeft={i > 0}
-                      canMoveRight={i < teamsData[activeTeam].members.length - 1}
-                      onMoveLeft={() => handleMoveMember(activeTeam, i, -1)}
-                      onMoveRight={() => handleMoveMember(activeTeam, i, 1)}
-                      onEdit={() =>
-                        setEditingTarget({
-                          type: 'team',
-                          teamKey: activeTeam,
-                          index: i,
-                          member,
-                          isNew: false,
-                        })
-                      }
-                      onDelete={() => handleDeleteMember(activeTeam, i)}
-                    />
-                  ))}
-                </div>
+                {teamsData[activeTeam]?.members?.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {teamsData[activeTeam]?.members?.map((member, i) => (
+                      <ProfileCard
+                        key={member._id || i}
+                        member={{ ...member, team: teamsData[activeTeam]?.title }}
+                        domain={activeTeam}
+                        onClick={() =>
+                          setSelectedMember({
+                            ...member,
+                            domain: activeTeam,
+                            team: teamsData[activeTeam]?.title,
+                            themeColor: teamsData[activeTeam]?.color,
+                          })
+                        }
+                        color={teamsData[activeTeam]?.color}
+                        isAdmin={isAdmin}
+                        canMoveLeft={i > 0}
+                        canMoveRight={i < (teamsData[activeTeam]?.members?.length || 0) - 1}
+                        onMoveLeft={() => handleMoveMember(activeTeam, i, -1)}
+                        onMoveRight={() => handleMoveMember(activeTeam, i, 1)}
+                        onEdit={() =>
+                          setEditingTarget({
+                            type: 'team',
+                            teamKey: activeTeam,
+                            index: i,
+                            member,
+                            isNew: false,
+                          })
+                        }
+                        onDelete={() => handleDeleteMember(activeTeam, i)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-slate-400">
+                    <p className="text-sm">No members currently in {teamsData[activeTeam]?.title || 'this team'}.</p>
+                  </div>
+                )}
               </motion.div>
             ) : (
               <motion.div

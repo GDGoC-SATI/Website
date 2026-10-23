@@ -236,9 +236,9 @@ const Notifications = () => {
         </div>
 
         {/* STICKY BAR: Search & Category Filter (Avyukt UI style, sticky below navbar) */}
-        <div className="sticky top-[88px] md:top-[96px] z-30 mb-8 p-3 sm:p-4 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-md space-y-3">
+        <div className="sticky top-[80px] md:top-[80px] z-30 mb-6 py-1 px-3 sm:py-1.5 sm:px-4 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-md space-y-1.5">
           {/* Top row: Search input & Status info */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-2.5">
             <div className="relative flex-1">
               <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
               <input
@@ -246,12 +246,12 @@ const Notifications = () => {
                 placeholder="Search notifications, announcements, topics..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/60 focus:outline-none focus:border-google-blue text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
+                className="w-full pl-9 pr-4 py-1 rounded-lg text-xs bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/60 focus:outline-none focus:border-google-blue text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
               />
             </div>
 
             <div className="text-right shrink-0 hidden sm:block">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                 Showing:{' '}
                 <strong className="text-slate-800 dark:text-slate-200">
                   {categories.find((c) => c.id === activeCategory)?.label || 'All'}
@@ -262,12 +262,12 @@ const Notifications = () => {
           </div>
 
           {/* Bottom row: Filter tabs with counts */}
-          <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar no-scrollbar pt-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar no-scrollbar pt-0.5">
             {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${activeCategory === cat.id
+                className={`px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${activeCategory === cat.id
                   ? 'bg-google-blue text-white shadow-sm'
                   : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
