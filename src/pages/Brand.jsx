@@ -591,31 +591,32 @@ const BRAND_SECTIONS = [
     (async () => {
       try {
         const res = await api.sections.get('brand_kit', true);
-        if (res) {
-          if (Array.isArray(res.logos) && res.logos.length > 0) {
-            setLogos(res.logos);
-            localStorage.setItem('gdg_brand_logos', JSON.stringify(res.logos));
+        const kitData = res?.data?.data || res?.data || res;
+        if (kitData) {
+          if (Array.isArray(kitData.logos) && kitData.logos.length > 0) {
+            setLogos(kitData.logos);
+            localStorage.setItem('gdg_brand_logos', JSON.stringify(kitData.logos));
           }
-          if (Array.isArray(res.icons) && res.icons.length > 0) {
-            setIcons(res.icons);
-            localStorage.setItem('gdg_brand_icons', JSON.stringify(res.icons));
+          if (Array.isArray(kitData.icons) && kitData.icons.length > 0) {
+            setIcons(kitData.icons);
+            localStorage.setItem('gdg_brand_icons', JSON.stringify(kitData.icons));
           }
-          if (Array.isArray(res.colorPalettes) && res.colorPalettes.length > 0) {
-            setColorPalettes(res.colorPalettes);
-            localStorage.setItem('gdg_brand_colors', JSON.stringify(res.colorPalettes));
+          if (Array.isArray(kitData.colorPalettes) && kitData.colorPalettes.length > 0) {
+            setColorPalettes(kitData.colorPalettes);
+            localStorage.setItem('gdg_brand_colors', JSON.stringify(kitData.colorPalettes));
           }
-          if (Array.isArray(res.avatarFrames) && res.avatarFrames.length > 0) {
-            const cleanFrames = sanitizeAvatarFrames(res.avatarFrames);
+          if (Array.isArray(kitData.avatarFrames) && kitData.avatarFrames.length > 0) {
+            const cleanFrames = sanitizeAvatarFrames(kitData.avatarFrames);
             setAvatarFrames(cleanFrames);
             localStorage.setItem('gdg_brand_frames', JSON.stringify(cleanFrames));
           }
-          if (Array.isArray(res.fonts) && res.fonts.length > 0) {
-            setBrandFonts(res.fonts);
-            localStorage.setItem('gdg_brand_fonts', JSON.stringify(res.fonts));
+          if (Array.isArray(kitData.fonts) && kitData.fonts.length > 0) {
+            setBrandFonts(kitData.fonts);
+            localStorage.setItem('gdg_brand_fonts', JSON.stringify(kitData.fonts));
           }
-          if (res.guidelines) {
-            setGuidelines(res.guidelines);
-            localStorage.setItem('gdg_brand_guidelines', JSON.stringify(res.guidelines));
+          if (kitData.guidelines) {
+            setGuidelines(kitData.guidelines);
+            localStorage.setItem('gdg_brand_guidelines', JSON.stringify(kitData.guidelines));
           }
         }
       } catch {
