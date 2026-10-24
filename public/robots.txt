@@ -7,11 +7,14 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
-# Explicitly enable AI Search and LLM Crawlers
+# Explicitly enable AI Search, Privacy, and LLM Crawlers
 User-agent: Googlebot
 Allow: /
 
 User-agent: Bingbot
+Allow: /
+
+User-agent: Bravebot
 Allow: /
 
 User-agent: GPTBot
@@ -29,6 +32,8 @@ Allow: /
 User-agent: Applebot
 Allow: /
 
-# Sitemap & Documentation
+# Sitemap & Developer Standards
 Sitemap: https://gdgocsati.vercel.app/sitemap.xml
+# Humans: https://gdgocsati.vercel.app/humans.txt
+# Security: https://gdgocsati.vercel.app/.well-known/security.txt
 # LLMs: https://gdgocsati.vercel.app/llms.txt

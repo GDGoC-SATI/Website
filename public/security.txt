@@ -1,0 +1,7 @@
+Contact: mailto:satigdgoncampus@gmail.com
+Expires: 2047-12-31T23:59:59.000Z
+Preferred-Languages: en, hi
+Canonical: https://gdgocsati.vercel.app/.well-known/security.txt
+Policy: https://gdgocsati.vercel.app/terms
+Acknowledgments: https://gdgocsati.vercel.app/humans.txt
+Hiring: https://gdgocsati.vercel.app/team

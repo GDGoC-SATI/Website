@@ -18,6 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { UserAvatar } from '../utils/avatarHelper';
 import NotificationsDropdown from './common/NotificationsDropdown';
+import { preloadRoute } from '../utils/routePreloader';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -146,6 +147,8 @@ const Navbar = () => {
               <Link
                 key={link.name}
                 to={link.path}
+                onMouseEnter={() => preloadRoute(link.path)}
+                onTouchStart={() => preloadRoute(link.path)}
                 className={`px-3 py-2 rounded-full text-sm font-medium transition-colors relative ${
                   location.pathname === link.path
                     ? 'text-google-blue'
@@ -430,19 +433,21 @@ const Navbar = () => {
           >
             <div className="px-4 py-4 space-y-1 ">
               {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block px-3 py-3 rounded-md text-base font-medium flex justify-center ${
-                    location.pathname === link.path
-                      ? 'bg-google-blue/10 text-google-blue'
-                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              ))}
+                 <Link
+                   key={link.name}
+                   to={link.path}
+                   onMouseEnter={() => preloadRoute(link.path)}
+                   onTouchStart={() => preloadRoute(link.path)}
+                   onClick={() => setIsMobileMenuOpen(false)}
+                   className={`block px-3 py-3 rounded-md text-base font-medium flex justify-center ${
+                     location.pathname === link.path
+                       ? 'bg-google-blue/10 text-google-blue'
+                       : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                   }`}
+                 >
+                   {link.name}
+                 </Link>
+               ))}
 
             </div>
           </motion.div>

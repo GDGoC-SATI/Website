@@ -1,0 +1,22 @@
+/* TEAM */
+Lead Developer & Software Architect: Safal Tiwari
+Role: Software Developer | Full-Stack Web Developer | Product & Event Owner
+College: Samrat Ashok Technological Institute (SATI), Vidisha (M.P.), India
+Degree: B.Tech in Computer Science & Engineering (IoT), Batch 2024 - 2028
+Email: safaltiwari601@gmail.com
+GitHub: https://github.com/SAFAL-TIWARI
+Instagram: https://www.instagram.com/itz_safal_/
+Location: Vidisha, Madhya Pradesh, India
+
+/* PROJECT */
+Project: Google Developer Groups on Campus (GDGoC) - SATI Vidisha
+Founded / Started: 2025
+Platform: https://gdgocsati.vercel.app/
+Repository: https://github.com/GDGoC-SATI/website
+Purpose: Official community platform to learn, connect, and innovate through student-led technical workshops, hackathons, and open source development.
+
+/* TECHNOLOGY STACK */
+Frontend: React 19, Vite, Tailwind CSS, Framer Motion, Canvas API, Three.js
+Backend: Node.js, Express, MongoDB, Server-Sent Events (SSE)
+Standards: HTML5, CSS3, ECMAScript 2025+, JSON-LD Schema.org, RFC 9116 Security, Humanstxt.org
+Hosting: Vercel (Edge & Serverless)
