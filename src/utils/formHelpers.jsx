@@ -13,6 +13,16 @@ export const EVENT_TYPES = [
   'Meetup',
 ];
 
+/**
+ * Checks if an event type is eligible for the Winners & Trophies podium template
+ * Strictly for Hackathons, Workshops, and Study Jams
+ */
+export const isWinnersEligibleEventType = (type = '') => {
+  if (!type) return false;
+  const norm = String(type).toLowerCase().trim();
+  return norm.includes('hackathon') || norm.includes('workshop') || norm.includes('study jam') || norm.includes('studyjam');
+};
+
 export const COMMON_LOCATIONS = [
   'Online',
   'Smart Classroom, SATI Vidisha',
