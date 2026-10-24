@@ -428,13 +428,13 @@ const Navbar = () => {
               isScrolled ? 'rounded-3xl mx-4 mt-2' : ''
             }`}
           >
-            <div className="px-4 py-4 space-y-1">
+            <div className="px-4 py-4 space-y-1 ">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.path}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block px-3 py-3 rounded-md text-base font-medium ${
+                  className={`block px-3 py-3 rounded-md text-base font-medium flex justify-center ${
                     location.pathname === link.path
                       ? 'bg-google-blue/10 text-google-blue'
                       : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
