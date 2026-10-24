@@ -6,17 +6,57 @@ const getToken = () => localStorage.getItem('gdg_token');
 // In-memory cache and promise deduplication map
 const responseCache = new Map();
 const inFlightRequests = new Map();
-const DEFAULT_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const DEFAULT_CACHE_TTL = 10 * 60 * 1000; // 10 minutes default TTL
+const STORAGE_PREFIX = 'gdg_swr_cache:';
+
+const readStorageCache = (key) => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(`${STORAGE_PREFIX}${key}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.data) {
+      return parsed;
+    }
+  } catch {}
+  return null;
+};
+
+const writeStorageCache = (key, data, ttl) => {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(
+      `${STORAGE_PREFIX}${key}`,
+      JSON.stringify({ data, timestamp: Date.now(), ttl })
+    );
+  } catch {}
+};
 
 export const clearApiCache = (endpointPrefix = '') => {
   if (!endpointPrefix) {
     responseCache.clear();
+    if (typeof window !== 'undefined') {
+      try {
+        Object.keys(sessionStorage).forEach((k) => {
+          if (k.startsWith(STORAGE_PREFIX)) sessionStorage.removeItem(k);
+        });
+      } catch {}
+    }
     return;
   }
   for (const key of responseCache.keys()) {
     if (key.includes(endpointPrefix)) {
       responseCache.delete(key);
     }
+  }
+  if (typeof window !== 'undefined') {
+    try {
+      Object.keys(sessionStorage).forEach((k) => {
+        if (k.startsWith(STORAGE_PREFIX) && k.includes(endpointPrefix)) {
+          sessionStorage.removeItem(k);
+        }
+      });
+    } catch {}
   }
 };
 
@@ -26,18 +66,29 @@ const request = async (endpoint, options = {}, ttl = DEFAULT_CACHE_TTL) => {
   const isCacheable = method === 'GET' && !options.skipCache;
   const cacheKey = `${method}:${endpoint}`;
 
-  // Check cache for GET requests
+  // 1. Instant Return: Check in-memory cache
   if (isCacheable && responseCache.has(cacheKey)) {
     const cached = responseCache.get(cacheKey);
-    if (Date.now() - cached.timestamp < cached.ttl) {
+    const isFresh = Date.now() - cached.timestamp < cached.ttl;
+    if (isFresh) {
       return cached.data;
     }
-    responseCache.delete(cacheKey);
+  }
+
+  // 2. Instant Return: Check sessionStorage cache (Stale-While-Revalidate)
+  let staleData = null;
+  if (isCacheable) {
+    const storageItem = readStorageCache(cacheKey);
+    if (storageItem) {
+      staleData = storageItem.data;
+      // Populate memory cache with stale data for instant zero-ms sync
+      responseCache.set(cacheKey, storageItem);
+    }
   }
 
   // Deduplicate concurrent in-flight GET requests
   if (isCacheable && inFlightRequests.has(cacheKey)) {
-    return inFlightRequests.get(cacheKey);
+    return staleData ? staleData : inFlightRequests.get(cacheKey);
   }
 
   const headers = {
@@ -59,13 +110,20 @@ const request = async (endpoint, options = {}, ttl = DEFAULT_CACHE_TTL) => {
         throw new Error(data.message || `Server error (${res.status})`);
       }
 
-      // Cache successful GET responses
+      // Cache successful GET responses in memory & sessionStorage
       if (isCacheable) {
-        responseCache.set(cacheKey, {
+        const cacheEntry = {
           data,
           timestamp: Date.now(),
           ttl,
-        });
+        };
+        responseCache.set(cacheKey, cacheEntry);
+        writeStorageCache(cacheKey, data, ttl);
+
+        // Notify subscribers if fresh data arrived in background
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('gdg:cache-update', { detail: { endpoint, data } }));
+        }
       }
 
       // Invalidate relevant cache on mutations
@@ -78,6 +136,10 @@ const request = async (endpoint, options = {}, ttl = DEFAULT_CACHE_TTL) => {
 
       return data;
     } catch (error) {
+      // If network fails but we have stale cache, return stale cache gracefully
+      if (staleData) {
+        return staleData;
+      }
       console.error(`API Error [${endpoint}]:`, error.message);
       if (
         error.name === 'TypeError' &&
@@ -95,6 +157,11 @@ const request = async (endpoint, options = {}, ttl = DEFAULT_CACHE_TTL) => {
 
   if (isCacheable) {
     inFlightRequests.set(cacheKey, fetchPromise);
+  }
+
+  // If stale data is available, return it immediately while fetchPromise finishes in background
+  if (staleData) {
+    return staleData;
   }
 
   return fetchPromise;

@@ -106,10 +106,17 @@ This project is licensed under the **MIT License**. See the `LICENSE` file for m
 
 ---
 
-## 🤝 Contributing
+## 🤝 Community & Governance
 
-We welcome contributions from the community! Whether you're fixing a bug, suggesting a feature, or improving documentation, please feel free to open a Pull Request or create an Issue.
+We are committed to building an open, respectful, and secure developer ecosystem:
+
+- **[Support Guidelines](./SUPPORT.md)**: Find channels for technical support, feature suggestions, and community queries.
+- **[Code of Conduct](./CODE_OF_CONDUCT.md)**: Our standards and enforcement pledge based on Contributor Covenant v2.1.
+- **[Security Policy](./SECURITY.md)**: Responsible vulnerability disclosure process and response SLAs.
+- **[Contributing Guide](./CONTRIBUTING.md)**: Standards, Git commit etiquette, and contribution workflow.
 
 ---
 
-<div align="center"><b>Built with ❤️ by GDGoC-SATI Community</b></div>
+<div align="center">
+  <b>Designed & Built with ❤️ by <a href="https://github.com/SAFAL-TIWARI">Safal Tiwari</a> & the GDGoC SATI Community</b>
+</div>
