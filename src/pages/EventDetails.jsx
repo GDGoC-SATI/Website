@@ -13,6 +13,9 @@ import {
   FaStream,
   FaPlus,
   FaTrash,
+  FaTrophy,
+  FaArrowUp,
+  FaArrowDown,
 } from 'react-icons/fa';
 import { getEventById, saveOrUpdateEvent } from '../data/eventsData';
 import { api } from '../services/api';
@@ -24,10 +27,12 @@ import {
   FormattedDateTimeInput,
   LocationSelect,
   StatusSelect,
+  isWinnersEligibleEventType,
 } from '../utils/formHelpers';
 import { StructuredDescription, autoFormatEventDescription } from '../components/common/StructuredDescription';
 import { EventDetailsSkeleton } from '../components/common/Skeleton';
 import { notifyIndexNow } from '../services/indexingService';
+import EventWinnersSection from '../components/events/EventWinnersSection';
 
 // Google Brand Colors for timeline nodes
 const GOOGLE_COLORS = [
@@ -47,7 +52,7 @@ const EventDetails = () => {
   const [loading, setLoading] = useState(!initialEvent);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Form State for editing full content (including timeline sub-events)
+  // Form State for editing full content (including timeline sub-events and winners)
   const [formData, setFormData] = useState(
     initialEvent
       ? {
@@ -60,6 +65,7 @@ const EventDetails = () => {
         imageUrl: initialEvent.imageUrl || '',
         originalUrl: initialEvent.originalUrl || '',
         timeline: initialEvent.timeline ? JSON.parse(JSON.stringify(initialEvent.timeline)) : [],
+        winners: initialEvent.winners ? JSON.parse(JSON.stringify(initialEvent.winners)) : [],
       }
       : {}
   );
@@ -82,6 +88,7 @@ const EventDetails = () => {
           imageUrl: local.imageUrl || '',
           originalUrl: local.originalUrl || '',
           timeline: local.timeline ? JSON.parse(JSON.stringify(local.timeline)) : [],
+          winners: local.winners ? JSON.parse(JSON.stringify(local.winners)) : [],
         });
         setLoading(false);
       }
@@ -106,6 +113,7 @@ const EventDetails = () => {
             imageUrl: apiEvt.imageUrl || '',
             originalUrl: apiEvt.originalUrl || '',
             timeline: apiEvt.timeline ? JSON.parse(JSON.stringify(apiEvt.timeline)) : [],
+            winners: apiEvt.winners ? JSON.parse(JSON.stringify(apiEvt.winners)) : [],
           });
         }
       } catch (err) {
@@ -142,6 +150,7 @@ const EventDetails = () => {
       ...event,
       ...formData,
       timeline: formData.timeline || [],
+      winners: formData.winners || [],
     };
     setEvent(updated);
     saveOrUpdateEvent(updated);
@@ -192,6 +201,64 @@ const EventDetails = () => {
       ...prev,
       timeline: (prev.timeline || []).filter((_, i) => i !== index),
     }));
+  };
+
+  // Winners podium management handlers for admin edit modal
+  const handleAddWinner = () => {
+    const currentLen = formData.winners?.length || 0;
+    const defaultTrophy = currentLen === 0 ? 'gold' : currentLen === 1 ? 'silver' : 'bronze';
+    const defaultPosition =
+      currentLen === 0
+        ? 'Grand Winner'
+        : currentLen === 1
+        ? '1st Runner Up'
+        : currentLen === 2
+        ? '2nd Runner Up'
+        : `Rank 0${currentLen + 1}`;
+    const defaultRank = currentLen === 0 ? 1 : currentLen === 1 ? 2 : currentLen === 2 ? 3 : currentLen + 1;
+
+    setFormData((prev) => ({
+      ...prev,
+      winners: [
+        ...(prev.winners || []),
+        {
+          id: `winner-${Date.now()}`,
+          position: defaultPosition,
+          rank: defaultRank,
+          trophy: defaultTrophy,
+          name: '',
+          subtitle: '',
+          extraText: '',
+        },
+      ],
+    }));
+  };
+
+  const handleUpdateWinner = (index, field, value) => {
+    setFormData((prev) => {
+      const updated = [...(prev.winners || [])];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, winners: updated };
+    });
+  };
+
+  const handleRemoveWinner = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      winners: (prev.winners || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleMoveWinner = (index, direction) => {
+    setFormData((prev) => {
+      const list = [...(prev.winners || [])];
+      const target = index + direction;
+      if (target < 0 || target >= list.length) return prev;
+      const temp = list[index];
+      list[index] = list[target];
+      list[target] = temp;
+      return { ...prev, winners: list };
+    });
   };
 
   const hasTimeline = event.timeline && event.timeline.length > 0;
@@ -389,10 +456,16 @@ const EventDetails = () => {
                   })}
                 </div>
               </div>
+
+              {/* Event Winners Section (below timeline section) */}
+              <EventWinnersSection
+                winners={event.winners}
+                eventType={event.type}
+              />
             </div>
           ) : (
             /* Events WITHOUT Timeline (e.g. Workshops, Study Jams): Responsive 2-column layout with Date, Location & Link */
-            <div className="p-4 sm:p-6 md:p-10">
+            <div className="p-4 sm:p-6 md:p-10 space-y-6 sm:space-y-10">
               <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 md:gap-12">
                 {/* Main Info */}
                 <div className="flex-grow space-y-4 sm:space-y-6">
@@ -454,6 +527,12 @@ const EventDetails = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Event Winners Section (below about section where timeline does not exist) */}
+              <EventWinnersSection
+                winners={event.winners}
+                eventType={event.type}
+              />
             </div>
           )}
         </motion.div>
@@ -727,6 +806,165 @@ const EventDetails = () => {
                   </div>
                 )}
               </div>
+
+              {/* Winners & Trophies Podium Management (Strictly for Hackathons, Workshops, Study Jams) */}
+              {isWinnersEligibleEventType(formData.type) && (
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <FaTrophy className="text-amber-500" />
+                        Winners & Champions Podium
+                      </h4>
+                      <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+                        Add, edit, or remove winners, trophy awards, and custom prize notes
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddWinner}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500 hover:text-white text-xs font-bold transition-all border border-amber-500/20 self-start sm:self-auto"
+                    >
+                      <FaPlus size={11} /> Add Winner
+                    </button>
+                  </div>
+
+                  {(!formData.winners || formData.winners.length === 0) ? (
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-700 text-center text-xs text-slate-400">
+                      No winners added yet. Click &ldquo;+ Add Winner&rdquo; above to award trophies and announce champions.
+                    </div>
+                  ) : (
+                    <div className="space-y-3 sm:space-y-4 max-h-72 sm:max-h-80 overflow-y-auto pr-1">
+                      {formData.winners.map((winner, index) => (
+                        <div
+                          key={winner.id || index}
+                          className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-2.5 sm:space-y-3"
+                        >
+                          {/* Header with winner number and delete */}
+                          <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                              <span>{winner.trophy === 'silver' ? '🥈' : winner.trophy === 'bronze' ? '🥉' : '🥇'}</span>
+                              Winner #{index + 1}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              {index > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveWinner(index, -1)}
+                                  className="p-1 text-slate-400 hover:text-google-blue transition-colors text-xs"
+                                  title="Move Up"
+                                >
+                                  <FaArrowUp size={11} />
+                                </button>
+                              )}
+                              {index < formData.winners.length - 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveWinner(index, 1)}
+                                  className="p-1 text-slate-400 hover:text-google-blue transition-colors text-xs"
+                                  title="Move Down"
+                                >
+                                  <FaArrowDown size={11} />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveWinner(index)}
+                                className="p-1 text-slate-400 hover:text-google-red transition-colors text-xs ml-1"
+                                title="Remove this winner"
+                              >
+                                <FaTrash size={12} />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+                            {/* Position / Rank Title (Above Trophy) */}
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
+                                Position Label (Above Trophy) *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={winner.position || ''}
+                                onChange={(e) => handleUpdateWinner(index, 'position', e.target.value)}
+                                placeholder="e.g. Grand Winner / 1st Runner Up"
+                                className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-google-blue"
+                              />
+                            </div>
+
+                            {/* Trophy Selection */}
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
+                                Trophy Award *
+                              </label>
+                              <select
+                                value={winner.trophy || (index === 0 ? 'gold' : index === 1 ? 'silver' : 'bronze')}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  handleUpdateWinner(index, 'trophy', val);
+                                  handleUpdateWinner(index, 'rank', val === 'gold' ? 1 : val === 'silver' ? 2 : 3);
+                                }}
+                                className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-google-blue font-medium"
+                              >
+                                <option value="gold">🥇 Gold Trophy (1st)</option>
+                                <option value="silver">🥈 Silver Trophy (2nd)</option>
+                                <option value="bronze">🥉 Bronze Trophy (3rd)</option>
+                              </select>
+                            </div>
+
+                            {/* Winner / Team Name */}
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
+                                Winner / Team Name *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={winner.name || ''}
+                                onChange={(e) => handleUpdateWinner(index, 'name', e.target.value)}
+                                placeholder="e.g. Team Phoenix"
+                                className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-google-blue"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                            {/* Subtitle / Role (Below Name) */}
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
+                                Subtitle / Title (Below Name)
+                              </label>
+                              <input
+                                type="text"
+                                value={winner.subtitle || ''}
+                                onChange={(e) => handleUpdateWinner(index, 'subtitle', e.target.value)}
+                                placeholder="e.g. Gold Medalist / Best Innovation"
+                                className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-google-blue"
+                              />
+                            </div>
+
+                            {/* Extra Text / Custom Note (Option to add any other text below name) */}
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
+                                Extra Text / Prize Note (Below Subtitle)
+                              </label>
+                              <input
+                                type="text"
+                                value={winner.extraText || ''}
+                                onChange={(e) => handleUpdateWinner(index, 'extraText', e.target.value)}
+                                placeholder="e.g. ₹1,000 Cash Prize + Swag Kit"
+                                className="w-full px-3 py-1.5 sm:py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-google-blue"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-slate-100 dark:border-slate-800">
                 <button

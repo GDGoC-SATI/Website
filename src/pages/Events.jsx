@@ -12,7 +12,7 @@ import {
   FaArrowDown,
   FaPlus,
   FaTimes,
-  FaSave
+  FaSave,
 } from 'react-icons/fa';
 import { Link, useSearchParams } from 'react-router-dom';
 import { eventsData as initialEvents } from '../data/eventsData';
@@ -598,6 +598,7 @@ const EventModal = ({ event, onClose, onSave, isNew = false }) => {
     description: event?.description || '',
     imageUrl: event?.imageUrl || '',
     originalUrl: event?.originalUrl || '',
+    winners: event?.winners || [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -897,6 +898,7 @@ const Events = () => {
         imageUrl: saved.imageUrl || '',
         originalUrl: saved.originalUrl || '',
         timeline: saved.timeline || [],
+        winners: saved.winners || [],
         year: saved.year || yearFromDate,
       };
 
