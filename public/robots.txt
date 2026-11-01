@@ -2,6 +2,10 @@
 # Website: https://gdgocsati.vercel.app/
 # GitHub: https://github.com/GDGoC-SATI/website
 
+# Google AdSense Crawler
+User-agent: Mediapartners-Google
+Allow: /
+
 User-agent: *
 Allow: /
 Disallow: /admin

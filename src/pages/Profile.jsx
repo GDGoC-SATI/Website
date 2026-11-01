@@ -897,7 +897,7 @@ const Profile = () => {
                 <UserAvatar
                   user={user}
                   size="xl"
-                  className="border-4 border-white dark:border-slate-900 shadow-2xl ring-2 ring-slate-100 dark:ring-slate-800"
+                  className=" shadow-2xl ring-2 ring-slate-800 dark:ring-slate-100 bg-white dark:bg-slate-900"
                 />
               </div>
 
