@@ -41,9 +41,10 @@ const Privacy = () => {
     { id: 'profile-privacy', title: '5. Profile Privacy & Visibility Controls' },
     { id: 'third-parties', title: '6. Third-Party Integrations & Cloud Services' },
     { id: 'cookies-storage', title: '7. Cookies & Local Storage' },
-    { id: 'user-rights', title: '8. Your Rights & Data Deletion' },
-    { id: 'security-measures', title: '9. Security Practices & Safeguards' },
-    { id: 'contact', title: '10. Contact Us & Policy Updates' },
+    { id: 'adsense-advertising', title: '8. Google AdSense & Advertising Policy' },
+    { id: 'user-rights', title: '9. Your Rights & Data Deletion' },
+    { id: 'security-measures', title: '10. Security Practices & Safeguards' },
+    { id: 'contact', title: '11. Contact Us & Policy Updates' },
   ];
 
   const scrollTo = (id) => {
@@ -448,25 +449,81 @@ const Privacy = () => {
               </div>
               <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                 <p>
-                  We do <strong>not</strong> use tracking cookies or invasive third-party analytics pixels. We use browser <code className="text-xs bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded">localStorage</code> strictly for functional website requirements:
+                  Our web application uses client-side browser <code className="text-xs bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded">localStorage</code> strictly for critical functional operations:
                 </p>
                 <ul className="list-disc list-inside space-y-1 text-xs text-slate-500 dark:text-slate-400">
-                  <li><strong className="text-slate-800 dark:text-slate-200">token:</strong> Storing your encrypted session token to keep you logged in.</li>
-                  <li><strong className="text-slate-800 dark:text-slate-200">theme:</strong> Saving your preference for Light Mode or Dark Mode.</li>
-                  <li><strong className="text-slate-800 dark:text-slate-200">user:</strong> Caching profile identifiers for fast interface rendering.</li>
-                  <li><strong className="text-slate-800 dark:text-slate-200">gdg_privacy_*:</strong> Caching client-side privacy state for instant toggle updates.</li>
+                  <li><strong className="text-slate-800 dark:text-slate-200">token:</strong> Storing your encrypted session token to keep you authenticated.</li>
+                  <li><strong className="text-slate-800 dark:text-slate-200">theme:</strong> Saving your display preference (Light Mode or Dark Mode).</li>
+                  <li><strong className="text-slate-800 dark:text-slate-200">user:</strong> Caching profile identifiers for instant UI rendering.</li>
+                  <li><strong className="text-slate-800 dark:text-slate-200">gdg_privacy_*:</strong> Caching client-side visibility controls for immediate interface updates.</li>
                 </ul>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  You can clear your local storage at any time via your browser settings, which will log you out and reset display preferences.
+                  You can clear your local storage at any time via your browser settings. In addition, third-party advertising partners such as Google AdSense utilize cookies to serve ads, as detailed in Section 8 below.
                 </p>
               </div>
             </section>
 
-            {/* Section 8 */}
+            {/* Section 8 - Google AdSense & Advertising Policy */}
+            <section id="adsense-advertising" className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 rounded-xl bg-google-blue/10 text-google-blue flex items-center justify-center font-bold">
+                  8
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+                  Google AdSense & Advertising Policy
+                </h2>
+              </div>
+              <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                <p>
+                  To support community hosting infrastructure, workshops, and educational programs, this website displays advertisements served by <strong>Google AdSense</strong> (Publisher ID: <code className="text-xs bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded">ca-pub-1490765652477855</code>).
+                </p>
+
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-3 text-xs">
+                  <div>
+                    <strong className="text-slate-900 dark:text-white block mb-1">Use of Cookies by Third-Party Vendors</strong>
+                    <p className="text-slate-500 dark:text-slate-400">
+                      Third-party vendors, including Google, use cookies (such as DoubleClick or Google advertising cookies) to serve ads based on a user&apos;s prior visits to this website or other websites across the Internet.
+                    </p>
+                  </div>
+                  <div>
+                    <strong className="text-slate-900 dark:text-white block mb-1">Personalized Advertising & User Choice</strong>
+                    <p className="text-slate-500 dark:text-slate-400">
+                      Google&apos;s use of advertising cookies enables it and its partners to serve ads to users based on their visit to our site and other sites on the Internet. Users may opt out of personalized advertising at any time by visiting:
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <a
+                        href="https://adssettings.google.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-google-blue text-white text-[11px] font-semibold hover:bg-blue-600 transition-colors"
+                      >
+                        Google Ads Settings
+                      </a>
+                      <a
+                        href="https://www.aboutads.info/choices/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        AboutAds.info Opt-Out
+                      </a>
+                    </div>
+                  </div>
+                  <div>
+                    <strong className="text-slate-900 dark:text-white block mb-1">Student & Member Data Protection</strong>
+                    <p className="text-slate-500 dark:text-slate-400">
+                      We never sell, trade, or share user personal credentials, passwords, student contact lists, or event registration details with advertising networks. Third-party ad serving is strictly governed by Google&apos;s Program Policies and privacy standards.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Section 9 */}
             <section id="user-rights" className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-9 h-9 rounded-xl bg-google-red/10 text-google-red flex items-center justify-center font-bold">
-                  8
+                  9
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                   Your Rights & Data Deletion
@@ -497,11 +554,11 @@ const Privacy = () => {
               </div>
             </section>
 
-            {/* Section 9 */}
+            {/* Section 10 */}
             <section id="security-measures" className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-9 h-9 rounded-xl bg-google-blue/10 text-google-blue flex items-center justify-center font-bold">
-                  9
+                  10
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                   Security Practices & Safeguards
@@ -528,11 +585,11 @@ const Privacy = () => {
               </div>
             </section>
 
-            {/* Section 10 */}
+            {/* Section 11 */}
             <section id="contact" className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-9 h-9 rounded-xl bg-google-green/10 text-google-green flex items-center justify-center font-bold">
-                  10
+                  11
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                   Contact Us & Policy Updates
