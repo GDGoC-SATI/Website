@@ -194,6 +194,11 @@ export const api = {
     getBySlug: (slug) => request(`/events/${slug}`, {}, 5 * 60 * 1000),
     create: (body) => request('/events', { method: 'POST', body: JSON.stringify(body) }),
     update: (id, body) => request(`/events/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    updateLeaderboard: (id, leaderboard) =>
+      request(`/events/${id}/leaderboard`, {
+        method: 'PUT',
+        body: JSON.stringify({ leaderboard }),
+      }),
     delete: (id) => request(`/events/${id}`, { method: 'DELETE' }),
   },
 

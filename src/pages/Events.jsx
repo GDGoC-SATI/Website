@@ -625,7 +625,6 @@ const EventModal = ({ event, onClose, onSave, isNew = false }) => {
     description: event?.description || '',
     imageUrl: event?.imageUrl || '',
     originalUrl: event?.originalUrl || '',
-    leaderboardUrl: event?.leaderboardUrl || '',
     winners: event?.winners || [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -724,25 +723,6 @@ const EventModal = ({ event, onClose, onSave, isNew = false }) => {
               className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white outline-none focus:border-google-blue"
             />
           </div>
-
-          {(formData.type?.toLowerCase().includes('study') || formData.type?.toLowerCase().includes('jam')) && (
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
-                <FaTrophy className="text-google-yellow" />
-                Leaderboard URL (Study Jam)
-              </label>
-              <input
-                type="text"
-                value={formData.leaderboardUrl}
-                onChange={(e) => setFormData({ ...formData, leaderboardUrl: e.target.value })}
-                placeholder="/leaderboard or https://..."
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white outline-none focus:border-google-blue"
-              />
-              <p className="text-[11px] text-slate-400 mt-1">
-                Optional custom URL. Defaults to the built-in Cloud Study Leaderboard (/leaderboard)
-              </p>
-            </div>
-          )}
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">

@@ -1,203 +1,23 @@
 /**
- * Official Google Cloud Study Jams 2026 Syllabus Badges
- * Source: https://docs.google.com/spreadsheets/d/e/2PACX-1vTVMEFW24yi5IVcBblZFEK5xMdQyeF9pndf-wxE37BKu5hyOghhSkYiCHW6rSLjNJd5U3OI_E_I9vZi/pubhtml?gid=411469390&single=true&urp=gmail_link
+ * Google Cloud Study Jams Syllabus & Google Sheet Parsing Utility
  * 
- * STRICT REQUIREMENT: Only badges from this exact syllabus of 10 labs/courses count towards the leaderboard progress.
+ * Dynamically parses participant records and validates completed labs
+ * strictly against the event's configured syllabus labs from the database.
  */
 
-export const SYLLABUS_SOURCE_URL =
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVMEFW24yi5IVcBblZFEK5xMdQyeF9pndf-wxE37BKu5hyOghhSkYiCHW6rSLjNJd5U3OI_E_I9vZi/pubhtml?gid=411469390&single=true&urp=gmail_link';
+export const DEFAULT_SYLLABUS_SOURCE_URL =
+  '';
 
-export const OFFICIAL_SYLLABUS_BADGES = [
-  {
-    id: 'badge-1',
-    templateId: '754',
-    title: 'The Basics of Google Cloud Compute',
-    shortName: 'Google Cloud Compute',
-    url: 'https://www.cloudskillsboost.google/course_templates/754',
-    credits: 4,
-    category: 'Compute & Infrastructure',
-    iconColor: '#4285F4', // Google Blue
-    aliases: [
-      'the basics of google cloud compute',
-      'basics of google cloud compute',
-      'google cloud compute',
-      'gsp754',
-      '754',
-    ],
-  },
-  {
-    id: 'badge-2',
-    templateId: '702',
-    title: 'Configure Service Accounts and IAM Roles for Google Cloud',
-    shortName: 'IAM & Service Accounts',
-    url: 'https://www.cloudskillsboost.google/course_templates/702',
-    credits: 4,
-    category: 'Security & Access',
-    iconColor: '#EA4335', // Google Red
-    aliases: [
-      'configure service accounts and iam roles for google cloud',
-      'configure service accounts and iam roles',
-      'service accounts and iam roles',
-      'iam roles for google cloud',
-      'gsp702',
-      '702',
-    ],
-  },
-  {
-    id: 'badge-3',
-    templateId: '700',
-    title: 'Implement Speech and Language Solutions with Pre-trained APIs',
-    shortName: 'Speech & Language APIs',
-    url: 'https://www.cloudskillsboost.google/course_templates/700',
-    credits: 4,
-    category: 'Machine Learning & NLP',
-    iconColor: '#34A853', // Google Green
-    aliases: [
-      'implement speech and language solutions with pre-trained apis',
-      'speech and language solutions with pre-trained apis',
-      'speech and language solutions',
-      'pre-trained apis',
-      'gsp700',
-      '700',
-    ],
-  },
-  {
-    id: 'badge-4',
-    templateId: '1426',
-    title: 'Develop AI-Powered Prototypes in Google AI Studio',
-    shortName: 'Google AI Studio Prototypes',
-    url: 'https://www.cloudskillsboost.google/course_templates/1426',
-    credits: 0,
-    category: 'Generative AI',
-    iconColor: '#FBBC05', // Google Yellow
-    aliases: [
-      'develop ai-powered prototypes in google ai studio',
-      'develop ai powered prototypes in google ai studio',
-      'google ai studio prototypes',
-      'ai-powered prototypes in google ai studio',
-      'google ai studio',
-      'gsp1426',
-      '1426',
-    ],
-  },
-  {
-    id: 'badge-5',
-    templateId: '633',
-    title: 'Analyze Images with the Cloud Vision API',
-    shortName: 'Cloud Vision API',
-    url: 'https://www.cloudskillsboost.google/course_templates/633',
-    credits: 12,
-    category: 'Computer Vision',
-    iconColor: '#4285F4',
-    aliases: [
-      'analyze images with the cloud vision api',
-      'analyze images with cloud vision api',
-      'cloud vision api',
-      'vision api',
-      'gsp633',
-      '633',
-    ],
-  },
-  {
-    id: 'badge-6',
-    templateId: '638',
-    title: 'Build a Website on Google Cloud',
-    shortName: 'Website on Google Cloud',
-    url: 'https://www.cloudskillsboost.google/course_templates/638',
-    credits: 13,
-    category: 'Web & Hosting',
-    iconColor: '#34A853',
-    aliases: [
-      'build a website on google cloud',
-      'build a website on gcp',
-      'website on google cloud',
-      'gsp638',
-      '638',
-    ],
-  },
-  {
-    id: 'badge-7',
-    templateId: '1586',
-    title: 'Create Your First Gemini Enterprise Application',
-    shortName: 'Gemini Enterprise App',
-    url: 'https://www.cloudskillsboost.google/course_templates/1586',
-    credits: 0,
-    category: 'Generative AI & Gemini',
-    iconColor: '#8E24AA', // Purple
-    aliases: [
-      'create your first gemini enterprise application',
-      'gemini enterprise application',
-      'first gemini enterprise application',
-      'gemini enterprise app',
-      'gsp1586',
-      '1586',
-    ],
-  },
-  {
-    id: 'badge-8',
-    templateId: '658',
-    title: 'Store, Process, and Manage Data on Google Cloud - Console',
-    shortName: 'Data on Cloud Console',
-    url: 'https://www.cloudskillsboost.google/course_templates/658',
-    credits: 3,
-    category: 'Data & Storage',
-    iconColor: '#FBBC05',
-    aliases: [
-      'store, process, and manage data on google cloud - console',
-      'store process and manage data on google cloud',
-      'manage data on google cloud - console',
-      'store process and manage data',
-      'data on google cloud - console',
-      'gsp658',
-      '658',
-    ],
-  },
-  {
-    id: 'badge-9',
-    templateId: '756',
-    title: 'Using the Google Cloud Speech API',
-    shortName: 'Google Cloud Speech API',
-    url: 'https://www.cloudskillsboost.google/course_templates/756',
-    credits: 4,
-    category: 'Speech & Audio AI',
-    iconColor: '#EA4335',
-    aliases: [
-      'using the google cloud speech api',
-      'google cloud speech api',
-      'cloud speech api',
-      'speech api',
-      'gsp756',
-      '756',
-    ],
-  },
-  {
-    id: 'badge-10',
-    templateId: '959',
-    title: 'Explore Generative AI in Agent Platform',
-    shortName: 'Generative AI Agent Platform',
-    url: 'https://www.cloudskillsboost.google/course_templates/959',
-    credits: 16,
-    category: 'AI Agents & GenAI',
-    iconColor: '#00ACC1', // Cyan
-    aliases: [
-      'explore generative ai in agent platform',
-      'generative ai in agent platform',
-      'agent platform generative ai',
-      'gsp959',
-      '959',
-    ],
-  },
+export const DEFAULT_SYLLABUS_LABS = [
+ 
 ];
 
-export const TOTAL_SYLLABUS_BADGES = OFFICIAL_SYLLABUS_BADGES.length; // 10
-
 /**
- * Normalizes text for lenient yet accurate matching
+ * Normalizes text for lenient yet robust matching
  */
-const normalizeText = (text) => {
+export const normalizeText = (text) => {
   if (!text) return '';
-  return text
+  return String(text)
     .toLowerCase()
     .replace(/[^a-z0-9]/g, ' ')
     .replace(/\s+/g, ' ')
@@ -205,39 +25,278 @@ const normalizeText = (text) => {
 };
 
 /**
- * Check if a badge belongs to the official syllabus
- * Returns the matching syllabus badge definition or null
+ * Converts any Google Sheets link to a direct CSV export/download link
  */
-export const matchSyllabusBadge = (rawBadge) => {
-  if (!rawBadge) return null;
+export const convertToCsvUrl = (url) => {
+  if (!url || typeof url !== 'string') return '';
+  const cleanUrl = url.trim();
 
-  // If rawBadge is an object with id/templateId/title
-  const inputStr = typeof rawBadge === 'string'
-    ? rawBadge
-    : (rawBadge.title || rawBadge.name || rawBadge.id || rawBadge.templateId || '');
+  // Already a direct CSV link or ends with .csv
+  if (cleanUrl.includes('output=csv') || cleanUrl.includes('format=csv')) {
+    return cleanUrl;
+  }
 
-  const normInput = normalizeText(inputStr);
-  if (!normInput) return null;
+  // Handle published Google Sheets (/pubhtml or /pub)
+  if (cleanUrl.includes('/spreadsheets/d/e/2PACX-')) {
+    let csvUrl = cleanUrl.replace(/\/pubhtml([?#].*)?$/, '/pub');
+    if (!csvUrl.includes('/pub')) {
+      csvUrl = csvUrl.replace(/\/pub\?/, '/pub?');
+    }
+    const hasQuery = csvUrl.includes('?');
+    return `${csvUrl}${hasQuery ? '&' : '?'}output=csv`;
+  }
 
-  for (const badge of OFFICIAL_SYLLABUS_BADGES) {
-    // 1. Direct template ID match
-    if (rawBadge.templateId && String(rawBadge.templateId) === badge.templateId) {
-      return badge;
+  // Handle standard Google Sheets links (/d/{sheetId}/edit or /view)
+  const idMatch = cleanUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (idMatch && idMatch[1]) {
+    const sheetId = idMatch[1];
+    // Check for gid parameter in query or hash
+    const gidMatch = cleanUrl.match(/[?&#]gid=([0-9]+)/);
+    const gid = gidMatch ? gidMatch[1] : '0';
+    return `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+  }
+
+  return cleanUrl;
+};
+
+/**
+ * Robust RFC-compliant CSV Parser that handles quoted multi-line fields and commas
+ */
+export const parseCsvRows = (text) => {
+  if (!text || typeof text !== 'string') return [];
+
+  const lines = [];
+  let currentRow = [];
+  let currentField = '';
+  let insideQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+
+    if (char === '"') {
+      if (insideQuotes && nextChar === '"') {
+        currentField += '"';
+        i++; // skip escaped double quote
+      } else {
+        insideQuotes = !insideQuotes;
+      }
+    } else if (char === ',' && !insideQuotes) {
+      currentRow.push(currentField.trim());
+      currentField = '';
+    } else if ((char === '\r' || char === '\n') && !insideQuotes) {
+      if (char === '\r' && nextChar === '\n') {
+        i++;
+      }
+      currentRow.push(currentField.trim());
+      if (currentRow.some((f) => f.length > 0)) {
+        lines.push(currentRow);
+      }
+      currentRow = [];
+      currentField = '';
+    } else {
+      currentField += char;
     }
-    // 2. Strict ID match
-    if (rawBadge.id && rawBadge.id === badge.id) {
-      return badge;
+  }
+
+  if (currentField.length > 0 || currentRow.length > 0) {
+    currentRow.push(currentField.trim());
+    if (currentRow.some((f) => f.length > 0)) {
+      lines.push(currentRow);
     }
-    // 3. Normalized title match
-    const normTitle = normalizeText(badge.title);
-    if (normInput === normTitle || normInput.includes(normTitle) || normTitle.includes(normInput)) {
-      return badge;
+  }
+
+  if (lines.length < 2) return [];
+
+  const headers = lines[0].map((h) => h.replace(/^["']|["']$/g, '').trim());
+  const rows = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const rowValues = lines[i];
+    const rowObj = {};
+    headers.forEach((header, colIdx) => {
+      rowObj[header] = rowValues[colIdx] ? rowValues[colIdx].replace(/^["']|["']$/g, '').trim() : '';
+    });
+    rows.push(rowObj);
+  }
+
+  return rows;
+};
+
+/**
+ * Helper to determine if a cell's value represents completion of a course/lab.
+ * Strictly verifies positive markers or completion dates; rejects everything else.
+ */
+export const isCellCompleted = (val) => {
+  if (val === null || val === undefined) return false;
+  const str = String(val).trim();
+  if (!str) return false;
+
+  const lower = str.toLowerCase();
+
+  // Explicit negatives that mean NOT completed
+  if (
+    lower === 'no' ||
+    lower === 'n' ||
+    lower === 'false' ||
+    lower === '0' ||
+    lower === '0.0' ||
+    lower === '-' ||
+    lower === '--' ||
+    lower === 'na' ||
+    lower === 'n/a' ||
+    lower === 'none' ||
+    lower === 'pending' ||
+    lower === 'in progress' ||
+    lower === 'not completed' ||
+    lower === 'not started' ||
+    lower === 'incomplete' ||
+    lower === 'uncompleted' ||
+    lower === 'enrolled' ||
+    lower === 'registered' ||
+    lower === 'waiting' ||
+    lower === 'null' ||
+    lower === 'undefined'
+  ) {
+    return false;
+  }
+
+  // Explicit positive markers
+  if (
+    lower === 'yes' ||
+    lower === 'y' ||
+    lower === 'true' ||
+    lower === '1' ||
+    lower === 'done' ||
+    lower === 'completed' ||
+    lower === 'complete' ||
+    lower === 'passed' ||
+    lower === 'pass' ||
+    lower === 'earned' ||
+    lower === 'achieved' ||
+    lower === 'badge earned' ||
+    lower === 'completed badge'
+  ) {
+    return true;
+  }
+
+  // Valid completion date formats (DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, DD-MM-YYYY, DD.MM.YYYY)
+  if (/^\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}/.test(str)) {
+    return true;
+  }
+
+  // Month date strings like "Oct 24, 2026" or "24 Oct 2026"
+  if (
+    /^(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]* \d{1,2},? \d{4}/i.test(str) ||
+    /^\d{1,2} (?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]* \d{4}/i.test(str)
+  ) {
+    return true;
+  }
+
+  // ISO timestamp (e.g. 2026-10-24T12:00:00Z)
+  if (/^\d{4}-\d{2}-\d{2}T/.test(str)) {
+    return true;
+  }
+
+  // If not an explicit positive marker or a date, it is NOT completed
+  return false;
+};
+
+/**
+ * Checks if a column header matches a syllabus lab
+ */
+export const isHeaderMatchingLab = (header, lab) => {
+  if (!header || !lab) return false;
+
+  // Never match general personal / profile / college metadata columns
+  if (
+    /name|student|participant|email|mail|college|institute|dept|department|branch|semester|year|roll|phone|mobile|contact|avatar|photo|profile|boost.*url|link|timestamp|date.*of.*birth|dob|status|arcade|trivia|token|swag|comment|remark/i.test(
+      header
+    )
+  ) {
+    return false;
+  }
+
+  const normH = normalizeText(header);
+  const normTitle = normalizeText(lab.title);
+
+  if (normH === normTitle) return true;
+
+  // Match template ID in URL (e.g. 754, 702, 1426, 633, 638, 1586, 658, 756, 959)
+  const templateMatch = lab.url && lab.url.match(/course_templates\/([0-9]+)/);
+  if (templateMatch && templateMatch[1]) {
+    const tid = templateMatch[1];
+    if (new RegExp(`\\b${tid}\\b`).test(normH) || normH.includes(tid)) {
+      return true;
     }
-    // 4. Aliases
-    for (const alias of badge.aliases) {
-      const normAlias = normalizeText(alias);
-      if (normInput === normAlias || (normAlias.length > 5 && normInput.includes(normAlias))) {
-        return badge;
+  }
+
+  // Check if header contains the substantial part of the lab title
+  if (normTitle.length >= 10 && normH.includes(normTitle)) {
+    return true;
+  }
+  if (normH.length >= 10 && normTitle.includes(normH)) {
+    return true;
+  }
+
+  // Substantial keyword matching
+  const stopWords = new Set([
+    'google',
+    'cloud',
+    'the',
+    'and',
+    'for',
+    'with',
+    'using',
+    'in',
+    'on',
+    'of',
+    'first',
+    'basics',
+    'platform',
+    'console',
+  ]);
+  const titleWords = normTitle.split(' ').filter((w) => w.length > 2 && !stopWords.has(w));
+
+  if (titleWords.length > 0) {
+    const matchedCount = titleWords.filter((w) => normH.includes(w)).length;
+    if (matchedCount >= Math.max(2, Math.ceil(titleWords.length * 0.7))) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/**
+ * Extracts a numeric badge completion count strictly from official skill badge summary columns
+ */
+export const extractNumericBadgeCount = (row, totalLabs) => {
+  const keys = Object.keys(row);
+
+  // Strict columns matching "# of Skill Badges Completed" (excluding Arcade games/trivia)
+  const countColumns = keys.filter(
+    (k) =>
+      /#.*skill.*badge|number.*of.*skill.*badge|skill.*badge.*completed|total.*skill.*badge/i.test(k) &&
+      !/arcade|trivia|game|token/i.test(k)
+  );
+
+  for (const col of countColumns) {
+    const val = String(row[col] || '').trim();
+    if (!val) continue;
+
+    // "X/10" or "X / 10" or "X of 10"
+    const ratioMatch = val.match(/^(\d+)\s*(?:\/|of)\s*(\d+)/i);
+    if (ratioMatch) {
+      const num = parseInt(ratioMatch[1], 10);
+      if (!isNaN(num)) return Math.min(num, totalLabs);
+    }
+
+    // Direct integer like "10" or "8" or "0"
+    const parsed = parseInt(val, 10);
+    if (!isNaN(parsed) && String(parsed) === val.split('.')[0]) {
+      if (parsed >= 0 && parsed <= totalLabs) {
+        return parsed;
       }
     }
   }
@@ -246,71 +305,150 @@ export const matchSyllabusBadge = (rawBadge) => {
 };
 
 /**
- * Strictly filters and calculates syllabus badges completed by a participant.
- * Ignores any badges outside the 10 syllabus courses.
+ * Parses raw CSV rows into standardized participant records and verifies
+ * badges strictly against the event's configured syllabus labs.
+ * NO RANK IS ASSIGNED.
  */
-export const filterAndCountSyllabusBadges = (participantBadges = []) => {
-  if (!Array.isArray(participantBadges)) return { completedBadges: [], count: 0, percentage: 0 };
+export const parseParticipantsFromCsv = (csvText, syllabusLabs = DEFAULT_SYLLABUS_LABS) => {
+  const rows = parseCsvRows(csvText);
+  if (!rows || rows.length === 0) return [];
 
-  const matchedSet = new Map();
+  const labs = Array.isArray(syllabusLabs) && syllabusLabs.length > 0 ? syllabusLabs : DEFAULT_SYLLABUS_LABS;
+  const totalLabs = labs.length;
 
-  for (const item of participantBadges) {
-    const matched = matchSyllabusBadge(item);
-    if (matched && !matchedSet.has(matched.id)) {
-      matchedSet.set(matched.id, {
-        ...matched,
-        completedAt: item?.completedAt || item?.date || null,
-      });
+  // Detect which columns in the sheet correspond to individual syllabus labs
+  const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
+  const labColumnMap = new Map();
+
+  for (const lab of labs) {
+    const matchingHeader = headers.find((h) => isHeaderMatchingLab(h, lab));
+    if (matchingHeader) {
+      labColumnMap.set(lab.id || lab.title, { lab, header: matchingHeader });
     }
   }
 
-  const completedBadges = Array.from(matchedSet.values());
-  const count = completedBadges.length;
-  const percentage = Math.round((count / TOTAL_SYLLABUS_BADGES) * 100);
+  const hasIndividualLabColumns = labColumnMap.size > 0;
 
-  return {
-    completedBadges,
-    count,
-    percentage,
-  };
+  return rows.map((row, index) => {
+    const keys = Object.keys(row);
+
+    // 1. Participant Name: Search for header with name / student / participant
+    const nameKey =
+      keys.find((k) => /name|student|participant/i.test(k) && !/course|lab|event|branch|dept|college/i.test(k)) ||
+      keys[0];
+    const name = (row[nameKey] || `Participant ${index + 1}`).trim();
+
+    // 2. Cloud Skills Boost Profile URL
+    const profileKey = keys.find((k) =>
+      /profile|skills boost|cloudskillsboost|cloud profile|boost url|link/i.test(k)
+    );
+    let profileUrl = profileKey ? (row[profileKey] || '').trim() : '';
+
+    if (!profileUrl) {
+      for (const k of keys) {
+        const val = (row[k] || '').trim();
+        if (/cloudskillsboost\.google|skills\.google/i.test(val)) {
+          profileUrl = val;
+          break;
+        }
+      }
+    }
+
+    // 3. Completed Labs & Badges matching strictly against syllabusLabs
+    const completedLabs = [];
+
+    if (hasIndividualLabColumns) {
+      // Individual columns for labs exist in the sheet: check each syllabus lab strictly
+      for (const { lab, header } of labColumnMap.values()) {
+        const cellVal = row[header];
+        if (isCellCompleted(cellVal)) {
+          completedLabs.push(lab);
+        }
+      }
+    }
+
+    // Verified count is strictly the number of actual syllabus labs completed
+    let verifiedCount = completedLabs.length;
+
+    // Fallback: only if NO individual lab columns exist at all in sheet, check for explicit "# of Skill Badges Completed" column
+    if (!hasIndividualLabColumns) {
+      const explicitCount = extractNumericBadgeCount(row, totalLabs);
+      if (explicitCount !== null && explicitCount >= 0) {
+        verifiedCount = Math.min(explicitCount, totalLabs);
+      }
+    }
+
+    // Avatar (Cloud Skills Boost Profile Avatar / Image)
+    const avatarKey = keys.find((k) => /avatar|photo|image|picture|pfp|dp|icon|profile_image|user_photo/i.test(k));
+    const sheetAvatar =
+      avatarKey && row[avatarKey] && (row[avatarKey].startsWith('http') || row[avatarKey].startsWith('//'))
+        ? row[avatarKey].trim()
+        : null;
+
+    let cachedAvatar = null;
+    if (typeof window !== 'undefined' && profileUrl) {
+      try {
+        cachedAvatar = sessionStorage.getItem(`csb_avatar_${encodeURIComponent(profileUrl)}`);
+      } catch {}
+    }
+
+    const defaultGoogleAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      name || 'User'
+    )}&background=4285F4&color=fff&bold=true&rounded=true&size=128`;
+    const avatar = sheetAvatar || cachedAvatar || defaultGoogleAvatar;
+
+    const percentage = totalLabs > 0 ? Math.min(100, Math.round((verifiedCount / totalLabs) * 100)) : 0;
+
+    return {
+      id: `p-${index + 1}`,
+      name,
+      avatar,
+      profileUrl,
+      verifiedCount,
+      completedLabs,
+      percentage,
+    };
+  });
 };
 
 /**
- * Calculate participant milestone tier based on verified syllabus badge count
+ * Asynchronously attempts to resolve the exact avatar image from a public Cloud Skills Boost profile
  */
-export const getMilestoneTier = (count) => {
-  if (count >= 10) {
-    return {
-      tier: 'Tier 1 (Complete)',
-      label: 'All 10 Badges Completed',
-      badgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
-      color: '#10B981',
-      isComplete: true,
-    };
+export const resolveCloudProfileAvatar = async (profileUrl) => {
+  if (!profileUrl || typeof profileUrl !== 'string' || typeof window === 'undefined') return null;
+
+  const storageKey = `csb_avatar_${encodeURIComponent(profileUrl)}`;
+  try {
+    const cached = sessionStorage.getItem(storageKey);
+    if (cached) return cached;
+  } catch {}
+
+  const proxies = [
+    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+  ];
+
+  for (const makeProxy of proxies) {
+    try {
+      const res = await fetch(makeProxy(profileUrl), { signal: AbortSignal.timeout(3500) });
+      if (!res.ok) continue;
+      const html = await res.text();
+      const match =
+        html.match(/<ql-avatar[^>]+src=["']([^"']+)["']/i) ||
+        html.match(/<img[^>]+(?:class|id)=["'][^"']*avatar[^"']*["'][^>]+src=["']([^"']+)["']/i) ||
+        html.match(/<div[^>]+class=["'][^"']*public-profile__avatar[^"']*["'][^>]*>\s*<img[^>]+src=["']([^"']+)["']/i);
+
+      if (match && match[1] && (match[1].startsWith('http') || match[1].startsWith('//'))) {
+        const fullUrl = match[1].startsWith('//') ? `https:${match[1]}` : match[1];
+        try {
+          sessionStorage.setItem(storageKey, fullUrl);
+        } catch {}
+        return fullUrl;
+      }
+    } catch {
+      // Continue to next
+    }
   }
-  if (count >= 6) {
-    return {
-      tier: 'Milestone 2',
-      label: 'Milestone 2 (6+ Badges)',
-      badgeClass: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30',
-      color: '#3B82F6',
-      isComplete: false,
-    };
-  }
-  if (count >= 3) {
-    return {
-      tier: 'Milestone 1',
-      label: 'Milestone 1 (3+ Badges)',
-      badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
-      color: '#F59E0B',
-      isComplete: false,
-    };
-  }
-  return {
-    tier: 'Getting Started',
-    label: 'In Progress (<3 Badges)',
-    badgeClass: 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20',
-    color: '#64748B',
-    isComplete: false,
-  };
+
+  return null;
 };
