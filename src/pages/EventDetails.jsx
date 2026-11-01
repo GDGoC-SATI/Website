@@ -14,6 +14,7 @@ import {
   FaPlus,
   FaTrash,
   FaTrophy,
+  FaArrowRight,
   FaArrowUp,
   FaArrowDown,
 } from 'react-icons/fa';
@@ -64,6 +65,7 @@ const EventDetails = () => {
         description: initialEvent.description || '',
         imageUrl: initialEvent.imageUrl || '',
         originalUrl: initialEvent.originalUrl || '',
+        leaderboardUrl: initialEvent.leaderboardUrl || '',
         timeline: initialEvent.timeline ? JSON.parse(JSON.stringify(initialEvent.timeline)) : [],
         winners: initialEvent.winners ? JSON.parse(JSON.stringify(initialEvent.winners)) : [],
       }
@@ -87,6 +89,7 @@ const EventDetails = () => {
           description: local.description || '',
           imageUrl: local.imageUrl || '',
           originalUrl: local.originalUrl || '',
+          leaderboardUrl: local.leaderboardUrl || '',
           timeline: local.timeline ? JSON.parse(JSON.stringify(local.timeline)) : [],
           winners: local.winners ? JSON.parse(JSON.stringify(local.winners)) : [],
         });
@@ -112,6 +115,7 @@ const EventDetails = () => {
             description: apiEvt.description || '',
             imageUrl: apiEvt.imageUrl || '',
             originalUrl: apiEvt.originalUrl || '',
+            leaderboardUrl: apiEvt.leaderboardUrl || '',
             timeline: apiEvt.timeline ? JSON.parse(JSON.stringify(apiEvt.timeline)) : [],
             winners: apiEvt.winners ? JSON.parse(JSON.stringify(apiEvt.winners)) : [],
           });
@@ -524,6 +528,39 @@ const EventDetails = () => {
                         </a>
                       </>
                     )}
+
+                    {/* Leaderboard Button for Study Jams / Cloud Study Learn */}
+                    {(event.leaderboardUrl || event.slug === 'google-cloud-study-learn-2026' || event.type?.toLowerCase().includes('study') || event.title?.toLowerCase().includes('cloud study')) && (
+                      <>
+                        {!event.originalUrl && <hr className="border-slate-200 dark:border-slate-700" />}
+                        {(() => {
+                          const targetUrl = event.leaderboardUrl?.trim() || '/leaderboard';
+                          const isExternal = targetUrl.startsWith('http://') || targetUrl.startsWith('https://');
+
+                          return isExternal ? (
+                            <a
+                              href={targetUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block w-full py-3 sm:py-3.5 px-4 sm:px-6 text-center text-white bg-gradient-to-r from-amber-500 via-orange-500 to-google-red hover:from-amber-600 hover:to-red-600 rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-amber-500/25 transition-all hover:-translate-y-1 flex items-center justify-center gap-2"
+                            >
+                              <FaTrophy className="text-yellow-200 text-sm" />
+                              <span>Cloud Study Leaderboard</span>
+                              <FaExternalLinkAlt size={11} />
+                            </a>
+                          ) : (
+                            <Link
+                              to={targetUrl}
+                              className="block w-full py-3 sm:py-3.5 px-4 sm:px-6 text-center text-white bg-gradient-to-r from-amber-500 via-orange-500 to-google-red hover:from-amber-600 hover:to-red-600 rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-amber-500/25 transition-all hover:-translate-y-1 flex items-center justify-center gap-2"
+                            >
+                              <FaTrophy className="text-yellow-200 text-sm" />
+                              <span>Cloud Study Leaderboard</span>
+                              <FaArrowRight size={11} />
+                            </Link>
+                          );
+                        })()}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -618,6 +655,26 @@ const EventDetails = () => {
                   />
                 </div>
               </div>
+
+              {/* Leaderboard URL for Study Jam events */}
+              {(formData.type?.toLowerCase().includes('study') || formData.type?.toLowerCase().includes('jam')) && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                    <FaTrophy className="text-google-yellow" />
+                    Leaderboard Link (Study Jam)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.leaderboardUrl || ''}
+                    onChange={(e) => setFormData({ ...formData, leaderboardUrl: e.target.value })}
+                    placeholder="/leaderboard or https://..."
+                    className="w-full px-3 py-2 sm:py-2.5 text-xs sm:text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:border-google-blue"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Optional custom link. Defaults to the built-in Cloud Study Leaderboard (/leaderboard)
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">

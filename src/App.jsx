@@ -25,6 +25,7 @@ const Notifications = lazy(() => import('./pages/Notifications'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
 const Brand = lazy(() => import('./pages/Brand'));
+const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 import { getTitleForPath } from './hooks/usePageSEO';
@@ -110,6 +111,8 @@ function App() {
                   <Route path="/privacy" element={<Privacy />} />
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/brand" element={<Brand />} />
+                  <Route path="/leaderboard" element={<Leaderboard />} />
+                  <Route path="/events/:id/leaderboard" element={<Leaderboard />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
