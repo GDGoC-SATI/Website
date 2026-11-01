@@ -68,6 +68,10 @@ export const ROUTE_METADATA = {
     title: 'Brand Kit & Design System',
     description: 'Official Google Developer Groups on Campus SATI Vidisha brand assets, vectors, guidelines, logos, color palettes, badges, merchandise, and community avatar studio.',
   },
+  '/leaderboard': {
+    title: 'Cloud Study Jams 2026 - Leaderboard',
+    description: 'Official student rankings and syllabus badge tracking for Google Cloud Study Jams 2026 at GDG on Campus SATI Vidisha.',
+  },
   '/admin': {
     title: 'Admin Console',
     description: 'Administrative portal for managing events, projects, community members, and announcements at GDGoC SATI Vidisha.',

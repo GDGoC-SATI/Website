@@ -13,9 +13,10 @@ import {
   FaPlus,
   FaTimes,
   FaSave,
+  FaTrophy,
 } from 'react-icons/fa';
-import { Link, useSearchParams } from 'react-router-dom';
-import { eventsData as initialEvents } from '../data/eventsData';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { eventsData, setAllEventsData, isFullEventsListLoaded } from '../data/eventsData';
 import { useAuth } from '../context/AuthContext';
 import ViewToggle from '../components/common/ViewToggle';
 import Pagination from '../components/common/Pagination';
@@ -70,12 +71,20 @@ const EventListItem = memo(({
   onEdit,
   onDelete,
 }) => {
+  const navigate = useNavigate();
+
+  const handleCardClick = (e) => {
+    if (e.target.closest('button') || e.target.closest('a')) return;
+    navigate(`/events/${id}`);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.04 }}
-      className="relative bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group overflow-hidden"
+      onClick={handleCardClick}
+      className="relative bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-google-blue/40 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group overflow-hidden cursor-pointer"
     >
       <div className={`flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1 ${isAdmin ? 'pr-16 sm:pr-0' : ''}`}>
         {imageUrl && (
@@ -153,10 +162,19 @@ const DesktopJourneyCard = memo(({
   onEdit,
   onDelete
 }) => {
+  const navigate = useNavigate();
   const { id, title, date, location, description, imageUrl, type } = event;
 
+  const handleCardClick = (e) => {
+    if (e.target.closest('button') || e.target.closest('a')) return;
+    navigate(`/events/${id}`);
+  };
+
   return (
-    <div className="w-72 sm:w-80 lg:w-[21rem] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xl hover:shadow-2xl hover:shadow-google-blue/15 transition-all duration-300 group overflow-hidden relative">
+    <div
+      onClick={handleCardClick}
+      className="w-72 sm:w-80 lg:w-[21rem] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xl hover:shadow-2xl hover:shadow-google-blue/15 transition-all duration-300 group overflow-hidden relative cursor-pointer"
+    >
       {/* Admin Controls Overlay */}
       {isAdmin && (
         <div
@@ -273,10 +291,19 @@ const MobileJourneyCard = memo(({
   onEdit,
   onDelete
 }) => {
+  const navigate = useNavigate();
   const { id, title, date, location, description, imageUrl, type } = event;
 
+  const handleCardClick = (e) => {
+    if (e.target.closest('button') || e.target.closest('a')) return;
+    navigate(`/events/${id}`);
+  };
+
   return (
-    <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-slate-200/80 dark:border-slate-800 shadow-xl relative group overflow-hidden">
+    <div
+      onClick={handleCardClick}
+      className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-slate-200/80 dark:border-slate-800 shadow-xl relative group overflow-hidden cursor-pointer"
+    >
       {/* Admin Controls */}
       {isAdmin && (
         <div
@@ -773,8 +800,35 @@ const Events = () => {
   const initialQuery = searchParams.get('q') || '';
   const initialView = searchParams.get('view') || 'grid';
 
-  const [events, setEvents] = useState(initialEvents);
-  const [loading, setLoading] = useState(false);
+  const [events, setEvents] = useState(() => {
+    if (isFullEventsListLoaded() && eventsData.length > 1) {
+      return eventsData;
+    }
+    try {
+      const saved = localStorage.getItem('gdg_all_events_cache');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 1) {
+          setAllEventsData(parsed);
+          return parsed;
+        }
+      }
+    } catch {}
+    return [];
+  });
+
+  const [loading, setLoading] = useState(() => {
+    if (eventsData.length > 1) return false;
+    try {
+      const saved = localStorage.getItem('gdg_all_events_cache');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 1) return false;
+      }
+    } catch {}
+    return true;
+  });
+
   const [filterYear, setFilterYearState] = useState(initialYear);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -783,31 +837,32 @@ const Events = () => {
   const PAGE_SIZE = 6;
 
   // Fetch events from MongoDB API on component mount
-  const fetchEvents = async (showSkeleton = true) => {
+  const fetchEvents = async (showSkeleton = true, skipCache = false) => {
     try {
-      if (showSkeleton) setLoading(true);
-      const res = await api.events.getAll(true);
-      if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+      if (showSkeleton && events.length <= 1) setLoading(true);
+      const res = await api.events.getAll(skipCache);
+      if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
         const mapped = res.data.map((item) => ({
           ...item,
           id: item.slug || item.id || item._id,
         }));
         setEvents(mapped);
+        setAllEventsData(mapped);
       }
     } catch (err) {
       console.warn('API event fetch notice, using cached events:', err.message);
     } finally {
-      if (showSkeleton) setLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchEvents();
+    fetchEvents(false, false);
   }, []);
 
   // Real-time zero-refresh instant updates whenever events change in DB
   useRealtimeSubscription('events', () => {
-    fetchEvents(false);
+    fetchEvents(false, true);
   });
 
   // Debounced search query prevents excessive recalculation and router thrashing
@@ -866,6 +921,7 @@ const Events = () => {
     updated[index] = updated[target];
     updated[target] = temp;
     setEvents(updated);
+    setAllEventsData(updated);
   };
 
   const handleDeleteEvent = async (index) => {
@@ -875,11 +931,16 @@ const Events = () => {
       try {
         const targetId = targetEvent._id || targetEvent.id || targetEvent.slug;
         await api.events.delete(targetId);
-        await fetchEvents();
+        const updated = events.filter((_, i) => i !== index);
+        setEvents(updated);
+        setAllEventsData(updated);
+        await fetchEvents(false, true);
       } catch (err) {
         console.error('Failed to delete event from database:', err);
         // Local state fallback
-        setEvents(events.filter((_, i) => i !== index));
+        const updated = events.filter((_, i) => i !== index);
+        setEvents(updated);
+        setAllEventsData(updated);
       }
     }
   };
@@ -912,16 +973,19 @@ const Events = () => {
         const targetSlug = saved.slug || saved.id || targetId;
         if (targetSlug) notifyIndexNow(`/events/${targetSlug}`);
       }
-      await fetchEvents();
+      await fetchEvents(false, true);
     } catch (err) {
       console.error('Failed to persist event to MongoDB:', err);
       // Fallback local update
       if (modalState.isNew) {
-        setEvents([{ ...saved, id: saved.id || `event-${Date.now()}` }, ...events]);
+        const updated = [{ ...saved, id: saved.id || `event-${Date.now()}` }, ...events];
+        setEvents(updated);
+        setAllEventsData(updated);
       } else {
         const updated = [...events];
         updated[modalState.index] = saved;
         setEvents(updated);
+        setAllEventsData(updated);
       }
       alert(`Notice: ${err.message || 'Could not persist to MongoDB'}`);
     }
@@ -1071,7 +1135,7 @@ const Events = () => {
         </div>
 
       {/* Content: List View vs Grid View (Timeline) */}
-      {loading && events.length === 0 ? (
+      {loading && events.length <= 1 ? (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {view === 'list' ? (
             <div className="space-y-3">

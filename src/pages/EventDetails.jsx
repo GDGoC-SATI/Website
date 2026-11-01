@@ -14,6 +14,7 @@ import {
   FaPlus,
   FaTrash,
   FaTrophy,
+  FaArrowRight,
   FaArrowUp,
   FaArrowDown,
 } from 'react-icons/fa';
@@ -522,6 +523,21 @@ const EventDetails = () => {
                         >
                           <span>Extended View</span> <FaExternalLinkAlt size={12} />
                         </a>
+                      </>
+                    )}
+
+                    {/* Leaderboard Button for Study Jams / Cloud Study Learn */}
+                    {(event.slug === 'google-cloud-study-learn-2026' || event.type?.toLowerCase().includes('study') || event.type?.toLowerCase().includes('jam') || event.title?.toLowerCase().includes('cloud study') || event.leaderboard) && (
+                      <>
+                        {!event.originalUrl && <hr className="border-slate-200 dark:border-slate-700" />}
+                        <Link
+                          to={`/events/${event.slug || event.id || id}/leaderboard`}
+                          className="mt-3 block w-full py-3 sm:py-3.5 px-4 sm:px-6 text-center text-white bg-gradient-to-r from-google-blue via-indigo-600 to-blue-700 hover:from-blue-600 hover:to-indigo-700 rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-blue-500/25 transition-all hover:-translate-y-1 flex items-center justify-center gap-2"
+                        >
+                          <FaTrophy className="text-google-yellow text-sm" />
+                          <span>Leaderboard</span>
+                          <FaArrowRight size={11} />
+                        </Link>
                       </>
                     )}
                   </div>
