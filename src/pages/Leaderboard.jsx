@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, memo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaSearch,
@@ -31,6 +31,8 @@ import {
   DEFAULT_SYLLABUS_SOURCE_URL,
   convertToCsvUrl,
   parseParticipantsFromCsv,
+  fetchCloudProfileRealtime,
+  matchProfileBadgesToSyllabus,
   resolveCloudProfileAvatar,
 } from '../data/cloudStudySyllabus';
 import { getEventById, saveOrUpdateEvent } from '../data/eventsData';
@@ -45,9 +47,13 @@ import { ListItemSkeleton } from '../components/common/Skeleton';
 const BadgeInspectionModal = ({ participant, syllabusLabs, onClose }) => {
   if (!participant) return null;
 
-  const { name, avatar, profileUrl, completedLabs, verifiedCount } = participant;
+  const { name, avatar, profileUrl, completedLabs, verifiedCount, totalProfileBadges } = participant;
   const labs = Array.isArray(syllabusLabs) && syllabusLabs.length > 0 ? syllabusLabs : DEFAULT_SYLLABUS_LABS;
-  const completedIds = new Set((completedLabs || []).map((l) => l.id || l.title));
+  const completedMap = new Map();
+  (completedLabs || []).forEach((l) => {
+    if (l.id) completedMap.set(l.id, l);
+    if (l.title) completedMap.set(l.title, l);
+  });
 
   return (
     <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
@@ -59,16 +65,21 @@ const BadgeInspectionModal = ({ participant, syllabusLabs, onClose }) => {
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <img
               src={avatar}
               alt={name}
-              className="w-12 h-12 rounded-full p-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 object-cover"
+              onError={(e) => {
+                e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                  name || 'User'
+                )}&background=4285F4&color=fff&bold=true&rounded=true&size=128`;
+              }}
+              className="w-12 h-12 rounded-full p-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 object-cover shrink-0"
             />
-            <div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <span>{name}</span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-google-blue/10 text-google-blue font-bold">
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
+                <span className="truncate">{name}</span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-google-blue/10 text-google-blue font-bold shrink-0">
                   {verifiedCount} / {labs.length} Labs
                 </span>
               </h3>
@@ -77,7 +88,7 @@ const BadgeInspectionModal = ({ participant, syllabusLabs, onClose }) => {
                   href={profileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-google-blue hover:underline inline-flex items-center gap-1 mt-0.5"
+                  className="text-xs text-google-blue hover:underline inline-flex items-center gap-1 mt-0.5 truncate max-w-full"
                 >
                   <span>Google Cloud Skills Boost Profile</span>
                   <FaExternalLinkAlt size={9} />
@@ -87,24 +98,32 @@ const BadgeInspectionModal = ({ participant, syllabusLabs, onClose }) => {
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors shrink-0"
           >
             <FaTimes size={16} />
           </button>
         </div>
 
         {/* Syllabus Progress Subtitle */}
-        <div className="py-2.5 px-3.5 bg-blue-50/70 dark:bg-blue-950/30 rounded-2xl my-3 text-xs text-slate-600 dark:text-slate-300 flex items-center gap-2 border border-blue-100 dark:border-blue-900/40 shrink-0">
-          <FaInfoCircle className="text-google-blue shrink-0" size={13} />
-          <span>
-            Only completed badges matching this Study Jam's syllabus count towards milestone completion.
-          </span>
+        <div className="py-2.5 px-3.5 bg-blue-50/70 dark:bg-blue-950/30 rounded-2xl my-3 text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between gap-2 border border-blue-100 dark:border-blue-900/40 shrink-0">
+          <div className="flex items-center gap-2">
+            <FaInfoCircle className="text-google-blue shrink-0" size={13} />
+            <span>
+              Real-time verified from Google Cloud Skills Boost profile against this Study Jam&apos;s syllabus.
+            </span>
+          </div>
+          {totalProfileBadges > 0 && (
+            <span className="font-semibold text-slate-500 dark:text-slate-400 text-[11px] shrink-0">
+              Total Badges: {totalProfileBadges}
+            </span>
+          )}
         </div>
 
         {/* Syllabus Badges Checklist */}
         <div className="overflow-y-auto space-y-2 pr-1 flex-1">
           {labs.map((lab, idx) => {
-            const isCompleted = completedIds.has(lab.id) || completedIds.has(lab.title);
+            const completedLab = completedMap.get(lab.id) || completedMap.get(lab.title);
+            const isCompleted = !!completedLab;
             return (
               <div
                 key={lab.id || idx}
@@ -120,24 +139,39 @@ const BadgeInspectionModal = ({ participant, syllabusLabs, onClose }) => {
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden ${
                       isCompleted
                         ? 'bg-emerald-500 text-white'
                         : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
                     }`}
                   >
-                    {isCompleted ? <FaCheckCircle size={12} /> : idx + 1}
+                    {isCompleted ? (
+                      completedLab?.badgeImage ? (
+                        <img src={completedLab.badgeImage} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <FaCheckCircle size={14} />
+                      )
+                    ) : (
+                      idx + 1
+                    )}
                   </div>
                   <div className="min-w-0">
                     <h4 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white truncate">
                       {lab.title}
                     </h4>
-                    {lab.url && (
-                      <span className="text-[11px] text-google-blue hover:underline inline-flex items-center gap-1 mt-0.5">
-                        <span>Course Link</span>
-                        <FaExternalLinkAlt size={8} />
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {lab.url && (
+                        <span className="text-[11px] text-google-blue hover:underline inline-flex items-center gap-1">
+                          <span>Course Link</span>
+                          <FaExternalLinkAlt size={8} />
+                        </span>
+                      )}
+                      {isCompleted && completedLab?.earnedDate && (
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                          • Earned: {completedLab.earnedDate}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -512,30 +546,6 @@ const Leaderboard = () => {
   const [showSyllabusModal, setShowSyllabusModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  // Background resolver for real Cloud Skills Boost profile avatars
-  useEffect(() => {
-    let isCancelled = false;
-    const resolveAvatars = async () => {
-      for (const p of participants) {
-        if (isCancelled) break;
-        if (p.profileUrl && p.avatar && p.avatar.includes('ui-avatars.com')) {
-          const resolved = await resolveCloudProfileAvatar(p.profileUrl);
-          if (resolved && !isCancelled) {
-            setParticipants((prev) =>
-              prev.map((item) => (item.id === p.id ? { ...item, avatar: resolved } : item))
-            );
-          }
-        }
-      }
-    };
-    if (participants.length > 0) {
-      resolveAvatars();
-    }
-    return () => {
-      isCancelled = true;
-    };
-  }, [participants.length]);
-
   const handleParticipantClick = (e, profileUrl) => {
     if (e.target.closest('button')) return;
     if (profileUrl) {
@@ -647,6 +657,106 @@ const Leaderboard = () => {
       fetchSheetData(leaderboardConfig);
     }
   }, [leaderboardConfig?.sheetUrl]);
+
+  // Ref to always access the latest participants array inside worker without triggering recreations
+  const participantsRef = useRef(participants);
+  useEffect(() => {
+    participantsRef.current = participants;
+  }, [participants]);
+
+  // Live Profile Progress Sync State
+  const [syncStatus, setSyncStatus] = useState({
+    syncing: false,
+    progress: 0,
+    total: 0,
+    lastSyncedAt: null,
+  });
+
+  // Background Live Profile Sync Engine:
+  // Fetches real earned badges from each participant's Google Cloud Skills Boost profile
+  // and validates strictly against the event's configured syllabus labs.
+  const syncLiveProfiles = useCallback(
+    async (forceRefresh = false) => {
+      const currentList = participantsRef.current || [];
+      const candidates = currentList.filter((p) => p.profileUrl);
+      if (candidates.length === 0) return;
+
+      setSyncStatus({
+        syncing: true,
+        progress: 0,
+        total: candidates.length,
+        lastSyncedAt: null,
+      });
+
+      const currentLabs = syllabusLabs;
+      let completed = 0;
+      const CONCURRENCY = 3;
+
+      const worker = async (p) => {
+        try {
+          const profileData = await fetchCloudProfileRealtime(p.profileUrl, forceRefresh);
+          if (profileData && profileData.success) {
+            const matchRes = matchProfileBadgesToSyllabus(profileData.badges || [], currentLabs);
+            setParticipants((prev) =>
+              prev.map((item) => {
+                if (item.id === p.id) {
+                  return {
+                    ...item,
+                    avatar: profileData.avatar || item.avatar,
+                    completedLabs: matchRes.completedLabs,
+                    verifiedCount: matchRes.verifiedCount,
+                    percentage: matchRes.percentage,
+                    totalProfileBadges: profileData.totalBadgesCount || profileData.badges?.length || 0,
+                    liveVerified: true,
+                  };
+                }
+                return item;
+              })
+            );
+          }
+        } catch (err) {
+          console.warn(`Profile sync notice for ${p.name}:`, err.message);
+        } finally {
+          completed++;
+          setSyncStatus((prev) => ({
+            ...prev,
+            progress: completed,
+          }));
+        }
+      };
+
+      const queue = [...candidates];
+      const pool = Array(Math.min(CONCURRENCY, queue.length))
+        .fill(0)
+        .map(async () => {
+          while (queue.length > 0) {
+            const item = queue.shift();
+            if (item) {
+              await worker(item);
+            }
+          }
+        });
+
+      await Promise.all(pool);
+
+      setSyncStatus((prev) => ({
+        ...prev,
+        syncing: false,
+        lastSyncedAt: new Date(),
+      }));
+    },
+    [syllabusLabs]
+  );
+
+  // Automatically trigger sync when participants are loaded and any profile is unverified
+  useEffect(() => {
+    if (participants.length > 0) {
+      const hasUnverified = participants.some((p) => p.profileUrl && !p.liveVerified);
+      if (hasUnverified && !syncStatus.syncing) {
+        syncLiveProfiles(false);
+      }
+    }
+  }, [participants.length, syllabusLabs, syncLiveProfiles, syncStatus.syncing]);
 
   // Page SEO
   usePageSEO({
@@ -776,13 +886,17 @@ const Leaderboard = () => {
 
             {leaderboardConfig?.sheetUrl && (
               <button
-                onClick={() => fetchSheetData(leaderboardConfig)}
-                disabled={loadingSheet}
+                onClick={() => syncLiveProfiles(true)}
+                disabled={syncStatus.syncing}
                 className="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:text-google-blue font-bold text-xs shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
-                title="Fetch latest updates from Google Sheet"
+                title="Fetch real-time updates directly from Google Cloud Skills Boost profiles"
               >
-                <FaSyncAlt size={11} className={loadingSheet ? 'animate-spin' : ''} />
-                <span>{loadingSheet ? 'Syncing...' : 'Sync Sheet'}</span>
+                <FaSyncAlt size={11} className={syncStatus.syncing ? 'animate-spin text-google-blue' : ''} />
+                <span>
+                  {syncStatus.syncing
+                    ? `Syncing (${syncStatus.progress}/${syncStatus.total})...`
+                    : 'Sync Data'}
+                </span>
               </button>
             )}
 
@@ -805,7 +919,7 @@ const Leaderboard = () => {
         {/* Sticky Controls Bar - Standardized height, width and UI matching Events.jsx & Projects.jsx */}
         <div className="sticky top-[80px] md:top-[80px] z-30 flex flex-col sm:flex-row items-center justify-between gap-2 py-1 px-3 sm:py-1.5 sm:px-4 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-md mb-6">
           {/* Search Input */}
-          <div className="relative w-full sm:w-80">
+          <div className="relative w-full sm:w-150">
             <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
             <input
               type="text"
@@ -816,7 +930,7 @@ const Leaderboard = () => {
             />
           </div>
 
-          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">  
             <span className="text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400">
               {filteredParticipants.length} {filteredParticipants.length === 1 ? 'Participant' : 'Participants'}
             </span>
