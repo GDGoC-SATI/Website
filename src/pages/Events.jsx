@@ -813,7 +813,7 @@ const Events = () => {
           return parsed;
         }
       }
-    } catch {}
+    } catch { }
     return [];
   });
 
@@ -825,7 +825,7 @@ const Events = () => {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 1) return false;
       }
-    } catch {}
+    } catch { }
     return true;
   });
 
@@ -1065,15 +1065,14 @@ const Events = () => {
       <div className="w-full relative mt-3">
         {/* Controls: Search, Filter & View Switcher (Normal/static in grid view on desktop, sticky in list view and on mobile) */}
         <div
-          className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 ${
-            view === 'grid'
+          className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 ${view === 'grid'
               ? 'sticky top-[80px] md:top-[80px] lg:static lg:top-auto z-30'
               : 'sticky top-[80px] md:top-[80px] z-30'
-          }`}
+            }`}
         >
           <div className="flex flex-col md:flex-row items-center justify-between gap-2 py-1 px-3 sm:py-1.5 sm:px-4 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shadow-md">
             {/* Search Input */}
-            <div className="relative w-full md:w-80">
+            <div className="relative w-full md:w-150">
               <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
               <input
                 type="text"
@@ -1116,8 +1115,8 @@ const Events = () => {
                             setIsDropdownOpen(false);
                           }}
                           className={`w-full text-left px-4 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${filterYear === year
-                              ? 'text-google-blue font-bold'
-                              : 'text-slate-600 dark:text-slate-300'
+                            ? 'text-google-blue font-bold'
+                            : 'text-slate-600 dark:text-slate-300'
                             }`}
                         >
                           {year === 'All' ? 'All Years' : year}
@@ -1134,78 +1133,78 @@ const Events = () => {
           </div>
         </div>
 
-      {/* Content: List View vs Grid View (Timeline) */}
-      {loading && events.length <= 1 ? (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {view === 'list' ? (
-            <div className="space-y-3">
-              {[1, 2, 3, 4].map((n) => (
-                <ListItemSkeleton key={n} />
+        {/* Content: List View vs Grid View (Timeline) */}
+        {loading && events.length <= 1 ? (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {view === 'list' ? (
+              <div className="space-y-3">
+                {[1, 2, 3, 4].map((n) => (
+                  <ListItemSkeleton key={n} />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <CardSkeleton key={n} />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : filteredEvents.length === 0 ? (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
+              <p className="text-base text-slate-500 dark:text-slate-400">
+                No events found matching your criteria.
+              </p>
+            </div>
+          </div>
+        ) : view === 'list' ? (
+          /* List View (Maintains Pagination) */
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="space-y-3 relative z-10">
+              {paginatedEvents.map((event, index) => (
+                <EventListItem
+                  key={event.id}
+                  {...event}
+                  index={(currentPage - 1) * PAGE_SIZE + index}
+                  isAdmin={isAdmin}
+                  onEdit={() =>
+                    setModalState({
+                      event,
+                      index: events.findIndex((e) => e.id === event.id),
+                      isNew: false,
+                    })
+                  }
+                  onDelete={() => handleDeleteEvent(events.findIndex((e) => e.id === event.id))}
+                />
               ))}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[1, 2, 3, 4, 5, 6].map((n) => (
-                <CardSkeleton key={n} />
-              ))}
-            </div>
-          )}
-        </div>
-      ) : filteredEvents.length === 0 ? (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
-            <p className="text-base text-slate-500 dark:text-slate-400">
-              No events found matching your criteria.
-            </p>
-          </div>
-        </div>
-      ) : view === 'list' ? (
-        /* List View (Maintains Pagination) */
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="space-y-3 relative z-10">
-            {paginatedEvents.map((event, index) => (
-              <EventListItem
-                key={event.id}
-                {...event}
-                index={(currentPage - 1) * PAGE_SIZE + index}
-                isAdmin={isAdmin}
-                onEdit={() =>
-                  setModalState({
-                    event,
-                    index: events.findIndex((e) => e.id === event.id),
-                    isNew: false,
-                  })
-                }
-                onDelete={() => handleDeleteEvent(events.findIndex((e) => e.id === event.id))}
-              />
-            ))}
-          </div>
 
-          {/* Pagination Controls - Strictly for list view */}
-          <Pagination
-            currentPage={currentPage}
-            totalItems={filteredEvents.length}
-            pageSize={PAGE_SIZE}
-            onPageChange={(p) => {
-              setCurrentPage(p);
-              window.scrollTo({ top: 380, behavior: 'smooth' });
-            }}
-          />
-        </div>
-      ) : (
-        /* Grid View: Full Width Viewport Screen (Line touches both edges) */
-        <div className="w-full relative overflow-x-clip">
-          <EventsTimelineJourney
-            events={filteredEvents}
-            allEvents={events}
-            isAdmin={isAdmin}
-            onMoveUp={(idx) => handleMoveEvent(idx, -1)}
-            onMoveDown={(idx) => handleMoveEvent(idx, 1)}
-            onEdit={(event, idx) => setModalState({ event, index: idx, isNew: false })}
-            onDelete={(idx) => handleDeleteEvent(idx)}
-          />
-        </div>
-      )}
+            {/* Pagination Controls - Strictly for list view */}
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredEvents.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={(p) => {
+                setCurrentPage(p);
+                window.scrollTo({ top: 380, behavior: 'smooth' });
+              }}
+            />
+          </div>
+        ) : (
+          /* Grid View: Full Width Viewport Screen (Line touches both edges) */
+          <div className="w-full relative overflow-x-clip">
+            <EventsTimelineJourney
+              events={filteredEvents}
+              allEvents={events}
+              isAdmin={isAdmin}
+              onMoveUp={(idx) => handleMoveEvent(idx, -1)}
+              onMoveDown={(idx) => handleMoveEvent(idx, 1)}
+              onEdit={(event, idx) => setModalState({ event, index: idx, isNew: false })}
+              onDelete={(idx) => handleDeleteEvent(idx)}
+            />
+          </div>
+        )}
       </div>
 
       {/* Admin Event Edit/Add Modal */}

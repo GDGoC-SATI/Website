@@ -290,7 +290,7 @@ const AssetCard = ({
     <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-transparent hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between overflow-hidden group">
       <div className="p-4">
         <div className="flex items-center justify-end mb-1">
-          
+
           {isAdmin && (
             <div className="flex items-center gap-1">
               <button
@@ -448,16 +448,16 @@ export default function Brand() {
   const initialQuery = searchParams.get('q') || '';
   const initialView = searchParams.get('view') || (typeof window !== 'undefined' && window.innerWidth < 768 ? 'list' : 'grid');
 
-const BRAND_SECTIONS = [
-  { value: 'all', label: 'All Sections' },
-  { value: 'logos', label: 'Logos & Lockups' },
-  { value: 'icons', label: 'GDGoC SATI Icon' },
-  { value: 'colors', label: 'Color System' },
-  { value: 'typography', label: 'Typography' },
-  { value: 'merch', label: 'Merchandise' },
-  { value: 'avatar', label: 'Profile Avatar Studio' },
-  { value: 'guidelines', label: 'Brand Guidelines' },
-];
+  const BRAND_SECTIONS = [
+    { value: 'all', label: 'All Sections' },
+    { value: 'logos', label: 'Logos & Lockups' },
+    { value: 'icons', label: 'GDGoC SATI Icon' },
+    { value: 'colors', label: 'Color System' },
+    { value: 'typography', label: 'Typography' },
+    { value: 'merch', label: 'Merchandise' },
+    { value: 'avatar', label: 'Profile Avatar Studio' },
+    { value: 'guidelines', label: 'Brand Guidelines' },
+  ];
 
   const [view, setViewState] = useState(initialView);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
@@ -567,10 +567,10 @@ const BRAND_SECTIONS = [
       return saved
         ? JSON.parse(saved)
         : {
-            title: 'T-Shirt & Apparel Designs',
-            description:
-              'Official GDGoC SATI chapter drop-shoulder t-shirt with chest badge and statement back artwork.',
-          };
+          title: 'T-Shirt & Apparel Designs',
+          description:
+            'Official GDGoC SATI chapter drop-shoulder t-shirt with chest badge and statement back artwork.',
+        };
     } catch {
       return {
         title: 'T-Shirt & Apparel Designs',
@@ -1240,7 +1240,7 @@ const BRAND_SECTIONS = [
       {/* 2. Sticky Control Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-3">
         <div className="sticky top-[80px] md:top-[80px] z-30 flex flex-col md:flex-row items-center justify-between gap-2 py-1 px-3 sm:py-1.5 sm:px-4 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-md mb-6">
-          <div className="relative w-full md:w-80">
+          <div className="relative w-full md:w-150">
             <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
             <input
               type="text"
@@ -1275,9 +1275,8 @@ const BRAND_SECTIONS = [
                   </span>
                 </div>
                 <FaChevronDown
-                  className={`text-slate-400 transition-transform duration-200 text-xs shrink-0 ${
-                    isSectionDropdownOpen ? 'rotate-180' : ''
-                  }`}
+                  className={`text-slate-400 transition-transform duration-200 text-xs shrink-0 ${isSectionDropdownOpen ? 'rotate-180' : ''
+                    }`}
                 />
               </button>
 
@@ -1296,11 +1295,10 @@ const BRAND_SECTIONS = [
                           handleSectionChange(sec.value);
                           setIsSectionDropdownOpen(false);
                         }}
-                        className={`w-full text-left px-3.5 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center justify-between ${
-                          selectedSection === sec.value
+                        className={`w-full text-left px-3.5 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center justify-between ${selectedSection === sec.value
                             ? 'text-google-blue font-bold bg-google-blue/5'
                             : 'text-slate-600 dark:text-slate-300'
-                        }`}
+                          }`}
                       >
                         <span>{sec.label}</span>
                         {selectedSection === sec.value && (
@@ -1745,11 +1743,10 @@ const BRAND_SECTIONS = [
                         key={color.id}
                         type="button"
                         onClick={() => setMerchColor(color.id)}
-                        className={`w-6 h-6 rounded-full border-2 transition-all cursor-pointer ${
-                          merchColor === color.id
+                        className={`w-6 h-6 rounded-full border-2 transition-all cursor-pointer ${merchColor === color.id
                             ? ' border-blue-500 scale-110 shadow-sm ring-2 ring-blue-500/30'
                             : 'border-slate-300 dark:border-slate-700 hover:scale-105'
-                        }`}
+                          }`}
                         style={{ backgroundColor: color.hex }}
                         title={`Color: ${color.label}`}
                       />
@@ -1782,22 +1779,20 @@ const BRAND_SECTIONS = [
                       <button
                         type="button"
                         onClick={() => setMerchView('front')}
-                        className={`px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-                          merchView === 'front'
+                        className={`px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${merchView === 'front'
                             ? 'bg-google-blue text-white'
                             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                        }`}
+                          }`}
                       >
                         Front
                       </button>
                       <button
                         type="button"
                         onClick={() => setMerchView('back')}
-                        className={`px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-                          merchView === 'back'
+                        className={`px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${merchView === 'back'
                             ? 'bg-google-blue text-white'
                             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                        }`}
+                          }`}
                       >
                         Back
                       </button>
@@ -1853,18 +1848,16 @@ const BRAND_SECTIONS = [
                         src={tShirtImages?.black?.front || T_SHIRT_IMAGES.black.front}
                         alt="GDGoC SATI T-Shirt Black Front"
                         draggable={false}
-                        className={`absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-opacity duration-500 ease-in-out ${
-                          merchColor === 'black' ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                        }`}
+                        className={`absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-opacity duration-500 ease-in-out ${merchColor === 'black' ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                          }`}
                       />
                       {/* White Front Mockup */}
                       <img
                         src={tShirtImages?.white?.front || T_SHIRT_IMAGES.white.front}
                         alt="GDGoC SATI T-Shirt White Front"
                         draggable={false}
-                        className={`absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-opacity duration-500 ease-in-out ${
-                          merchColor === 'white' ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                        }`}
+                        className={`absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-opacity duration-500 ease-in-out ${merchColor === 'white' ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                          }`}
                       />
                     </div>
 
@@ -1882,18 +1875,16 @@ const BRAND_SECTIONS = [
                         src={tShirtImages?.black?.back || T_SHIRT_IMAGES.black.back}
                         alt="GDGoC SATI T-Shirt Black Back"
                         draggable={false}
-                        className={`absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-opacity duration-500 ease-in-out ${
-                          merchColor === 'black' ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                        }`}
+                        className={`absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-opacity duration-500 ease-in-out ${merchColor === 'black' ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                          }`}
                       />
                       {/* White Back Mockup */}
                       <img
                         src={tShirtImages?.white?.back || T_SHIRT_IMAGES.white.back}
                         alt="GDGoC SATI T-Shirt White Back"
                         draggable={false}
-                        className={`absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-opacity duration-500 ease-in-out ${
-                          merchColor === 'white' ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                        }`}
+                        className={`absolute inset-0 w-full h-full object-contain pointer-events-none select-none transition-opacity duration-500 ease-in-out ${merchColor === 'white' ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                          }`}
                       />
                     </div>
 
@@ -2472,7 +2463,7 @@ const BRAND_SECTIONS = [
                 <div>
                   <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                     <span>T-Shirt Visual Mockup Assets</span>
-                   
+
                   </h4>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -2500,7 +2491,7 @@ const BRAND_SECTIONS = [
                         </div>
 
                         <div className="flex-1 space-y-1.5">
-                          
+
                           <input
                             type="text"
                             value={merchForm.blackFront}
@@ -2536,7 +2527,7 @@ const BRAND_SECTIONS = [
                         </div>
 
                         <div className="flex-1 space-y-1.5">
-                          
+
                           <input
                             type="text"
                             value={merchForm.blackBack}
@@ -2572,7 +2563,7 @@ const BRAND_SECTIONS = [
                         </div>
 
                         <div className="flex-1 space-y-1.5">
-                        
+
                           <input
                             type="text"
                             value={merchForm.whiteFront}
@@ -2608,7 +2599,7 @@ const BRAND_SECTIONS = [
                         </div>
 
                         <div className="flex-1 space-y-1.5">
-                          
+
                           <input
                             type="text"
                             value={merchForm.whiteBack}

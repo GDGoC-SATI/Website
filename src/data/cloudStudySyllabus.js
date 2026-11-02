@@ -1,16 +1,14 @@
 /**
- * Google Cloud Study Jams Syllabus & Google Sheet Parsing Utility
- * 
+ * Google Cloud Study Jams Syllabus & Real-Time Profile Progress Utility
+ *
  * Dynamically parses participant records and validates completed labs
- * strictly against the event's configured syllabus labs from the database.
+ * strictly against the event's configured syllabus labs from the live
+ * Google Cloud Skills Boost public profile in real time.
  */
 
-export const DEFAULT_SYLLABUS_SOURCE_URL =
-  '';
+export const DEFAULT_SYLLABUS_SOURCE_URL = '';
 
-export const DEFAULT_SYLLABUS_LABS = [
- 
-];
+export const DEFAULT_SYLLABUS_LABS = [];
 
 /**
  * Normalizes text for lenient yet robust matching
@@ -124,122 +122,121 @@ export const parseCsvRows = (text) => {
 };
 
 /**
- * Helper to determine if a cell's value represents completion of a course/lab.
- * Strictly verifies positive markers or completion dates; rejects everything else.
+ * Extracts all badges, name, and avatar from raw Google Cloud Skills Boost profile HTML
  */
-export const isCellCompleted = (val) => {
-  if (val === null || val === undefined) return false;
-  const str = String(val).trim();
-  if (!str) return false;
-
-  const lower = str.toLowerCase();
-
-  // Explicit negatives that mean NOT completed
-  if (
-    lower === 'no' ||
-    lower === 'n' ||
-    lower === 'false' ||
-    lower === '0' ||
-    lower === '0.0' ||
-    lower === '-' ||
-    lower === '--' ||
-    lower === 'na' ||
-    lower === 'n/a' ||
-    lower === 'none' ||
-    lower === 'pending' ||
-    lower === 'in progress' ||
-    lower === 'not completed' ||
-    lower === 'not started' ||
-    lower === 'incomplete' ||
-    lower === 'uncompleted' ||
-    lower === 'enrolled' ||
-    lower === 'registered' ||
-    lower === 'waiting' ||
-    lower === 'null' ||
-    lower === 'undefined'
-  ) {
-    return false;
+export const parseProfileHtml = (html, profileUrl) => {
+  if (!html || typeof html !== 'string') {
+    return { name: null, avatar: null, badges: [], totalBadgesCount: 0 };
   }
 
-  // Explicit positive markers
-  if (
-    lower === 'yes' ||
-    lower === 'y' ||
-    lower === 'true' ||
-    lower === '1' ||
-    lower === 'done' ||
-    lower === 'completed' ||
-    lower === 'complete' ||
-    lower === 'passed' ||
-    lower === 'pass' ||
-    lower === 'earned' ||
-    lower === 'achieved' ||
-    lower === 'badge earned' ||
-    lower === 'completed badge'
-  ) {
-    return true;
+  // 1. Extract Avatar
+  const avatarMatch =
+    html.match(/<ql-avatar[^>]+src=["']([^"']+)["']/i) ||
+    html.match(/<img[^>]+src=["']([^"']+)["'][^>]*class=["'][^"']*avatar/i) ||
+    html.match(/class=["'][^"']*avatar[^"']*["'][^>]*>\s*<img[^>]+src=["']([^"']+)["']/i) ||
+    html.match(/<div[^>]+class=["'][^"']*public-profile__avatar[^"']*["'][^>]*>\s*<img[^>]+src=["']([^"']+)["']/i);
+  let avatar = avatarMatch && avatarMatch[1] ? avatarMatch[1].trim() : null;
+  if (avatar && avatar.startsWith('//')) avatar = `https:${avatar}`;
+
+  // 2. Extract Name
+  const nameMatch =
+    html.match(/<h1[^>]+class=["'][^"']*ql-display-small[^"']*["'][^>]*>\s*([^<]+)\s*<\/h1>/i) ||
+    html.match(/<h1[^>]*>\s*([^<]+)\s*<\/h1>/i);
+  const name = nameMatch && nameMatch[1] ? nameMatch[1].trim() : null;
+
+  // 3. Extract Badges
+  const badges = [];
+  const badgeBlockRegex =
+    /<div[^>]+class=["'][^"']*profile-badge[^"']*["'][^>]*>([\s\S]*?)(?:<\/div>\s*<\/div>|(?=<div[^>]+class=["'][^"']*profile-badge)|$)/gi;
+  let blockMatch;
+
+  while ((blockMatch = badgeBlockRegex.exec(html)) !== null) {
+    const block = blockMatch[1];
+
+    // Title
+    const titleMatch =
+      block.match(/<span[^>]+class=["'][^"']*(?:ql-title-medium|ql-subhead-1|badge-title)[^"']*["'][^>]*>\s*([^<]+)\s*<\/span>/i) ||
+      block.match(/<h3[^>]*>\s*([^<]+)\s*<\/h3>/i);
+    const title = titleMatch && titleMatch[1] ? titleMatch[1].replace(/&amp;/g, '&').trim() : '';
+
+    if (!title) continue;
+
+    // Earned Date
+    const dateMatch =
+      block.match(/<span[^>]+class=["'][^"']*ql-body-medium[^"']*["'][^>]*>\s*(?:Earned\s*)?([^<]+)\s*<\/span>/i) ||
+      block.match(/Earned\s+([A-Za-z0-9, ]+)/i);
+    const earnedDate = dateMatch && dateMatch[1] ? dateMatch[1].trim() : '';
+
+    // Image
+    const imgMatch =
+      block.match(/<img[^>]+src=["']([^"']+)["'][^>]*role=["']presentation["']/i) ||
+      block.match(/<img[^>]+src=["']([^"']+)["']/i);
+    const image = imgMatch && imgMatch[1] ? imgMatch[1].trim() : '';
+
+    // Badge URL
+    const linkMatch = block.match(/<a[^>]+class=["'][^"']*badge-image[^"']*["'][^>]+href=["']([^"']+)["']/i);
+    const badgeUrl = linkMatch && linkMatch[1] ? linkMatch[1].trim() : '';
+
+    badges.push({
+      title,
+      earnedDate,
+      image,
+      badgeUrl,
+    });
   }
 
-  // Valid completion date formats (DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, DD-MM-YYYY, DD.MM.YYYY)
-  if (/^\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}/.test(str)) {
-    return true;
-  }
-
-  // Month date strings like "Oct 24, 2026" or "24 Oct 2026"
-  if (
-    /^(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]* \d{1,2},? \d{4}/i.test(str) ||
-    /^\d{1,2} (?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]* \d{4}/i.test(str)
-  ) {
-    return true;
-  }
-
-  // ISO timestamp (e.g. 2026-10-24T12:00:00Z)
-  if (/^\d{4}-\d{2}-\d{2}T/.test(str)) {
-    return true;
-  }
-
-  // If not an explicit positive marker or a date, it is NOT completed
-  return false;
-};
-
-/**
- * Checks if a column header matches a syllabus lab
- */
-export const isHeaderMatchingLab = (header, lab) => {
-  if (!header || !lab) return false;
-
-  // Never match general personal / profile / college metadata columns
-  if (
-    /name|student|participant|email|mail|college|institute|dept|department|branch|semester|year|roll|phone|mobile|contact|avatar|photo|profile|boost.*url|link|timestamp|date.*of.*birth|dob|status|arcade|trivia|token|swag|comment|remark/i.test(
-      header
-    )
-  ) {
-    return false;
-  }
-
-  const normH = normalizeText(header);
-  const normTitle = normalizeText(lab.title);
-
-  if (normH === normTitle) return true;
-
-  // Match template ID in URL (e.g. 754, 702, 1426, 633, 638, 1586, 658, 756, 959)
-  const templateMatch = lab.url && lab.url.match(/course_templates\/([0-9]+)/);
-  if (templateMatch && templateMatch[1]) {
-    const tid = templateMatch[1];
-    if (new RegExp(`\\b${tid}\\b`).test(normH) || normH.includes(tid)) {
-      return true;
+  // Fallback if badgeBlockRegex produced 0 but title spans exist
+  if (badges.length === 0) {
+    const titleRegex =
+      /<span[^>]+class=["'][^"']*(?:ql-title-medium|ql-subhead-1|badge-title)[^"']*["'][^>]*>\s*([^<]+)\s*<\/span>/gi;
+    let tm;
+    while ((tm = titleRegex.exec(html)) !== null) {
+      const title = tm[1].replace(/&amp;/g, '&').trim();
+      if (title && !title.toLowerCase().includes('badge') && title.length > 3) {
+        badges.push({
+          title,
+          earnedDate: '',
+          image: '',
+          badgeUrl: '',
+        });
+      }
     }
   }
 
-  // Check if header contains the substantial part of the lab title
-  if (normTitle.length >= 10 && normH.includes(normTitle)) {
-    return true;
-  }
-  if (normH.length >= 10 && normTitle.includes(normH)) {
-    return true;
+  return {
+    success: true,
+    profileUrl,
+    name,
+    avatar,
+    totalBadgesCount: badges.length,
+    badges,
+  };
+};
+
+/**
+ * Checks whether an earned profile badge matches a specific syllabus lab
+ */
+export const isBadgeMatchingSyllabusLab = (badgeTitle, lab) => {
+  if (!badgeTitle || !lab) return false;
+
+  const normBadge = normalizeText(badgeTitle);
+  const normLab = normalizeText(lab.title);
+
+  // Exact normalized match
+  if (normBadge === normLab) return true;
+
+  // Full substring containment
+  if (normLab.length >= 10 && normBadge.includes(normLab)) return true;
+  if (normBadge.length >= 10 && normLab.includes(normBadge)) return true;
+
+  // Match template ID in URL (e.g. 754, 700, 1426, 633, 638, 1586, 658, 756, 959)
+  const templateMatch = lab.url && lab.url.match(/course_templates\/([0-9]+)/);
+  if (templateMatch && templateMatch[1]) {
+    const tid = templateMatch[1];
+    if (new RegExp(`\\b${tid}\\b`).test(normBadge)) return true;
   }
 
-  // Substantial keyword matching
+  // Token-based similarity: compare distinctive keywords
   const stopWords = new Set([
     'google',
     'cloud',
@@ -255,12 +252,18 @@ export const isHeaderMatchingLab = (header, lab) => {
     'basics',
     'platform',
     'console',
+    'skills',
+    'boost',
+    'skill',
+    'badge',
+    'quest',
   ]);
-  const titleWords = normTitle.split(' ').filter((w) => w.length > 2 && !stopWords.has(w));
+  const labWords = normLab.split(' ').filter((w) => w.length > 2 && !stopWords.has(w));
+  const badgeWords = normBadge.split(' ').filter((w) => w.length > 2 && !stopWords.has(w));
 
-  if (titleWords.length > 0) {
-    const matchedCount = titleWords.filter((w) => normH.includes(w)).length;
-    if (matchedCount >= Math.max(2, Math.ceil(titleWords.length * 0.7))) {
+  if (labWords.length > 0 && badgeWords.length > 0) {
+    const matchedCount = labWords.filter((w) => badgeWords.includes(w)).length;
+    if (matchedCount >= Math.max(2, Math.ceil(labWords.length * 0.7))) {
       return true;
     }
   }
@@ -269,65 +272,130 @@ export const isHeaderMatchingLab = (header, lab) => {
 };
 
 /**
- * Extracts a numeric badge completion count strictly from official skill badge summary columns
+ * Matches an array of earned profile badges strictly against the event's syllabus labs.
+ * Returns only the completed labs that belong to the syllabus.
  */
-export const extractNumericBadgeCount = (row, totalLabs) => {
-  const keys = Object.keys(row);
+export const matchProfileBadgesToSyllabus = (badges = [], syllabusLabs = []) => {
+  const labs = Array.isArray(syllabusLabs) ? syllabusLabs : [];
+  const totalLabs = labs.length;
 
-  // Strict columns matching "# of Skill Badges Completed" (excluding Arcade games/trivia)
-  const countColumns = keys.filter(
-    (k) =>
-      /#.*skill.*badge|number.*of.*skill.*badge|skill.*badge.*completed|total.*skill.*badge/i.test(k) &&
-      !/arcade|trivia|game|token/i.test(k)
-  );
+  const completedLabs = [];
 
-  for (const col of countColumns) {
-    const val = String(row[col] || '').trim();
-    if (!val) continue;
-
-    // "X/10" or "X / 10" or "X of 10"
-    const ratioMatch = val.match(/^(\d+)\s*(?:\/|of)\s*(\d+)/i);
-    if (ratioMatch) {
-      const num = parseInt(ratioMatch[1], 10);
-      if (!isNaN(num)) return Math.min(num, totalLabs);
-    }
-
-    // Direct integer like "10" or "8" or "0"
-    const parsed = parseInt(val, 10);
-    if (!isNaN(parsed) && String(parsed) === val.split('.')[0]) {
-      if (parsed >= 0 && parsed <= totalLabs) {
-        return parsed;
-      }
+  for (const lab of labs) {
+    const matchedBadge = (badges || []).find((b) => isBadgeMatchingSyllabusLab(b.title, lab));
+    if (matchedBadge) {
+      completedLabs.push({
+        ...lab,
+        earnedDate: matchedBadge.earnedDate || '',
+        badgeImage: matchedBadge.image || '',
+        badgeUrl: matchedBadge.badgeUrl || lab.url || '',
+      });
     }
   }
 
-  return null;
+  const verifiedCount = completedLabs.length;
+  const percentage = totalLabs > 0 ? Math.min(100, Math.round((verifiedCount / totalLabs) * 100)) : 0;
+
+  return {
+    completedLabs,
+    verifiedCount,
+    percentage,
+    totalProfileBadges: (badges || []).length,
+  };
 };
 
 /**
- * Parses raw CSV rows into standardized participant records and verifies
- * badges strictly against the event's configured syllabus labs.
- * NO RANK IS ASSIGNED.
+ * Fetches real-time public profile data from Google Cloud Skills Boost.
+ * Uses sessionStorage caching (15 min) and proxy fallbacks to bypass CORS.
+ */
+export const fetchCloudProfileRealtime = async (profileUrl, forceRefresh = false) => {
+  if (!profileUrl || typeof profileUrl !== 'string') {
+    return { success: false, message: 'Invalid URL' };
+  }
+
+  const cleanUrl = profileUrl.trim();
+  const storageKey = `csb_live_v4_${encodeURIComponent(cleanUrl)}`;
+
+  if (!forceRefresh && typeof window !== 'undefined') {
+    try {
+      const cached = sessionStorage.getItem(storageKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.success && Array.isArray(parsed.badges)) {
+          return parsed;
+        }
+      }
+    } catch {}
+  }
+
+  // 1. Try internal serverless endpoint: /api/profile-progress
+  try {
+    const res = await fetch(`/api/profile-progress?url=${encodeURIComponent(cleanUrl)}`, {
+      signal: AbortSignal.timeout(8000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success) {
+        try {
+          sessionStorage.setItem(storageKey, JSON.stringify(data));
+        } catch {}
+        return data;
+      }
+    }
+  } catch {
+    // Fall back to external CORS proxies
+  }
+
+  // 2. Fallbacks via public CORS proxies
+  const proxyEndpoints = [
+    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  ];
+
+  for (const getProxyUrl of proxyEndpoints) {
+    try {
+      const res = await fetch(getProxyUrl(cleanUrl), {
+        signal: AbortSignal.timeout(6000),
+      });
+      if (res.ok) {
+        const html = await res.text();
+        if (html && (html.includes('profile-badge') || html.includes('ql-display-small') || html.includes('ql-avatar'))) {
+          const parsed = parseProfileHtml(html, cleanUrl);
+          if (parsed && parsed.success) {
+            try {
+              sessionStorage.setItem(storageKey, JSON.stringify(parsed));
+            } catch {}
+            return parsed;
+          }
+        }
+      }
+    } catch {
+      // Continue to next proxy
+    }
+  }
+
+  return {
+    success: false,
+    profileUrl: cleanUrl,
+    name: null,
+    avatar: null,
+    badges: [],
+    totalBadgesCount: 0,
+  };
+};
+
+/**
+ * Parses raw CSV rows into initial participant records.
+ * The Google Sheet is used exclusively to discover participants and their profile URLs.
+ * Real completed counts are resolved live from each user's Google Cloud Skills Boost profile.
  */
 export const parseParticipantsFromCsv = (csvText, syllabusLabs = DEFAULT_SYLLABUS_LABS) => {
   const rows = parseCsvRows(csvText);
   if (!rows || rows.length === 0) return [];
 
-  const labs = Array.isArray(syllabusLabs) && syllabusLabs.length > 0 ? syllabusLabs : DEFAULT_SYLLABUS_LABS;
+  const labs = Array.isArray(syllabusLabs) ? syllabusLabs : DEFAULT_SYLLABUS_LABS;
   const totalLabs = labs.length;
-
-  // Detect which columns in the sheet correspond to individual syllabus labs
-  const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
-  const labColumnMap = new Map();
-
-  for (const lab of labs) {
-    const matchingHeader = headers.find((h) => isHeaderMatchingLab(h, lab));
-    if (matchingHeader) {
-      labColumnMap.set(lab.id || lab.title, { lab, header: matchingHeader });
-    }
-  }
-
-  const hasIndividualLabColumns = labColumnMap.size > 0;
 
   return rows.map((row, index) => {
     const keys = Object.keys(row);
@@ -354,50 +422,49 @@ export const parseParticipantsFromCsv = (csvText, syllabusLabs = DEFAULT_SYLLABU
       }
     }
 
-    // 3. Completed Labs & Badges matching strictly against syllabusLabs
-    const completedLabs = [];
-
-    if (hasIndividualLabColumns) {
-      // Individual columns for labs exist in the sheet: check each syllabus lab strictly
-      for (const { lab, header } of labColumnMap.values()) {
-        const cellVal = row[header];
-        if (isCellCompleted(cellVal)) {
-          completedLabs.push(lab);
-        }
-      }
+    // Standardize URL protocol if needed
+    if (profileUrl && !profileUrl.startsWith('http')) {
+      profileUrl = `https://${profileUrl}`;
     }
 
-    // Verified count is strictly the number of actual syllabus labs completed
-    let verifiedCount = completedLabs.length;
-
-    // Fallback: only if NO individual lab columns exist at all in sheet, check for explicit "# of Skill Badges Completed" column
-    if (!hasIndividualLabColumns) {
-      const explicitCount = extractNumericBadgeCount(row, totalLabs);
-      if (explicitCount !== null && explicitCount >= 0) {
-        verifiedCount = Math.min(explicitCount, totalLabs);
-      }
-    }
-
-    // Avatar (Cloud Skills Boost Profile Avatar / Image)
-    const avatarKey = keys.find((k) => /avatar|photo|image|picture|pfp|dp|icon|profile_image|user_photo/i.test(k));
-    const sheetAvatar =
-      avatarKey && row[avatarKey] && (row[avatarKey].startsWith('http') || row[avatarKey].startsWith('//'))
-        ? row[avatarKey].trim()
-        : null;
-
-    let cachedAvatar = null;
+    // 3. Check if we already have cached real-time profile data in sessionStorage
+    let cachedData = null;
     if (typeof window !== 'undefined' && profileUrl) {
       try {
-        cachedAvatar = sessionStorage.getItem(`csb_avatar_${encodeURIComponent(profileUrl)}`);
+        const stored = sessionStorage.getItem(`csb_live_v4_${encodeURIComponent(profileUrl)}`);
+        if (stored) {
+          cachedData = JSON.parse(stored);
+        }
       } catch {}
     }
 
-    const defaultGoogleAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    let completedLabs = [];
+    let verifiedCount = 0;
+    let percentage = 0;
+    let liveVerified = false;
+    let totalProfileBadges = 0;
+
+    if (cachedData && Array.isArray(cachedData.badges)) {
+      const matchRes = matchProfileBadgesToSyllabus(cachedData.badges, labs);
+      completedLabs = matchRes.completedLabs;
+      verifiedCount = matchRes.verifiedCount;
+      percentage = matchRes.percentage;
+      liveVerified = true;
+      totalProfileBadges = cachedData.totalBadgesCount || cachedData.badges.length;
+    }
+
+    // Avatar resolution: Cached profile avatar > Sheet avatar > Default Google avatar
+    const sheetAvatarKey = keys.find((k) => /avatar|photo|image|picture|pfp|dp|icon|profile_image/i.test(k));
+    const sheetAvatar =
+      sheetAvatarKey && row[sheetAvatarKey] && (row[sheetAvatarKey].startsWith('http') || row[sheetAvatarKey].startsWith('//'))
+        ? row[sheetAvatarKey].trim()
+        : null;
+
+    const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
       name || 'User'
     )}&background=4285F4&color=fff&bold=true&rounded=true&size=128`;
-    const avatar = sheetAvatar || cachedAvatar || defaultGoogleAvatar;
 
-    const percentage = totalLabs > 0 ? Math.min(100, Math.round((verifiedCount / totalLabs) * 100)) : 0;
+    const avatar = cachedData?.avatar || sheetAvatar || defaultAvatar;
 
     return {
       id: `p-${index + 1}`,
@@ -407,48 +474,16 @@ export const parseParticipantsFromCsv = (csvText, syllabusLabs = DEFAULT_SYLLABU
       verifiedCount,
       completedLabs,
       percentage,
+      liveVerified,
+      totalProfileBadges,
     };
   });
 };
 
 /**
- * Asynchronously attempts to resolve the exact avatar image from a public Cloud Skills Boost profile
+ * Backwards compatibility helper to resolve profile avatar
  */
 export const resolveCloudProfileAvatar = async (profileUrl) => {
-  if (!profileUrl || typeof profileUrl !== 'string' || typeof window === 'undefined') return null;
-
-  const storageKey = `csb_avatar_${encodeURIComponent(profileUrl)}`;
-  try {
-    const cached = sessionStorage.getItem(storageKey);
-    if (cached) return cached;
-  } catch {}
-
-  const proxies = [
-    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-  ];
-
-  for (const makeProxy of proxies) {
-    try {
-      const res = await fetch(makeProxy(profileUrl), { signal: AbortSignal.timeout(3500) });
-      if (!res.ok) continue;
-      const html = await res.text();
-      const match =
-        html.match(/<ql-avatar[^>]+src=["']([^"']+)["']/i) ||
-        html.match(/<img[^>]+(?:class|id)=["'][^"']*avatar[^"']*["'][^>]+src=["']([^"']+)["']/i) ||
-        html.match(/<div[^>]+class=["'][^"']*public-profile__avatar[^"']*["'][^>]*>\s*<img[^>]+src=["']([^"']+)["']/i);
-
-      if (match && match[1] && (match[1].startsWith('http') || match[1].startsWith('//'))) {
-        const fullUrl = match[1].startsWith('//') ? `https:${match[1]}` : match[1];
-        try {
-          sessionStorage.setItem(storageKey, fullUrl);
-        } catch {}
-        return fullUrl;
-      }
-    } catch {
-      // Continue to next
-    }
-  }
-
-  return null;
+  const data = await fetchCloudProfileRealtime(profileUrl);
+  return data?.avatar || null;
 };

@@ -453,11 +453,10 @@ const AlbumModal = ({
                 <button
                   type="button"
                   onClick={() => setCurrentIdx(idx)}
-                  className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden block border-2 transition-all cursor-pointer ${
-                    currentIdx === idx
+                  className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden block border-2 transition-all cursor-pointer ${currentIdx === idx
                       ? 'border-google-blue scale-105 shadow-lg'
                       : 'border-transparent opacity-60 hover:opacity-100'
-                  }`}
+                    }`}
                 >
                   <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
                 </button>
@@ -790,7 +789,7 @@ const Gallery = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-3">
         <div className="sticky top-[80px] md:top-[80px] z-30 flex flex-col md:flex-row items-center justify-between gap-2 py-1 px-3 sm:py-1.5 sm:px-4 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-md mb-6">
           {/* Search Input */}
-          <div className="relative w-full md:w-80">
+          <div className="relative w-full md:w-150">
             <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
             <input
               type="text"
@@ -835,8 +834,8 @@ const Gallery = () => {
                           setIsYearDropdownOpen(false);
                         }}
                         className={`w-full text-left px-4 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${selectedYear === year
-                            ? 'text-google-red font-bold'
-                            : 'text-slate-600 dark:text-slate-300'
+                          ? 'text-google-red font-bold'
+                          : 'text-slate-600 dark:text-slate-300'
                           }`}
                       >
                         {year === 'All' ? 'All Years' : year}
