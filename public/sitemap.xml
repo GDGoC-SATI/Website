@@ -71,6 +71,18 @@
     <priority>0.3</priority>
   </url>
   <url>
+    <loc>https://gdgocsati.vercel.app/events/google-cloud-study-learn-2026/leaderboard</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://gdgocsati.vercel.app/events/google-cloud-study-jam-kick-off/leaderboard</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://gdgocsati.vercel.app/events/gdgoc-sati-recruitment-2026</loc>
     <lastmod>2026-10-26</lastmod>
     <changefreq>weekly</changefreq>
